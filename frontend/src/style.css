@@ -1,0 +1,245 @@
+Ahora abre el archivo frontend/src/style.css, borra todo el contenido y pega esto:
+css* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0f0f13;
+  color: #f0ede8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.header {
+  background: #16161e;
+  padding: 24px 20px 0;
+  border-bottom: 1px solid #22223a;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #6a6070;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 500;
+  color: #f0ede8;
+}
+
+.btn-subir {
+  background: #e8c87a;
+  color: #1a1500;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.stat {
+  background: #1e1e28;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.stat-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #6a6070;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 20px;
+  color: #c06060;
+  margin-bottom: 4px;
+}
+
+.stat-value.clientes {
+  color: #7ec47e;
+}
+
+.stat-count {
+  font-size: 11px;
+  color: #4a4055;
+}
+
+.content {
+  padding: 20px;
+}
+
+.upload-area {
+  margin-bottom: 20px;
+}
+
+.upload-area.hidden {
+  display: none;
+}
+
+.upload-box {
+  background: #16161e;
+  border: 2px dashed #2a2a3a;
+  border-radius: 14px;
+  padding: 30px 20px;
+  text-align: center;
+}
+
+.upload-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+
+.upload-title {
+  font-size: 16px;
+  color: #e0d8cc;
+  margin-bottom: 6px;
+}
+
+.upload-sub {
+  font-size: 12px;
+  color: #5a5565;
+  margin-bottom: 20px;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+.btn-file {
+  background: #e8c87a;
+  color: #1a1500;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.uploading { color: #9a90b4; font-size: 13px; margin-top: 12px; }
+.success { color: #7ec47e; font-size: 13px; margin-top: 12px; }
+.error { color: #c06060; font-size: 13px; margin-top: 12px; }
+
+.section-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #6a6070;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.empty {
+  text-align: center;
+  color: #4a4055;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.facturas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.factura-card {
+  background: #16161e;
+  border: 1px solid #22223a;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.factura-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.factura-nombre {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e0d8cc;
+}
+
+.factura-badge {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.factura-badge.proveedor {
+  background: #2a1a1a;
+  color: #c06060;
+}
+
+.factura-badge.cliente {
+  background: #1a2a1a;
+  color: #7ec47e;
+}
+
+.factura-datos {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #6a6070;
+  margin-bottom: 6px;
+}
+
+.factura-total {
+  color: #e8c87a;
+  font-weight: 600;
+}
+
+.factura-desglose {
+  font-size: 11px;
+  color: #4a4055;
+}
+
+.anomalia {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #c08040;
+  background: #2a1e10;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.btn-generar {
+  width: 100%;
+  background: #e8c87a;
+  color: #1a1500;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+}

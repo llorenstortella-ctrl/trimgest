@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrimGest</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+    .header { background: #16161e; padding: 24px 20px 20px; border-bottom: 1px solid #22223a; }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .label { font-size: 11px; letter-spacing: 3px; color: #6a6070; text-transform: uppercase; margin-bottom: 4px; }
+    h1 { font-size: 24px; font-weight: 500; }
+    .selectores { display: flex; gap: 8px; margin-top: 10px; margin-bottom: 16px; }
+    .selectores select { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 6px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .btn-subir { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat { background: #1e1e28; border-radius: 10px; padding: 14px; }
+    .stat-label { font-size: 10px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-size: 20px; color: #c06060; margin-bottom: 4px; }
+    .stat-value.verde { color: #7ec47e; }
+    .stat-count { font-size: 11px; color: #4a4055; }
+    .content { padding: 20px; }
+    .upload-area { display: none; margin-bottom: 20px; }
+    .upload-box { background: #16161e; border: 2px dashed #2a2a3a; border-radius: 14px; padding: 24px 20px; }
+    .upload-title { font-size: 16px; color: #e0d8cc; margin-bottom: 6px; text-align: center; }
+    .upload-sub { font-size: 12px; color: #5a5565; margin-bottom: 16px; text-align: center; }
+    .tipo-selector { display: flex; gap: 10px; margin-bottom: 16px; }
+    .tipo-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #2a2a3a; background: #1e1e28; color: #6a6070; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+    .tipo-btn.selected-prov { border-color: #c06060; color: #c06060; background: #2a1a1a; }
+    .tipo-btn.selected-cli { border-color: #7ec47e; color: #7ec47e; background: #1a2a1a; }
+    .upload-btns { display: flex; gap: 10px; }
+    .btn-file { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; }
+    .btn-file:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-camara { background: #1e1e28; color: #e0d8cc; border: 1px solid #2a2a3a; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; flex: 1; }
+    .btn-camara:disabled { opacity: 0.4; cursor: not-allowed; }
+    .uploading { color: #9a90b4; font-size: 13px; margin-top: 12px; text-align: center; }
+    .success { color: #7ec47e; font-size: 13px; margin-top: 12px; text-align: center; }
+    .error { color: #c06060; font-size: 13px; margin-top: 12px; text-align: center; }
+    .duplicado { color: #c08040; font-size: 13px; margin-top: 12px; background: #2a1e10; border-radius: 8px; padding: 10px; text-align: center; }
+    .section-title { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 14px; }
+    .empty { text-align: center; color: #4a4055; padding: 40px 20px; font-size: 14px; }
+    .facturas-list { display: flex; flex-direction: column; gap: 10px; }
+    .factura-card { background: #16161e; border: 1px solid #22223a; border-radius: 12px; padding: 14px; }
+    .factura-card.enviada { opacity: 0.5; }
+    .factura-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .factura-nombre { font-size: 15px; font-weight: 500; color: #e0d8cc; }
+    .factura-badges { display: flex; gap: 6px; align-items: center; }
+    .factura-badge { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+    .badge-proveedor { background: #2a1a1a; color: #c06060; }
+    .badge-cliente { background: #1a2a1a; color: #7ec47e; }
+    .badge-enviada { background: #1a1a2a; color: #6a80c0; }
+    .factura-datos { display: flex; gap: 12px; font-size: 12px; color: #6a6070; margin-bottom: 6px; flex-wrap: wrap; }
+    .factura-total { color: #e8c87a; font-weight: 600; }
+    .factura-desglose { font-size: 11px; color: #4a4055; margin-bottom: 8px; }
+    .factura-acciones { display: flex; gap: 6px; margin-top: 10px; }
+    .btn-accion { font-size: 11px; padding: 5px 10px; border-radius: 6px; border: 1px solid #2a2a3a; background: #1e1e28; color: #9a90b4; cursor: pointer; }
+    .btn-borrar { font-size: 11px; padding: 5px 10px; border-radius: 6px; border: 1px solid #3a1a1a; background: #2a1a1a; color: #c06060; cursor: pointer; }
+    .edit-form { margin-top: 12px; display: none; flex-direction: column; gap: 8px; }
+    .edit-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .edit-input { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 5px 8px; border-radius: 6px; font-size: 12px; width: 100%; }
+    .edit-row select { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 5px 8px; border-radius: 6px; font-size: 12px; }
+    .btn-guardar { font-size: 12px; padding: 8px 16px; border-radius: 6px; border: none; background: #e8c87a; color: #1a1500; cursor: pointer; font-weight: 600; width: 100%; margin-top: 4px; }
+    .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid #22223a; }
+    .tab { padding: 8px 16px; font-size: 13px; color: #6a6070; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab.active { color: #e8c87a; border-bottom-color: #e8c87a; }
+    .btn-generar { width: 100%; background: #e8c87a; color: #1a1500; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; }
+    .btn-marcar { width: 100%; background: #2a3a2a; color: #7ec47e; border: 1px solid #3a5a3a; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const API = 'http://localhost:3001';
+    window.trimestreSel = null;
+    window.annoSel = null;
+    window.tabSel = 'pendientes';
+    window.tipoSel = null;
+
+    function getTrimestre() {
+      const m = new Date().getMonth();
+      if (m <= 2) return 'T1';
+      if (m <= 5) return 'T2';
+      if (m <= 8) return 'T3';
+      return 'T4';
+    }
+
+    function formatEur(n) {
+      return Number(n).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    }
+
+    async function cargarFacturas() {
+      const res = await fetch(API + '/facturas/listar');
+      const data = await res.json();
+      return data.facturas;
+    }
+
+    async function renderApp() {
+      const facturas = await cargarFacturas();
+      const anno = new Date().getFullYear();
+      if (!window.trimestreSel) window.trimestreSel = getTrimestre();
+      if (!window.annoSel) window.annoSel = String(anno);
+
+      var anosSet = {};
+      for (var y = anno - 2; y <= anno + 3; y++) anosSet[String(y)] = true;
+      for (var i = 0; i < facturas.length; i++) {
+        if (facturas[i].anno) anosSet[String(facturas[i].anno)] = true;
+      }
+      var anos = Object.keys(anosSet).sort();
+
+      const facturasT = facturas.filter(function(f) {
+        return f.trimestre === window.trimestreSel && String(f.anno) === window.annoSel;
+      });
+
+      const pendientes = facturasT.filter(function(f) { return !f.enviado; });
+      const enviadas = facturasT.filter(function(f) { return f.enviado; });
+      const lista = window.tabSel === 'pendientes' ? pendientes : enviadas;
+
+      const provPend = pendientes.filter(function(f) { return f.tipo === 'proveedor'; });
+      const cliPend = pendientes.filter(function(f) { return f.tipo === 'cliente'; });
+      const totalProv = provPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
+      const totalCli = cliPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
+
+      var listaHTML = '';
+      if (lista.length === 0) {
+        listaHTML = '<div class="empty">No hay facturas en este apartado</div>';
+      } else {
+        listaHTML = '<div class="facturas-list">';
+        for (var i = 0; i < lista.length; i++) {
+          var f = lista[i];
+          var optsAnnoEdit = anos.map(function(a) { return '<option value="' + a + '"' + (String(f.anno)===a?' selected':'') + '>' + a + '</option>'; }).join('');
+          listaHTML += '<div class="factura-card' + (f.enviado ? ' enviada' : '') + '">';
+          listaHTML += '<div class="factura-header"><span class="factura-nombre">' + f.nombre + '</span>';
+          listaHTML += '<div class="factura-badges"><span class="factura-badge badge-' + f.tipo + '">' + f.tipo + '</span>';
+          if (f.enviado) listaHTML += '<span class="factura-badge badge-enviada">enviada</span>';
+          listaHTML += '</div></div>';
+          listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N&#176; ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
+          listaHTML += '<div class="factura-desglose">Base ' + formatEur(f.base_imponible) + ' &middot; IVA ' + f.iva_porcentaje + '% ' + formatEur(f.iva_importe) + '</div>';
+          listaHTML += '<div class="factura-acciones">';
+          listaHTML += '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">&#9998; Editar</button>';
+          listaHTML += '<button class="btn-borrar" onclick="borrarFactura(' + f.id + ')">&#128465; Borrar</button>';
+          listaHTML += '</div>';
+          listaHTML += '<div class="edit-form" id="edit-' + f.id + '">';
+          listaHTML += '<div class="edit-row"><select id="tipo-' + f.id + '"><option value="proveedor"' + (f.tipo==='proveedor'?' selected':'') + '>Proveedor</option><option value="cliente"' + (f.tipo==='cliente'?' selected':'') + '>Cliente</option></select>';
+          listaHTML += '<select id="trim-' + f.id + '"><option value="T1"' + (f.trimestre==='T1'?' selected':'') + '>T1</option><option value="T2"' + (f.trimestre==='T2'?' selected':'') + '>T2</option><option value="T3"' + (f.trimestre==='T3'?' selected':'') + '>T3</option><option value="T4"' + (f.trimestre==='T4'?' selected':'') + '>T4</option></select>';
+          listaHTML += '<select id="anno-' + f.id + '">' + optsAnnoEdit + '</select></div>';
+          listaHTML += '<input class="edit-input" id="nombre-' + f.id + '" value="' + f.nombre + '" placeholder="Nombre">';
+          listaHTML += '<input class="edit-input" id="nfactura-' + f.id + '" value="' + f.numero_factura + '" placeholder="N&#176; factura">';
+          listaHTML += '<input class="edit-input" id="fecha-' + f.id + '" value="' + f.fecha + '" placeholder="DD/MM/YYYY">';
+          listaHTML += '<div class="edit-row">';
+          listaHTML += '<input class="edit-input" id="base-' + f.id + '" value="' + f.base_imponible + '" placeholder="Base" type="number" style="flex:1">';
+          listaHTML += '<input class="edit-input" id="iva-' + f.id + '" value="' + f.iva_porcentaje + '" placeholder="IVA%" type="number" style="flex:0.5">';
+          listaHTML += '<input class="edit-input" id="total-' + f.id + '" value="' + f.total + '" placeholder="Total" type="number" style="flex:1">';
+          listaHTML += '</div>';
+          listaHTML += '<button class="btn-guardar" onclick="guardarEdicion(' + f.id + ')">Guardar cambios</button>';
+          listaHTML += '</div></div>';
+        }
+        listaHTML += '</div>';
+      }
+
+      var botonesEnvio = '';
+      if (window.tabSel === 'pendientes' && pendientes.length > 0) {
+        botonesEnvio =
+          '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestor&iacute;a</button>' +
+          '<button class="btn-marcar" onclick="marcarEnviadas()">&#10003; Marcar todas como enviadas</button>';
+      }
+
+      var optsAno = anos.map(function(a) {
+        return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>';
+      }).join('');
+
+      var trimestres = ['T1', 'T2', 'T3', 'T4'];
+      var optsTrim = trimestres.map(function(t) {
+        return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>';
+      }).join('');
+
+      var provClass = window.tipoSel === 'proveedor' ? ' selected-prov' : '';
+      var cliClass = window.tipoSel === 'cliente' ? ' selected-cli' : '';
+      var btnDisabled = !window.tipoSel ? ' disabled' : '';
+
+      document.getElementById('app').innerHTML =
+        '<div class="header">' +
+        '<div class="header-top"><div><div class="label">TrimGest</div><h1>' + window.trimestreSel + ' &middot; ' + window.annoSel + '</h1></div>' +
+        '<button class="btn-subir" onclick="toggleUpload()">+ Subir factura</button></div>' +
+        '<div class="selectores">' +
+        '<select onchange="window.trimestreSel=this.value;renderApp()">' + optsTrim + '</select>' +
+        '<select onchange="window.annoSel=this.value;renderApp()">' + optsAno + '</select>' +
+        '</div>' +
+        '<div class="stats">' +
+        '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' pendientes</div></div>' +
+        '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +
+        '</div></div>' +
+        '<div class="content">' +
+        '<div class="upload-area" id="uploadArea"><div class="upload-box">' +
+        '<div class="upload-title">Subir factura</div>' +
+        '<div class="upload-sub">Primero indica qu&eacute; tipo es</div>' +
+        '<div class="tipo-selector">' +
+        '<div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">&#128706; Proveedor</div>' +
+        '<div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">&#127968; Cliente</div>' +
+        '</div>' +
+        '<div class="upload-btns">' +
+        '<button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">&#128193; Elegir PDF</button>' +
+        '<button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">&#128247; Escanear</button>' +
+        '</div>' +
+        '<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+        '<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+        '<div id="uploadStatus"></div>' +
+        '</div></div>' +
+        '<div class="tabs">' +
+        '<div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div>' +
+        '<div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div>' +
+        '</div>' +
+        '<div class="section-title">Facturas del periodo</div>' +
+        listaHTML + botonesEnvio + '</div>';
+    }
+
+    function seleccionarTipo(tipo) {
+      window.tipoSel = tipo;
+      renderApp();
+      setTimeout(function() {
+        var area = document.getElementById('uploadArea');
+        if (area) area.style.display = 'block';
+      }, 50);
+    }
+
+    function toggleUpload() {
+      var area = document.getElementById('uploadArea');
+      if (area.style.display === 'block') {
+        area.style.display = 'none';
+        window.tipoSel = null;
+      } else {
+        area.style.display = 'block';
+      }
+    }
+
+    function toggleEdit(id) {
+      var form = document.getElementById('edit-' + id);
+      form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    async function guardarEdicion(id) {
+      var body = {
+        tipo: document.getElementById('tipo-' + id).value,
+        trimestre: document.getElementById('trim-' + id).value,
+        anno: document.getElementById('anno-' + id).value,
+        nombre: document.getElementById('nombre-' + id).value,
+        numero_factura: document.getElementById('nfactura-' + id).value,
+        fecha: document.getElementById('fecha-' + id).value,
+        base_imponible: document.getElementById('base-' + id).value,
+        iva_porcentaje: document.getElementById('iva-' + id).value,
+        total: document.getElementById('total-' + id).value
+      };
+      await fetch(API + '/facturas/editar/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      renderApp();
+    }
+
+    async function borrarFactura(id) {
+      if (!confirm('¿Seguro que quieres borrar esta factura?')) return;
+      await fetch(API + '/facturas/borrar/' + id, { method: 'DELETE' });
+      renderApp();
+    }
+
+    async function marcarEnviadas() {
+      const facturas = await cargarFacturas();
+      const pendientes = facturas.filter(function(f) {
+        return f.trimestre === window.trimestreSel && String(f.anno) === window.annoSel && !f.enviado;
+      });
+      const ids = pendientes.map(function(f) { return f.id; });
+      await fetch(API + '/facturas/marcar-enviado', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+      });
+      renderApp();
+    }
+
+    async function procesarArchivo(file) {
+      if (!file) return;
+      var status = document.getElementById('uploadStatus');
+      status.innerHTML = '<div class="uploading">&#9203; Procesando con IA...</div>';
+      var formData = new FormData();
+      formData.append('factura', file);
+      try {
+        var res = await fetch(API + '/facturas/subir?tipo_manual=' + window.tipoSel, { method: 'POST', body: formData });
+        var data = await res.json();
+        if (data.error === 'duplicado') {
+          status.innerHTML = '<div class="duplicado">&#9888; Esta factura ya est&aacute; en el sistema</div>';
+        } else if (data.factura) {
+          window.trimestreSel = data.factura.trimestre;
+          window.annoSel = String(data.factura.anno);
+          window.tipoSel = null;
+          status.innerHTML = '<div class="success">&#10003; Factura procesada correctamente</div>';
+          setTimeout(function() { renderApp(); }, 1500);
+        } else {
+          status.innerHTML = '<div class="error">Error al procesar la factura</div>';
+        }
+      } catch(e) {
+        status.innerHTML = '<div class="error">Error de conexi&oacute;n</div>';
+      }
+    }
+
+    function generarPDFs() {
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  window.open(API + '/generar/pdf/proveedor/' + t + '/' + a);
+  setTimeout(function() {
+    window.open(API + '/generar/pdf/cliente/' + t + '/' + a);
+  }, 1000);
+}
+
+    renderApp();
+  </script>
+</body>
+</html>

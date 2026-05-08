@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1778212936687,
+    "archivo": "1778212934031-factura-prueba.pdf",
+    "tipo": "proveedor",
+    "nombre": "AUTONET BALEARES S.L.",
+    "numero_factura": "2415004498",
+    "fecha": "31/10/2024",
+    "base_imponible": 212.05,
+    "iva_porcentaje": 21,
+    "iva_importe": 44.53,
+    "total": 256.58,
+    "anomalias": null,
+    "trimestre": "T4",
+    "anno": 2024,
+    "enviado": false,
+    "fecha_envio": null,
+    "creado": "2026-05-08T04:02:16.687Z"
+  }
+]
