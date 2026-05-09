@@ -76,6 +76,7 @@
     window.annoSel = null;
     window.tabSel = 'pendientes';
     window.tipoSel = null;
+    window.uploadOpen = false;
 
     function getTrimestre() {
       const m = new Date().getMonth();
@@ -177,6 +178,7 @@
       var provClass = window.tipoSel === 'proveedor' ? ' selected-prov' : '';
       var cliClass = window.tipoSel === 'cliente' ? ' selected-cli' : '';
       var btnDisabled = !window.tipoSel ? ' disabled' : '';
+      var uploadDisplay = window.uploadOpen ? 'block' : 'none';
 
       document.getElementById('app').innerHTML =
         '<div class="header">' +
@@ -191,7 +193,7 @@
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +
         '</div></div>' +
         '<div class="content">' +
-        '<div class="upload-area" id="uploadArea"><div class="upload-box">' +
+        '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
         '<div class="upload-title">Subir factura</div>' +
         '<div class="upload-sub">Primero indica qu&eacute; tipo es</div>' +
         '<div class="tipo-selector">' +
@@ -215,35 +217,15 @@
     }
 
     function seleccionarTipo(tipo) {
-  window.tipoSel = tipo;
-  var provBtn = document.querySelector('.tipo-btn.selected-prov, .tipo-btn:first-child');
-  var cliBtn = document.querySelector('.tipo-btn.selected-cli, .tipo-btn:last-child');
-  document.querySelectorAll('.tipo-btn').forEach(function(btn) {
-    btn.classList.remove('selected-prov', 'selected-cli');
-  });
-  if (tipo === 'proveedor') {
-    document.querySelectorAll('.tipo-btn')[0].classList.add('selected-prov');
-    document.getElementById('fileInput').disabled = false;
-    document.getElementById('camaraInput').disabled = false;
-    document.querySelector('.btn-file').disabled = false;
-    document.querySelector('.btn-camara').disabled = false;
-  } else {
-    document.querySelectorAll('.tipo-btn')[1].classList.add('selected-cli');
-    document.getElementById('fileInput').disabled = false;
-    document.getElementById('camaraInput').disabled = false;
-    document.querySelector('.btn-file').disabled = false;
-    document.querySelector('.btn-camara').disabled = false;
-  }
-}
+      window.tipoSel = tipo;
+      window.uploadOpen = true;
+      renderApp();
+    }
 
     function toggleUpload() {
-      var area = document.getElementById('uploadArea');
-      if (area.style.display === 'block') {
-        area.style.display = 'none';
-        window.tipoSel = null;
-      } else {
-        area.style.display = 'block';
-      }
+      window.uploadOpen = !window.uploadOpen;
+      if (!window.uploadOpen) window.tipoSel = null;
+      renderApp();
     }
 
     function toggleEdit(id) {
@@ -306,6 +288,7 @@
           window.trimestreSel = data.factura.trimestre;
           window.annoSel = String(data.factura.anno);
           window.tipoSel = null;
+          window.uploadOpen = false;
           status.innerHTML = '<div class="success">&#10003; Factura procesada correctamente</div>';
           setTimeout(function() { renderApp(); }, 1500);
         } else {
@@ -317,13 +300,13 @@
     }
 
     function generarPDFs() {
-  var t = window.trimestreSel;
-  var a = window.annoSel;
-  window.open(API + '/generar/pdf/proveedor/' + t + '/' + a);
-  setTimeout(function() {
-    window.open(API + '/generar/pdf/cliente/' + t + '/' + a);
-  }, 1000);
-}
+      var t = window.trimestreSel;
+      var a = window.annoSel;
+      window.open(API + '/generar/pdf/proveedor/' + t + '/' + a);
+      setTimeout(function() {
+        window.open(API + '/generar/pdf/cliente/' + t + '/' + a);
+      }, 1000);
+    }
 
     renderApp();
   </script>
