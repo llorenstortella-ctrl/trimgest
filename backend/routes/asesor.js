@@ -10,6 +10,9 @@ const dbPath = process.env.DATA_PATH || path.join(__dirname, '../data/facturas.j
 const configPath = process.env.DATA_PATH
   ? path.join(path.dirname(process.env.DATA_PATH), 'config.json')
   : path.join(__dirname, '../data/config.json');
+const pygPath = process.env.DATA_PATH
+  ? path.join(path.dirname(process.env.DATA_PATH), 'pyg.json')
+  : path.join(__dirname, '../data/pyg.json');
 
 const getFacturas = () => {
   if (!fs.existsSync(dbPath)) return [];
@@ -23,6 +26,11 @@ const getConfig = () => {
 
 const saveConfig = (config) => {
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+};
+
+const getPyG = () => {
+  if (!fs.existsSync(pygPath)) return null;
+  return JSON.parse(fs.readFileSync(pygPath));
 };
 
 function getResumenFinanciero(trimestre, anno) {
@@ -48,11 +56,11 @@ function getResumenFinanciero(trimestre, anno) {
     beneficio_estimado: beneficioEstimado.toFixed(2),
     objetivo_trimestre: getConfig().objetivo_trimestre || null,
     proveedores_detalle: proveedores.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
-    clientes_detalle: clientes.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha }))
+    clientes_detalle: clientes.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
+    pyg: getPyG()
   };
 }
 
-// Guardar objetivo
 router.post('/objetivo', (req, res) => {
   const { objetivo } = req.body;
   const config = getConfig();
@@ -61,7 +69,6 @@ router.post('/objetivo', (req, res) => {
   res.json({ ok: true });
 });
 
-// Chat con asesor
 router.post('/chat', async (req, res) => {
   const { mensaje, trimestre, anno, historial } = req.body;
   const resumen = getResumenFinanciero(trimestre, anno);
@@ -69,15 +76,23 @@ router.post('/chat', async (req, res) => {
   const messages = [
     {
       role: 'system',
-      content: `Eres el asesor financiero personal de FEIM CA TEVA S.L., una pequeña empresa española. 
-      
+      content: `Eres el asesor financiero personal de FEIM CA TEVA S.L., una pequeña empresa española.
+
 Tu rol es orientar al propietario sobre su situación financiera de forma clara, en lenguaje simple y sin jerga contable. Eres como un amigo que sabe de números.
 
 DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno}:
 - Facturas de proveedores: ${resumen.num_facturas_proveedor} facturas, total gastos: ${resumen.total_gastos}€
 - Facturas de clientes: ${resumen.num_facturas_cliente} facturas, total ingresos: ${resumen.total_ingresos}€
-- Beneficio estimado: ${resumen.beneficio_estimado}€
+- Beneficio estimado (solo facturas): ${resumen.beneficio_estimado}€
 ${resumen.objetivo_trimestre ? `- Objetivo de beneficio este trimestre: ${resumen.objetivo_trimestre}€` : '- Sin objetivo de beneficio definido'}
+
+${resumen.pyg ? `DATOS REALES DE P&G (${resumen.pyg.anno}):
+- Ingresos netos: ${resumen.pyg.ingresos_netos}€
+- Gastos de personal: ${resumen.pyg.gastos_personal}€
+- Otros gastos de explotación: ${resumen.pyg.otros_gastos_explotacion}€
+- Resultado de explotación: ${resumen.pyg.resultado_explotacion}€
+- Resultado del ejercicio: ${resumen.pyg.resultado_ejercicio}€
+NOTA: Estos son los datos reales contabilizados por la gestoría, más completos que las facturas del sistema.` : '- Sin datos de P&G disponibles todavía'}
 
 PROVEEDORES:
 ${resumen.proveedores_detalle.map(p => `  - ${p.nombre}: ${p.total}€`).join('\n')}
@@ -86,7 +101,6 @@ CLIENTES:
 ${resumen.clientes_detalle.map(c => `  - ${c.nombre}: ${c.total}€`).join('\n')}
 
 IMPORTANTE:
-- Estos datos son estimaciones basadas en las facturas subidas. La gestoría puede tener información adicional.
 - Sé honesto sobre las limitaciones de los datos.
 - Responde siempre en español.
 - Sé conciso, máximo 3-4 frases por respuesta.
