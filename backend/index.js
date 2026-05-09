@@ -17,7 +17,7 @@ app.use(express.json());
 app.use('/facturas', facturasRouter);
 app.use('/generar', generarRouter);
 app.use('/auth', authRouter);
-app.use('/asesor', authRouter);
+app.use('/asesor', asesorRouter);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
