@@ -8,7 +8,6 @@ const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const uploadsDir = path.join(__dirname, '../uploads');
 const pygPath = process.env.DATA_PATH
   ? path.join(path.dirname(process.env.DATA_PATH), 'pyg.json')
   : path.join(__dirname, '../data/pyg.json');
@@ -27,34 +26,49 @@ router.post('/subir', upload.single('pyg'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'Eres un experto contable español. Extrae los datos de una Cuenta de Pérdidas y Ganancias de Pymes y devuelve SOLO un JSON.'
+          content: 'Eres un experto contable español. Extrae los datos de una Cuenta de Pérdidas y Ganancias de Pymes. El documento puede tener datos de dos ejercicios diferentes en columnas. Devuelve SOLO un JSON.'
         },
         {
           role: 'user',
-          content: `Extrae los datos de esta P&G y devuelve SOLO este JSON sin texto adicional:
+          content: `Extrae los datos de esta P&G. Si hay dos ejercicios, extrae los dos. Devuelve SOLO este JSON sin texto adicional:
 {
-  "anno": número del año del ejercicio,
-  "ingresos_netos": número,
-  "aprovisionamientos": número,
-  "gastos_personal": número,
-  "otros_gastos_explotacion": número,
-  "amortizacion": número,
-  "resultado_explotacion": número,
-  "resultado_financiero": número,
-  "resultado_antes_impuestos": número,
-  "impuestos": número,
-  "resultado_ejercicio": número
+  "ejercicio_actual": {
+    "anno": número del año más reciente,
+    "ingresos_netos": número,
+    "aprovisionamientos": número,
+    "gastos_personal": número,
+    "otros_gastos_explotacion": número,
+    "amortizacion": número,
+    "resultado_explotacion": número,
+    "resultado_financiero": número,
+    "resultado_antes_impuestos": número,
+    "impuestos": número,
+    "resultado_ejercicio": número
+  },
+  "ejercicio_anterior": {
+    "anno": número del año anterior o null si no existe,
+    "ingresos_netos": número o null,
+    "aprovisionamientos": número o null,
+    "gastos_personal": número o null,
+    "otros_gastos_explotacion": número o null,
+    "amortizacion": número o null,
+    "resultado_explotacion": número o null,
+    "resultado_financiero": número o null,
+    "resultado_antes_impuestos": número o null,
+    "impuestos": número o null,
+    "resultado_ejercicio": número o null
+  }
 }
 
 TEXTO DE LA P&G:
 ${texto}`
         }
       ],
-      max_tokens: 500
+      max_tokens: 800
     });
 
     const texto_resp = response.choices[0].message.content;
-    const clean = texto_resp.replace(/\`\`\`json|\`\`\`/g, '').trim();
+    const clean = texto_resp.replace(/```json|```/g, '').trim();
     const datos = JSON.parse(clean);
 
     fs.writeFileSync(pygPath, JSON.stringify(datos, null, 2));
