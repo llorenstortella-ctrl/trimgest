@@ -217,11 +217,13 @@
     }
 
     function seleccionarTipo(tipo) {
-      window.tipoSel = tipo;
-      window.uploadOpen = true;
-      renderApp();
-    }
-
+  window.tipoSel = tipo;
+  var btns = document.querySelectorAll('.tipo-btn');
+  btns[0].className = 'tipo-btn' + (tipo === 'proveedor' ? ' selected-prov' : '');
+  btns[1].className = 'tipo-btn' + (tipo === 'cliente' ? ' selected-cli' : '');
+  document.querySelector('.btn-file').disabled = false;
+  document.querySelector('.btn-camara').disabled = false;
+}
     function toggleUpload() {
       window.uploadOpen = !window.uploadOpen;
       if (!window.uploadOpen) window.tipoSel = null;
