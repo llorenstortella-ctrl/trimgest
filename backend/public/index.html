@@ -257,6 +257,13 @@
         '<input id="pinActual" type="password" maxlength="4" placeholder="PIN actual" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
         '<input id="pinNuevo" type="password" maxlength="4" placeholder="PIN nuevo" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
         '<input id="pinConfirmar" type="password" maxlength="4" placeholder="Confirmar PIN nuevo" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+'<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">Pérdidas y Ganancias</div>' +
+'<div style="font-size:12px;color:#4a4055;margin-bottom:12px;">Sube el PDF de P&G que te manda la gestoría al final del trimestre</div>' +
+'<input type="file" id="pygInput" accept="application/pdf" onchange="subirPyG(this.files[0])" style="display:none">' +
+'<button onclick="document.getElementById(\'pygInput\').click()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;width:100%;">📊 Subir PDF de P&G</button>' +
+'<div id="pygMsg" style="font-size:12px;margin-top:8px;text-align:center;"></div>' +
+'</div>' +
         '<button onclick="cambiarPin()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cambiar PIN</button>' +
         '<div id="ajustesMsg" style="font-size:13px;text-align:center;margin-top:4px;"></div>' +
         '</div>' +
@@ -264,6 +271,28 @@
       document.body.appendChild(div);
     }
 
+    async function subirPyG(file) {
+  if (!file) return;
+  var msg = document.getElementById('pygMsg');
+  msg.style.color = '#9a90b4';
+  msg.textContent = '⏳ Procesando...';
+  var formData = new FormData();
+  formData.append('pyg', file);
+  try {
+    var res = await fetch(API + '/pyg/subir', { method: 'POST', body: formData });
+    var data = await res.json();
+    if (data.ok) {
+      msg.style.color = '#7ec47e';
+      msg.textContent = '✓ P&G procesada correctamente';
+    } else {
+      msg.style.color = '#c06060';
+      msg.textContent = 'Error al procesar el PDF';
+    }
+  } catch(e) {
+    msg.style.color = '#c06060';
+    msg.textContent = 'Error de conexión';
+  }
+}
     function cerrarAjustes() {
       var panel = document.getElementById('ajustesPanel');
       if (panel) panel.remove();
