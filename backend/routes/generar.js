@@ -5,7 +5,7 @@ const path = require('path');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
 const dbPath = path.join(__dirname, '../data/facturas.json');
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = path.join(__dirname, '../data/uploads');
 
 const getFacturas = () => JSON.parse(fs.readFileSync(dbPath));
 

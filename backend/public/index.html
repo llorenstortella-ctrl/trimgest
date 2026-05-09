@@ -647,7 +647,7 @@
       }
     }
 
-    function generarPDFs() {
+   function generarPDFs() {
   var t = window.trimestreSel;
   var a = window.annoSel;
   var div = document.createElement('div');
@@ -657,10 +657,61 @@
     '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
     '<div style="font-size:20px;color:#f0ede8;margin-bottom:16px;">PDFs para gestor&iacute;a</div>' +
     '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">' + t + ' &middot; ' + a + '</div>' +
-    '<a href="' + API + '/generar/pdf/proveedor/' + t + '/' + a + '" target="_blank" style="background:#c06060;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;text-align:center;text-decoration:none;display:block;">&#128206; PDF Proveedores</a>' +
-    '<a href="' + API + '/generar/pdf/cliente/' + t + '/' + a + '" target="_blank" style="background:#7ec47e;color:#1a2a1a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;text-align:center;text-decoration:none;display:block;">&#128206; PDF Clientes</a>' +
+    '<div id="pdfStatus" style="font-size:13px;color:#9a90b4;min-height:20px;text-align:center;"></div>' +
+    '<button onclick="descargarPDF(\'proveedor\')" style="background:#c06060;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;">&#128206; PDF Proveedores</button>' +
+    '<button onclick="descargarPDF(\'cliente\')" style="background:#7ec47e;color:#1a2a1a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;">&#128206; PDF Clientes</button>' +
     '<button onclick="document.getElementById(\'pdfPanel\').remove()" style="margin-top:16px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">&#8592; Volver</button>';
   document.body.appendChild(div);
+}
+
+async function descargarPDF(tipo) {
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  var status = document.getElementById('pdfStatus');
+  status.textContent = '⏳ Generando PDF...';
+  try {
+    var res = await fetch(API + '/generar/pdf/' + tipo + '/' + t + '/' + a);
+    if (!res.ok) throw new Error('Error servidor');
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'TrimGest-' + tipo + '-' + t + '-' + a + '.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    status.style.color = '#7ec47e';
+    status.textContent = '✓ PDF descargado';
+  } catch(e) {
+    status.style.color = '#c06060';
+    status.textContent = 'Error al generar el PDF';
+  }
+}
+
+async function descargarPDF(tipo) {
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  var status = document.getElementById('pdfStatus');
+  status.textContent = '⏳ Generando PDF...';
+  try {
+    var res = await fetch(API + '/generar/pdf/' + tipo + '/' + t + '/' + a);
+    if (!res.ok) throw new Error('Error servidor');
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'TrimGest-' + tipo + '-' + t + '-' + a + '.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    status.style.color = '#7ec47e';
+    status.textContent = '✓ PDF descargado';
+  } catch(e) {
+    status.style.color = '#c06060';
+    status.textContent = 'Error al generar el PDF';
+  }
 }
   </script>
 </body>
