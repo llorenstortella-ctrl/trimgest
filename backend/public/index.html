@@ -91,10 +91,11 @@
   </style>
 </head>
 <body>
+
   <div class="pin-screen" id="pinScreen">
     <div class="pin-logo">TrimGest</div>
     <div class="pin-title">Introduce tu PIN</div>
-    <div class="pin-dots" id="pinDots">
+    <div class="pin-dots">
       <div class="pin-dot" id="d0"></div>
       <div class="pin-dot" id="d1"></div>
       <div class="pin-dot" id="d2"></div>
@@ -144,7 +145,20 @@
     window.tabSel = 'pendientes';
     window.tipoSel = null;
     window.uploadOpen = false;
+    window.chatHistorial = [];
     var pinValue = '';
+
+    function getTrimestre() {
+      const m = new Date().getMonth();
+      if (m <= 2) return 'T1';
+      if (m <= 5) return 'T2';
+      if (m <= 8) return 'T3';
+      return 'T4';
+    }
+
+    function formatEur(n) {
+      return Number(n).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    }
 
     function addPin(digit) {
       if (pinValue.length >= 4) return;
@@ -177,6 +191,8 @@
       if (data.ok) {
         document.getElementById('pinScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
+        window.trimestreSel = getTrimestre();
+        window.annoSel = String(new Date().getFullYear());
         renderApp();
       } else {
         updateDots(true);
@@ -245,54 +261,125 @@
       }
     }
 
+    function mostrarAsesor() {
+      if (!window.trimestreSel) window.trimestreSel = getTrimestre();
+      if (!window.annoSel) window.annoSel = String(new Date().getFullYear());
+      window.chatHistorial = [];
+      var div = document.createElement('div');
+      div.id = 'asesorPanel';
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;max-width:480px;margin:0 auto;';
+      div.innerHTML =
+        '<div style="background:#16161e;padding:20px;border-bottom:1px solid #22223a;display:flex;justify-content:space-between;align-items:center;">' +
+        '<div><div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
+        '<div style="font-size:18px;color:#e8c87a;">&#129302; Asesor financiero</div></div>' +
+        '<button onclick="cerrarAsesor()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">&#215;</button>' +
+        '</div>' +
+        '<div style="padding:16px;background:#12121a;border-bottom:1px solid #22223a;">' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:8px;">Objetivo de beneficio este trimestre (&#8364;)</div>' +
+        '<div style="display:flex;gap:8px;">' +
+        '<input id="objetivoInput" type="number" placeholder="ej. 5000" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px 12px;border-radius:8px;font-size:14px;flex:1;">' +
+        '<button onclick="guardarObjetivo()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>' +
+        '</div>' +
+        '<div id="objetivoMsg" style="font-size:12px;margin-top:6px;"></div>' +
+        '</div>' +
+        '<div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
+        '<div style="background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#9a90b4;">' +
+        'Hola, soy tu asesor financiero. Puedo ayudarte a entender c&oacute;mo va tu negocio este trimestre. &iquest;Qu&eacute; quieres saber?' +
+        '</div>' +
+        '</div>' +
+        '<div style="padding:16px;background:#16161e;border-top:1px solid #22223a;display:flex;gap:8px;">' +
+        '<input id="chatInput" type="text" placeholder="Preg&uacute;ntame lo que quieras..." style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:14px;flex:1;" onkeydown="if(event.key===\'Enter\')enviarMensaje();">' +
+        '<button onclick="enviarMensaje()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px 16px;font-size:16px;cursor:pointer;">&#8594;</button>' +
+        '</div>';
+      document.body.appendChild(div);
+    }
+
+    function cerrarAsesor() {
+      var panel = document.getElementById('asesorPanel');
+      if (panel) panel.remove();
+    }
+
+    async function guardarObjetivo() {
+      var objetivo = document.getElementById('objetivoInput').value;
+      var msg = document.getElementById('objetivoMsg');
+      if (!objetivo) return;
+      var res = await fetch(API + '/asesor/objetivo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objetivo: objetivo })
+      });
+      var data = await res.json();
+      if (data.ok) {
+        msg.style.color = '#7ec47e';
+        msg.textContent = '&#10003; Objetivo guardado';
+        setTimeout(function() { msg.textContent = ''; }, 2000);
+      }
+    }
+
+    async function enviarMensaje() {
+      var input = document.getElementById('chatInput');
+      var mensaje = input.value.trim();
+      if (!mensaje) return;
+      input.value = '';
+      var messages = document.getElementById('chatMessages');
+      var userMsg = document.createElement('div');
+      userMsg.style.cssText = 'background:#1e1e28;border-radius:12px;padding:14px;font-size:14px;color:#e0d8cc;align-self:flex-end;max-width:85%;';
+      userMsg.textContent = mensaje;
+      messages.appendChild(userMsg);
+      var loadingMsg = document.createElement('div');
+      loadingMsg.style.cssText = 'background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#6a6070;';
+      loadingMsg.textContent = 'Pensando...';
+      messages.appendChild(loadingMsg);
+      messages.scrollTop = messages.scrollHeight;
+      window.chatHistorial.push({ role: 'user', content: mensaje });
+      try {
+        var res = await fetch(API + '/asesor/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mensaje: mensaje,
+            trimestre: window.trimestreSel,
+            anno: window.annoSel,
+            historial: window.chatHistorial.slice(-6)
+          })
+        });
+        var data = await res.json();
+        loadingMsg.style.color = '#9a90b4';
+        loadingMsg.textContent = data.respuesta;
+        window.chatHistorial.push({ role: 'assistant', content: data.respuesta });
+      } catch(e) {
+        loadingMsg.style.color = '#c06060';
+        loadingMsg.textContent = 'Error de conexi&oacute;n';
+      }
+      messages.scrollTop = messages.scrollHeight;
+    }
+
     function mostrarAjustes() {
       var div = document.createElement('div');
       div.id = 'ajustesPanel';
-      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;';
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;overflow-y:auto;';
       div.innerHTML =
         '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">TrimGest</div>' +
-        '<div style="font-size:22px;color:#f0ede8;margin-bottom:40px;">Ajustes</div>' +
+        '<div style="font-size:22px;color:#f0ede8;margin-bottom:30px;">Ajustes</div>' +
         '<div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;">' +
         '<div style="font-size:13px;color:#6a6070;margin-bottom:4px;">Cambiar PIN</div>' +
         '<input id="pinActual" type="password" maxlength="4" placeholder="PIN actual" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
         '<input id="pinNuevo" type="password" maxlength="4" placeholder="PIN nuevo" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
         '<input id="pinConfirmar" type="password" maxlength="4" placeholder="Confirmar PIN nuevo" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
-        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
-'<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">Pérdidas y Ganancias</div>' +
-'<div style="font-size:12px;color:#4a4055;margin-bottom:12px;">Sube el PDF de P&G que te manda la gestoría al final del trimestre</div>' +
-'<input type="file" id="pygInput" accept="application/pdf" onchange="subirPyG(this.files[0])" style="display:none">' +
-'<button onclick="document.getElementById(\'pygInput\').click()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;width:100%;">📊 Subir PDF de P&G</button>' +
-'<div id="pygMsg" style="font-size:12px;margin-top:8px;text-align:center;"></div>' +
-'</div>' +
         '<button onclick="cambiarPin()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cambiar PIN</button>' +
         '<div id="ajustesMsg" style="font-size:13px;text-align:center;margin-top:4px;"></div>' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+        '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">P&eacute;rdidas y Ganancias</div>' +
+        '<div style="font-size:12px;color:#4a4055;margin-bottom:12px;">Sube el PDF de P&G que te manda la gestor&iacute;a al final del trimestre</div>' +
+        '<input type="file" id="pygInput" accept="application/pdf" onchange="subirPyG(this.files[0])" style="display:none">' +
+        '<button onclick="document.getElementById(\'pygInput\').click()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;width:100%;">&#128202; Subir PDF de P&G</button>' +
+        '<div id="pygMsg" style="font-size:12px;margin-top:8px;text-align:center;"></div>' +
         '</div>' +
-        '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">← Volver</button>';
+        '</div>' +
+        '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">&#8592; Volver</button>';
       document.body.appendChild(div);
     }
 
-    async function subirPyG(file) {
-  if (!file) return;
-  var msg = document.getElementById('pygMsg');
-  msg.style.color = '#9a90b4';
-  msg.textContent = '⏳ Procesando...';
-  var formData = new FormData();
-  formData.append('pyg', file);
-  try {
-    var res = await fetch(API + '/pyg/subir', { method: 'POST', body: formData });
-    var data = await res.json();
-    if (data.ok) {
-      msg.style.color = '#7ec47e';
-      msg.textContent = '✓ P&G procesada correctamente';
-    } else {
-      msg.style.color = '#c06060';
-      msg.textContent = 'Error al procesar el PDF';
-    }
-  } catch(e) {
-    msg.style.color = '#c06060';
-    msg.textContent = 'Error de conexión';
-  }
-}
     function cerrarAjustes() {
       var panel = document.getElementById('ajustesPanel');
       if (panel) panel.remove();
@@ -303,7 +390,7 @@
       var nuevo = document.getElementById('pinNuevo').value;
       var confirmar = document.getElementById('pinConfirmar').value;
       var msg = document.getElementById('ajustesMsg');
-      if (nuevo.length !== 4) { msg.style.color='#c06060'; msg.textContent='El PIN debe tener 4 dígitos'; return; }
+      if (nuevo.length !== 4) { msg.style.color='#c06060'; msg.textContent='El PIN debe tener 4 d&iacute;gitos'; return; }
       if (nuevo !== confirmar) { msg.style.color='#c06060'; msg.textContent='Los PINs no coinciden'; return; }
       var res = await fetch(API + '/auth/cambiar-pin', {
         method: 'POST',
@@ -313,7 +400,7 @@
       var data = await res.json();
       if (data.ok) {
         msg.style.color='#7ec47e';
-        msg.textContent='✓ PIN cambiado correctamente';
+        msg.textContent='&#10003; PIN cambiado correctamente';
         setTimeout(cerrarAjustes, 1500);
       } else {
         msg.style.color='#c06060';
@@ -321,16 +408,27 @@
       }
     }
 
-    function getTrimestre() {
-      const m = new Date().getMonth();
-      if (m <= 2) return 'T1';
-      if (m <= 5) return 'T2';
-      if (m <= 8) return 'T3';
-      return 'T4';
-    }
-
-    function formatEur(n) {
-      return Number(n).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    async function subirPyG(file) {
+      if (!file) return;
+      var msg = document.getElementById('pygMsg');
+      msg.style.color = '#9a90b4';
+      msg.textContent = '&#9203; Procesando...';
+      var formData = new FormData();
+      formData.append('pyg', file);
+      try {
+        var res = await fetch(API + '/pyg/subir', { method: 'POST', body: formData });
+        var data = await res.json();
+        if (data.ok) {
+          msg.style.color = '#7ec47e';
+          msg.textContent = '&#10003; P&G procesada correctamente';
+        } else {
+          msg.style.color = '#c06060';
+          msg.textContent = 'Error al procesar el PDF';
+        }
+      } catch(e) {
+        msg.style.color = '#c06060';
+        msg.textContent = 'Error de conexi&oacute;n';
+      }
     }
 
     async function cargarFacturas() {
@@ -426,9 +524,9 @@
       document.getElementById('app').innerHTML =
         '<div class="header">' +
         '<div class="header-top"><div><div class="label">TrimGest</div><h1>' + window.trimestreSel + ' &middot; ' + window.annoSel + '</h1></div>' +
-        '<div style="display:flex;gap:8px;align-items:center;">' +
-       '<button class="btn-ajustes" onclick="mostrarAsesor()" title="Asesor">🤖</button>' +
-'<button class="btn-ajustes" onclick="mostrarAjustes()" title="Ajustes">⚙️</button>' +
+        '<div style="display:flex;gap:4px;align-items:center;">' +
+        '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;&#65039;</button>' +
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores">' +
@@ -548,101 +646,7 @@
         status.innerHTML = '<div class="error">Error de conexi&oacute;n</div>';
       }
     }
-function mostrarAsesor() {
-  var div = document.createElement('div');
-  div.id = 'asesorPanel';
-  div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;';
-  div.innerHTML =
-    '<div style="background:#16161e;padding:20px;border-bottom:1px solid #22223a;display:flex;justify-content:space-between;align-items:center;">' +
-    '<div><div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
-    '<div style="font-size:18px;color:#e8c87a;">Asesor financiero</div></div>' +
-    '<button onclick="cerrarAsesor()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">×</button>' +
-    '</div>' +
-    '<div style="padding:16px;background:#12121a;border-bottom:1px solid #22223a;">' +
-    '<div style="font-size:12px;color:#6a6070;margin-bottom:8px;">Objetivo de beneficio este trimestre (€)</div>' +
-    '<div style="display:flex;gap:8px;">' +
-    '<input id="objetivoInput" type="number" placeholder="ej. 5000" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px 12px;border-radius:8px;font-size:14px;flex:1;">' +
-    '<button onclick="guardarObjetivo()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>' +
-    '</div>' +
-    '<div id="objetivoMsg" style="font-size:12px;margin-top:6px;"></div>' +
-    '</div>' +
-    '<div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
-    '<div style="background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#9a90b4;">' +
-    'Hola, soy tu asesor financiero. Puedo ayudarte a entender cómo va tu negocio este trimestre. ¿Qué quieres saber?' +
-    '</div>' +
-    '</div>' +
-    '<div style="padding:16px;background:#16161e;border-top:1px solid #22223a;display:flex;gap:8px;">' +
-    '<input id="chatInput" type="text" placeholder="Pregúntame lo que quieras..." style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:14px;flex:1;" onkeydown="if(event.key===\'Enter\')enviarMensaje();">' +
-    '<button onclick="enviarMensaje()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px 16px;font-size:16px;cursor:pointer;">→</button>' +
-    '</div>';
-  document.body.appendChild(div);
-  window.chatHistorial = [];
-}
 
-function cerrarAsesor() {
-  var panel = document.getElementById('asesorPanel');
-  if (panel) panel.remove();
-}
-
-async function guardarObjetivo() {
-  var objetivo = document.getElementById('objetivoInput').value;
-  var msg = document.getElementById('objetivoMsg');
-  if (!objetivo) return;
-  var res = await fetch(API + '/asesor/objetivo', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ objetivo: objetivo })
-  });
-  var data = await res.json();
-  if (data.ok) {
-    msg.style.color = '#7ec47e';
-    msg.textContent = '✓ Objetivo guardado';
-    setTimeout(function() { msg.textContent = ''; }, 2000);
-  }
-}
-
-async function enviarMensaje() {
-  var input = document.getElementById('chatInput');
-  var mensaje = input.value.trim();
-  if (!mensaje) return;
-  input.value = '';
-
-  var messages = document.getElementById('chatMessages');
-
-  var userMsg = document.createElement('div');
-  userMsg.style.cssText = 'background:#1e1e28;border-radius:12px;padding:14px;font-size:14px;color:#e0d8cc;align-self:flex-end;max-width:85%;';
-  userMsg.textContent = mensaje;
-  messages.appendChild(userMsg);
-
-  var loadingMsg = document.createElement('div');
-  loadingMsg.style.cssText = 'background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#6a6070;';
-  loadingMsg.textContent = 'Pensando...';
-  messages.appendChild(loadingMsg);
-  messages.scrollTop = messages.scrollHeight;
-
-  window.chatHistorial.push({ role: 'user', content: mensaje });
-
-  try {
-    var res = await fetch(API + '/asesor/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mensaje: mensaje,
-        trimestre: window.trimestreSel,
-        anno: window.annoSel,
-        historial: window.chatHistorial.slice(-6)
-      })
-    });
-    var data = await res.json();
-    loadingMsg.style.color = '#9a90b4';
-    loadingMsg.textContent = data.respuesta;
-    window.chatHistorial.push({ role: 'assistant', content: data.respuesta });
-  } catch(e) {
-    loadingMsg.style.color = '#c06060';
-    loadingMsg.textContent = 'Error de conexión';
-  }
-  messages.scrollTop = messages.scrollHeight;
-}
     function generarPDFs() {
       var t = window.trimestreSel;
       var a = window.annoSel;
