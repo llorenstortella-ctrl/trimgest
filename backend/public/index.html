@@ -398,7 +398,8 @@
         '<div class="header">' +
         '<div class="header-top"><div><div class="label">TrimGest</div><h1>' + window.trimestreSel + ' &middot; ' + window.annoSel + '</h1></div>' +
         '<div style="display:flex;gap:8px;align-items:center;">' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()">⚙️</button>' +
+       '<button class="btn-ajustes" onclick="mostrarAsesor()" title="Asesor">🤖</button>' +
+'<button class="btn-ajustes" onclick="mostrarAjustes()" title="Ajustes">⚙️</button>' +
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores">' +
@@ -518,7 +519,101 @@
         status.innerHTML = '<div class="error">Error de conexi&oacute;n</div>';
       }
     }
+function mostrarAsesor() {
+  var div = document.createElement('div');
+  div.id = 'asesorPanel';
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;';
+  div.innerHTML =
+    '<div style="background:#16161e;padding:20px;border-bottom:1px solid #22223a;display:flex;justify-content:space-between;align-items:center;">' +
+    '<div><div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
+    '<div style="font-size:18px;color:#e8c87a;">Asesor financiero</div></div>' +
+    '<button onclick="cerrarAsesor()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">×</button>' +
+    '</div>' +
+    '<div style="padding:16px;background:#12121a;border-bottom:1px solid #22223a;">' +
+    '<div style="font-size:12px;color:#6a6070;margin-bottom:8px;">Objetivo de beneficio este trimestre (€)</div>' +
+    '<div style="display:flex;gap:8px;">' +
+    '<input id="objetivoInput" type="number" placeholder="ej. 5000" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px 12px;border-radius:8px;font-size:14px;flex:1;">' +
+    '<button onclick="guardarObjetivo()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>' +
+    '</div>' +
+    '<div id="objetivoMsg" style="font-size:12px;margin-top:6px;"></div>' +
+    '</div>' +
+    '<div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
+    '<div style="background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#9a90b4;">' +
+    'Hola, soy tu asesor financiero. Puedo ayudarte a entender cómo va tu negocio este trimestre. ¿Qué quieres saber?' +
+    '</div>' +
+    '</div>' +
+    '<div style="padding:16px;background:#16161e;border-top:1px solid #22223a;display:flex;gap:8px;">' +
+    '<input id="chatInput" type="text" placeholder="Pregúntame lo que quieras..." style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:14px;flex:1;" onkeydown="if(event.key===\'Enter\')enviarMensaje();">' +
+    '<button onclick="enviarMensaje()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px 16px;font-size:16px;cursor:pointer;">→</button>' +
+    '</div>';
+  document.body.appendChild(div);
+  window.chatHistorial = [];
+}
 
+function cerrarAsesor() {
+  var panel = document.getElementById('asesorPanel');
+  if (panel) panel.remove();
+}
+
+async function guardarObjetivo() {
+  var objetivo = document.getElementById('objetivoInput').value;
+  var msg = document.getElementById('objetivoMsg');
+  if (!objetivo) return;
+  var res = await fetch(API + '/asesor/objetivo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ objetivo: objetivo })
+  });
+  var data = await res.json();
+  if (data.ok) {
+    msg.style.color = '#7ec47e';
+    msg.textContent = '✓ Objetivo guardado';
+    setTimeout(function() { msg.textContent = ''; }, 2000);
+  }
+}
+
+async function enviarMensaje() {
+  var input = document.getElementById('chatInput');
+  var mensaje = input.value.trim();
+  if (!mensaje) return;
+  input.value = '';
+
+  var messages = document.getElementById('chatMessages');
+
+  var userMsg = document.createElement('div');
+  userMsg.style.cssText = 'background:#1e1e28;border-radius:12px;padding:14px;font-size:14px;color:#e0d8cc;align-self:flex-end;max-width:85%;';
+  userMsg.textContent = mensaje;
+  messages.appendChild(userMsg);
+
+  var loadingMsg = document.createElement('div');
+  loadingMsg.style.cssText = 'background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#6a6070;';
+  loadingMsg.textContent = 'Pensando...';
+  messages.appendChild(loadingMsg);
+  messages.scrollTop = messages.scrollHeight;
+
+  window.chatHistorial.push({ role: 'user', content: mensaje });
+
+  try {
+    var res = await fetch(API + '/asesor/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mensaje: mensaje,
+        trimestre: window.trimestreSel,
+        anno: window.annoSel,
+        historial: window.chatHistorial.slice(-6)
+      })
+    });
+    var data = await res.json();
+    loadingMsg.style.color = '#9a90b4';
+    loadingMsg.textContent = data.respuesta;
+    window.chatHistorial.push({ role: 'assistant', content: data.respuesta });
+  } catch(e) {
+    loadingMsg.style.color = '#c06060';
+    loadingMsg.textContent = 'Error de conexión';
+  }
+  messages.scrollTop = messages.scrollHeight;
+}
     function generarPDFs() {
       var t = window.trimestreSel;
       var a = window.annoSel;
