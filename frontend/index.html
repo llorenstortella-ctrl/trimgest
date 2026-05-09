@@ -215,13 +215,26 @@
     }
 
     function seleccionarTipo(tipo) {
-      window.tipoSel = tipo;
-      renderApp();
-      setTimeout(function() {
-        var area = document.getElementById('uploadArea');
-        if (area) area.style.display = 'block';
-      }, 50);
-    }
+  window.tipoSel = tipo;
+  var provBtn = document.querySelector('.tipo-btn.selected-prov, .tipo-btn:first-child');
+  var cliBtn = document.querySelector('.tipo-btn.selected-cli, .tipo-btn:last-child');
+  document.querySelectorAll('.tipo-btn').forEach(function(btn) {
+    btn.classList.remove('selected-prov', 'selected-cli');
+  });
+  if (tipo === 'proveedor') {
+    document.querySelectorAll('.tipo-btn')[0].classList.add('selected-prov');
+    document.getElementById('fileInput').disabled = false;
+    document.getElementById('camaraInput').disabled = false;
+    document.querySelector('.btn-file').disabled = false;
+    document.querySelector('.btn-camara').disabled = false;
+  } else {
+    document.querySelectorAll('.tipo-btn')[1].classList.add('selected-cli');
+    document.getElementById('fileInput').disabled = false;
+    document.getElementById('camaraInput').disabled = false;
+    document.querySelector('.btn-file').disabled = false;
+    document.querySelector('.btn-camara').disabled = false;
+  }
+}
 
     function toggleUpload() {
       var area = document.getElementById('uploadArea');
