@@ -16,10 +16,10 @@ app.use(express.json());
 app.use('/facturas', facturasRouter);
 app.use('/generar', generarRouter);
 app.use('/auth', authRouter);
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 app.listen(PORT, () => {
