@@ -650,16 +650,17 @@
     function generarPDFs() {
   var t = window.trimestreSel;
   var a = window.annoSel;
-  var a1 = document.createElement('a');
-  a1.href = API + '/generar/pdf/proveedor/' + t + '/' + a;
-  a1.download = 'TrimGest-proveedores-' + t + '-' + a + '.pdf';
-  a1.click();
-  setTimeout(function() {
-    var a2 = document.createElement('a');
-    a2.href = API + '/generar/pdf/cliente/' + t + '/' + a;
-    a2.download = 'TrimGest-clientes-' + t + '-' + a + '.pdf';
-    a2.click();
-  }, 1000);
+  var div = document.createElement('div');
+  div.id = 'pdfPanel';
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:16px;';
+  div.innerHTML =
+    '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
+    '<div style="font-size:20px;color:#f0ede8;margin-bottom:16px;">PDFs para gestor&iacute;a</div>' +
+    '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">' + t + ' &middot; ' + a + '</div>' +
+    '<a href="' + API + '/generar/pdf/proveedor/' + t + '/' + a + '" target="_blank" style="background:#c06060;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;text-align:center;text-decoration:none;display:block;">&#128206; PDF Proveedores</a>' +
+    '<a href="' + API + '/generar/pdf/cliente/' + t + '/' + a + '" target="_blank" style="background:#7ec47e;color:#1a2a1a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;text-align:center;text-decoration:none;display:block;">&#128206; PDF Clientes</a>' +
+    '<button onclick="document.getElementById(\'pdfPanel\').remove()" style="margin-top:16px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">&#8592; Volver</button>';
+  document.body.appendChild(div);
 }
   </script>
 </body>
