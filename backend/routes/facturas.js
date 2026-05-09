@@ -8,7 +8,7 @@ const { extraerDatosFactura } = require('../services/openai');
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const dbPath = path.join(__dirname, '../data/facturas.json');
+const dbPath = process.env.DATA_PATH || path.join(__dirname, '../data/facturas.json');
 const dataDir = path.join(__dirname, '../data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, JSON.stringify([]));
