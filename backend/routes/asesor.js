@@ -45,6 +45,7 @@ function getResumenFinanciero(trimestre, anno) {
   const totalGastos = proveedores.reduce((s, f) => s + Number(f.total), 0);
   const totalIngresos = clientes.reduce((s, f) => s + Number(f.total), 0);
   const beneficioEstimado = totalIngresos - totalGastos;
+  const pyg = getPyG();
 
   return {
     trimestre,
@@ -57,7 +58,8 @@ function getResumenFinanciero(trimestre, anno) {
     objetivo_trimestre: getConfig().objetivo_trimestre || null,
     proveedores_detalle: proveedores.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
     clientes_detalle: clientes.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
-    pyg: getPyG()
+    pyg_actual: pyg ? pyg.ejercicio_actual : null,
+    pyg_anterior: pyg ? pyg.ejercicio_anterior : null
   };
 }
 
@@ -73,6 +75,22 @@ router.post('/chat', async (req, res) => {
   const { mensaje, trimestre, anno, historial } = req.body;
   const resumen = getResumenFinanciero(trimestre, anno);
 
+  const pygActualTexto = resumen.pyg_actual ? `
+DATOS P&G AÑO ACTUAL (${resumen.pyg_actual.anno}):
+- Ingresos netos: ${resumen.pyg_actual.ingresos_netos}€
+- Gastos de personal: ${resumen.pyg_actual.gastos_personal}€
+- Otros gastos de explotación: ${resumen.pyg_actual.otros_gastos_explotacion}€
+- Resultado de explotación: ${resumen.pyg_actual.resultado_explotacion}€
+- Resultado del ejercicio: ${resumen.pyg_actual.resultado_ejercicio}€` : '- Sin datos de P&G del año actual';
+
+  const pygAnteriorTexto = resumen.pyg_anterior && resumen.pyg_anterior.anno ? `
+DATOS P&G AÑO ANTERIOR (${resumen.pyg_anterior.anno}):
+- Ingresos netos: ${resumen.pyg_anterior.ingresos_netos}€
+- Gastos de personal: ${resumen.pyg_anterior.gastos_personal}€
+- Otros gastos de explotación: ${resumen.pyg_anterior.otros_gastos_explotacion}€
+- Resultado de explotación: ${resumen.pyg_anterior.resultado_explotacion}€
+- Resultado del ejercicio: ${resumen.pyg_anterior.resultado_ejercicio}€` : '';
+
   const messages = [
     {
       role: 'system',
@@ -80,19 +98,14 @@ router.post('/chat', async (req, res) => {
 
 Tu rol es orientar al propietario sobre su situación financiera de forma clara, en lenguaje simple y sin jerga contable. Eres como un amigo que sabe de números.
 
-DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno}:
+DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno} (facturas subidas en TrimGest):
 - Facturas de proveedores: ${resumen.num_facturas_proveedor} facturas, total gastos: ${resumen.total_gastos}€
 - Facturas de clientes: ${resumen.num_facturas_cliente} facturas, total ingresos: ${resumen.total_ingresos}€
 - Beneficio estimado (solo facturas): ${resumen.beneficio_estimado}€
 ${resumen.objetivo_trimestre ? `- Objetivo de beneficio este trimestre: ${resumen.objetivo_trimestre}€` : '- Sin objetivo de beneficio definido'}
 
-${resumen.pyg ? `DATOS REALES DE P&G (${resumen.pyg.anno}):
-- Ingresos netos: ${resumen.pyg.ingresos_netos}€
-- Gastos de personal: ${resumen.pyg.gastos_personal}€
-- Otros gastos de explotación: ${resumen.pyg.otros_gastos_explotacion}€
-- Resultado de explotación: ${resumen.pyg.resultado_explotacion}€
-- Resultado del ejercicio: ${resumen.pyg.resultado_ejercicio}€
-NOTA: Estos son los datos reales contabilizados por la gestoría, más completos que las facturas del sistema.` : '- Sin datos de P&G disponibles todavía'}
+${pygActualTexto}
+${pygAnteriorTexto}
 
 PROVEEDORES:
 ${resumen.proveedores_detalle.map(p => `  - ${p.nombre}: ${p.total}€`).join('\n')}
@@ -101,10 +114,10 @@ CLIENTES:
 ${resumen.clientes_detalle.map(c => `  - ${c.nombre}: ${c.total}€`).join('\n')}
 
 IMPORTANTE:
+- Los datos de P&G son los contabilizados por la gestoría e incluyen gastos que no están en TrimGest como nóminas, seguridad social, etc.
 - Sé honesto sobre las limitaciones de los datos.
 - Responde siempre en español.
-- Sé conciso, máximo 3-4 frases por respuesta.
-- Si te preguntan algo que no puedes saber con estos datos, dilo claramente.`
+- Sé conciso, máximo 3-4 frases por respuesta.`
     }
   ];
 
