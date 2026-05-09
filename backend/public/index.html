@@ -648,13 +648,19 @@
     }
 
     function generarPDFs() {
-      var t = window.trimestreSel;
-      var a = window.annoSel;
-      window.open(API + '/generar/pdf/proveedor/' + t + '/' + a);
-      setTimeout(function() {
-        window.open(API + '/generar/pdf/cliente/' + t + '/' + a);
-      }, 1000);
-    }
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  var a1 = document.createElement('a');
+  a1.href = API + '/generar/pdf/proveedor/' + t + '/' + a;
+  a1.download = 'TrimGest-proveedores-' + t + '-' + a + '.pdf';
+  a1.click();
+  setTimeout(function() {
+    var a2 = document.createElement('a');
+    a2.href = API + '/generar/pdf/cliente/' + t + '/' + a;
+    a2.download = 'TrimGest-clientes-' + t + '-' + a + '.pdf';
+    a2.click();
+  }, 1000);
+}
   </script>
 </body>
 </html>
