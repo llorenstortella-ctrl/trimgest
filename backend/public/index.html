@@ -7,8 +7,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; }
-
-    /* PIN SCREEN */
     .pin-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
     .pin-logo { font-size: 13px; letter-spacing: 4px; color: #6a6070; text-transform: uppercase; margin-bottom: 8px; }
     .pin-title { font-size: 28px; font-weight: 400; color: #e8c87a; margin-bottom: 40px; }
@@ -23,19 +21,12 @@
     .pin-btn.empty { background: transparent; border: none; cursor: default; }
     .pin-forgot { margin-top: 24px; font-size: 13px; color: #6a6070; cursor: pointer; text-decoration: underline; }
     .pin-error { color: #c06060; font-size: 13px; margin-top: 12px; }
-    .pin-success { color: #7ec47e; font-size: 13px; margin-top: 12px; }
-
-    /* RECOVERY SCREEN */
     .recovery-screen { display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
     .recovery-title { font-size: 20px; color: #f0ede8; margin-bottom: 8px; }
     .recovery-sub { font-size: 13px; color: #6a6070; margin-bottom: 30px; text-align: center; }
     .recovery-input { background: #16161e; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 14px; border-radius: 10px; font-size: 20px; text-align: center; letter-spacing: 8px; width: 200px; margin-bottom: 16px; }
-    .recovery-pin-inputs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .recovery-pin-input { background: #16161e; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 14px; border-radius: 10px; font-size: 20px; text-align: center; width: 60px; }
     .btn-recovery { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; max-width: 260px; margin-bottom: 12px; }
     .btn-back { background: none; border: none; color: #6a6070; font-size: 13px; cursor: pointer; text-decoration: underline; }
-
-    /* MAIN APP */
     .main-app { display: none; }
     .header { background: #16161e; padding: 24px 20px 20px; border-bottom: 1px solid #22223a; }
     .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
@@ -44,6 +35,7 @@
     .selectores { display: flex; gap: 8px; margin-top: 10px; margin-bottom: 16px; }
     .selectores select { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 6px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; }
     .btn-subir { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-ajustes { background: none; border: none; color: #6a6070; font-size: 22px; cursor: pointer; padding: 8px; }
     .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .stat { background: #1e1e28; border-radius: 10px; padding: 14px; }
     .stat-label { font-size: 10px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 6px; }
@@ -99,8 +91,6 @@
   </style>
 </head>
 <body>
-
-  <!-- PIN SCREEN -->
   <div class="pin-screen" id="pinScreen">
     <div class="pin-logo">TrimGest</div>
     <div class="pin-title">Introduce tu PIN</div>
@@ -128,7 +118,6 @@
     <div id="pinError" class="pin-error"></div>
   </div>
 
-  <!-- RECOVERY SCREEN -->
   <div class="recovery-screen" id="recoveryScreen">
     <div class="recovery-title">Recuperar acceso</div>
     <div class="recovery-sub" id="recoveryStep1">Te enviaremos un código a feimcateva@gmail.com</div>
@@ -144,7 +133,6 @@
     <button class="btn-back" onclick="showPin()">← Volver</button>
   </div>
 
-  <!-- MAIN APP -->
   <div class="main-app" id="mainApp">
     <div id="app"></div>
   </div>
@@ -158,7 +146,6 @@
     window.uploadOpen = false;
     var pinValue = '';
 
-    // ---- PIN ----
     function addPin(digit) {
       if (pinValue.length >= 4) return;
       pinValue += digit;
@@ -245,7 +232,7 @@
       var res = await fetch(API + '/auth/resetear', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo, pin_nuevo: pinNuevo })
+        body: JSON.stringify({ codigo: codigo, pin_nuevo: pinNuevo })
       });
       var data = await res.json();
       if (data.ok) {
@@ -258,7 +245,53 @@
       }
     }
 
-    // ---- APP ----
+    function mostrarAjustes() {
+      var div = document.createElement('div');
+      div.id = 'ajustesPanel';
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;';
+      div.innerHTML =
+        '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">TrimGest</div>' +
+        '<div style="font-size:22px;color:#f0ede8;margin-bottom:40px;">Ajustes</div>' +
+        '<div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;">' +
+        '<div style="font-size:13px;color:#6a6070;margin-bottom:4px;">Cambiar PIN</div>' +
+        '<input id="pinActual" type="password" maxlength="4" placeholder="PIN actual" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
+        '<input id="pinNuevo" type="password" maxlength="4" placeholder="PIN nuevo" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
+        '<input id="pinConfirmar" type="password" maxlength="4" placeholder="Confirmar PIN nuevo" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:18px;text-align:center;letter-spacing:8px;width:100%;">' +
+        '<button onclick="cambiarPin()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cambiar PIN</button>' +
+        '<div id="ajustesMsg" style="font-size:13px;text-align:center;margin-top:4px;"></div>' +
+        '</div>' +
+        '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">← Volver</button>';
+      document.body.appendChild(div);
+    }
+
+    function cerrarAjustes() {
+      var panel = document.getElementById('ajustesPanel');
+      if (panel) panel.remove();
+    }
+
+    async function cambiarPin() {
+      var actual = document.getElementById('pinActual').value;
+      var nuevo = document.getElementById('pinNuevo').value;
+      var confirmar = document.getElementById('pinConfirmar').value;
+      var msg = document.getElementById('ajustesMsg');
+      if (nuevo.length !== 4) { msg.style.color='#c06060'; msg.textContent='El PIN debe tener 4 dígitos'; return; }
+      if (nuevo !== confirmar) { msg.style.color='#c06060'; msg.textContent='Los PINs no coinciden'; return; }
+      var res = await fetch(API + '/auth/cambiar-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin_actual: actual, pin_nuevo: nuevo })
+      });
+      var data = await res.json();
+      if (data.ok) {
+        msg.style.color='#7ec47e';
+        msg.textContent='✓ PIN cambiado correctamente';
+        setTimeout(cerrarAjustes, 1500);
+      } else {
+        msg.style.color='#c06060';
+        msg.textContent='PIN actual incorrecto';
+      }
+    }
+
     function getTrimestre() {
       const m = new Date().getMonth();
       if (m <= 2) return 'T1';
@@ -364,7 +397,10 @@
       document.getElementById('app').innerHTML =
         '<div class="header">' +
         '<div class="header-top"><div><div class="label">TrimGest</div><h1>' + window.trimestreSel + ' &middot; ' + window.annoSel + '</h1></div>' +
-        '<button class="btn-subir" onclick="toggleUpload()">+ Subir factura</button></div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()">⚙️</button>' +
+        '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
+        '</div></div>' +
         '<div class="selectores">' +
         '<select onchange="window.trimestreSel=this.value;renderApp()">' + optsTrim + '</select>' +
         '<select onchange="window.annoSel=this.value;renderApp()">' + optsAno + '</select>' +
