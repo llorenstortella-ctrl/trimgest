@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const OpenAI = require('openai');
+const pdfParse = require('pdf-parse');
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -21,33 +22,35 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post('/subir', upload.single('nomina'), async (req, res) => {
   try {
     const fileBuffer = req.file.buffer;
-    const base64 = fileBuffer.toString('base64');
-
-    const prompt = `Eres un experto en nominas espanolas. Extrae los siguientes datos de esta nomina en formato JSON y nada mas:
-{
-  "trabajador": "nombre completo del trabajador",
-  "mes": "nombre del mes en español (enero, febrero, etc.)",
-  "anno": "año como numero",
-  "devengado": "total devengado como numero",
-  "deducciones": "total deducciones como numero",
-  "neto": "liquido a percibir como numero",
-  "irpf_importe": "importe retenido de IRPF como numero",
-  "irpf_porcentaje": "porcentaje de IRPF como numero",
-  "ss_trabajador": "cuota SS del trabajador como numero",
-  "ss_empresa": "aportacion SS de la empresa como numero",
-  "coste_empresa": "coste total empresa como numero"
-}
-Solo devuelve el JSON, sin texto adicional.`;
+    const pdfData = await pdfParse(fileBuffer);
+    const textoNomina = pdfData.text;
 
     const response = await client.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
+          role: 'system',
+          content: 'Eres un experto en nominas espanolas. Extraes datos de nominas y devuelves solo JSON valido.'
+        },
+        {
           role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: `data:application/pdf;base64,${base64}` } }
-          ]
+          content: `Extrae los siguientes datos de esta nomina y devuelve SOLO este JSON sin texto adicional:
+{
+  "trabajador": "nombre completo del trabajador",
+  "mes": "nombre del mes en español en minusculas (enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre)",
+  "anno": numero_del_anno,
+  "devengado": numero,
+  "deducciones": numero,
+  "neto": numero,
+  "irpf_importe": numero,
+  "irpf_porcentaje": numero,
+  "ss_trabajador": numero,
+  "ss_empresa": numero,
+  "coste_empresa": numero
+}
+
+TEXTO DE LA NOMINA:
+${textoNomina}`
         }
       ],
       max_tokens: 500
