@@ -111,10 +111,7 @@ async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir) {
 router.get('/pdf/:tipo/:trimestre/:anno', authMiddleware, async (req, res) => {
   try {
     const { tipo, trimestre, anno } = req.params;
-    const usuariosPath = path.join(baseDataDir, 'usuarios.json');
-    const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
-    const usuario = usuarios.find(u => u.empresaId === req.empresaId);
-    const empresa = usuario ? usuario.nombre_empresa : 'Mi Empresa';
+    const empresa = req.query.empresa ? decodeURIComponent(req.query.empresa) : 'Mi Empresa';
     const dbPath = path.join(baseDataDir, 'empresas', req.empresaId, 'facturas.json');
     const uploadsDir = path.join(baseDataDir, 'empresas', req.empresaId, 'uploads');
     const pdfBytes = await generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir);

@@ -745,7 +745,7 @@
       var status = document.getElementById('pdfStatus');
       status.textContent = 'Generando PDF...';
       try {
-        var res = await fetch(API + '/generar/pdf/' + tipo + '/' + window.trimestreSel + '/' + window.annoSel, { headers: getHeaders() });
+        var res = await fetch(API + '/generar/pdf/' + tipo + '/' + window.trimestreSel + '/' + window.annoSel + '?empresa=' + encodeURIComponent(window.nombreEmpresa || 'Mi Empresa'), { headers: getHeaders() });
         if (!res.ok) throw new Error('Error');
         var blob = await res.blob();
         var url = URL.createObjectURL(blob);
