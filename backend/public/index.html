@@ -137,6 +137,14 @@
 
   <div class="main-app" id="mainApp">
     <div id="app"></div>
+    <nav style="position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#16161e;border-top:1px solid #22223a;display:flex;z-index:50;">
+      <button onclick="cambiarSeccion('facturas')" id="nav-facturas" style="flex:1;padding:12px;background:none;border:none;color:#e8c87a;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:20px;">&#128196;</span>Facturas
+      </button>
+      <button onclick="cambiarSeccion('nominas')" id="nav-nominas" style="flex:1;padding:12px;background:none;border:none;color:#6a6070;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:20px;">&#128100;</span>Nominas
+      </button>
+    </nav>
   </div>
 
   <script>
@@ -775,6 +783,116 @@
       } catch(e) {
         status.innerHTML = '<div class="error">Error de conexion</div>';
       }
+    }
+
+    window.seccionActual = 'facturas';
+
+    function cambiarSeccion(seccion) {
+      window.seccionActual = seccion;
+      document.getElementById('nav-facturas').style.color = seccion === 'facturas' ? '#e8c87a' : '#6a6070';
+      document.getElementById('nav-nominas').style.color = seccion === 'nominas' ? '#e8c87a' : '#6a6070';
+      if (seccion === 'facturas') renderApp();
+      if (seccion === 'nominas') renderNominas();
+    }
+
+    async function renderNominas() {
+      const res = await fetch(API + '/nominas/listar');
+      const data = await res.json();
+      const nominas = data.nominas || [];
+
+      const annoActual = window.annoSel || String(new Date().getFullYear());
+      const nominasFiltradas = nominas.filter(function(n) { return String(n.anno) === annoActual; });
+
+      var totalNeto = nominasFiltradas.reduce(function(s, n) { return s + Number(n.neto || 0); }, 0);
+      var totalCoste = nominasFiltradas.reduce(function(s, n) { return s + Number(n.coste_empresa || 0); }, 0);
+
+      var listaHTML = '';
+      if (nominasFiltradas.length === 0) {
+        listaHTML = '<div class="empty">No hay nominas en ' + annoActual + '</div>';
+      } else {
+        var porMes = {};
+        nominasFiltradas.forEach(function(n) {
+          var key = n.mes + ' ' + n.anno;
+          if (!porMes[key]) porMes[key] = [];
+          porMes[key].push(n);
+        });
+        Object.keys(porMes).forEach(function(mes) {
+          listaHTML += '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin:16px 0 8px;">' + mes + '</div>';
+          porMes[mes].forEach(function(n) {
+            listaHTML += '<div class="factura-card">';
+            listaHTML += '<div class="factura-header"><span class="factura-nombre">' + n.trabajador + '</span>';
+            listaHTML += '<span class="factura-total">' + formatEur(n.coste_empresa) + '</span></div>';
+            listaHTML += '<div class="factura-datos">';
+            listaHTML += '<span>Neto: ' + formatEur(n.neto) + '</span>';
+            listaHTML += '<span>IRPF: ' + formatEur(n.irpf_importe) + '</span>';
+            listaHTML += '<span>SS emp: ' + formatEur(n.ss_empresa) + '</span>';
+            listaHTML += '</div>';
+            listaHTML += '<div class="factura-acciones">';
+            listaHTML += '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button>';
+            listaHTML += '</div></div>';
+          });
+        });
+      }
+
+      var anos = [];
+      for (var y = new Date().getFullYear() - 2; y <= new Date().getFullYear() + 1; y++) anos.push(String(y));
+      var optsAno = anos.map(function(a) {
+        return '<option value="' + a + '"' + (annoActual === a ? ' selected' : '') + '>' + a + '</option>';
+      }).join('');
+
+      document.getElementById('app').innerHTML =
+        '<div class="header">' +
+        '<div class="header-top"><div><div class="label">TrimGest</div><h1>Nominas ' + annoActual + '</h1></div>' +
+        '<div style="display:flex;gap:4px;align-items:center;">' +
+        '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
+        '<button class="btn-subir" onclick="subirNomina()">+ Subir</button>' +
+        '</div></div>' +
+        '<div class="selectores">' +
+        '<select onchange="window.annoSel=this.value;renderNominas()">' + optsAno + '</select>' +
+        '</div>' +
+        '<div class="stats">' +
+        '<div class="stat"><div class="stat-label">Coste empresa</div><div class="stat-value">' + formatEur(totalCoste) + '</div><div class="stat-count">' + nominasFiltradas.length + ' nominas</div></div>' +
+        '<div class="stat"><div class="stat-label">Neto pagado</div><div class="stat-value verde">' + formatEur(totalNeto) + '</div></div>' +
+        '</div></div>' +
+        '<div class="content" style="padding-bottom:80px;">' +
+        '<div id="nominaUploadStatus"></div>' +
+        listaHTML +
+        '</div>';
+    }
+
+    function subirNomina() {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf';
+      input.onchange = function() { procesarNomina(input.files[0]); };
+      input.click();
+    }
+
+    async function procesarNomina(file) {
+      if (!file) return;
+      var status = document.getElementById('nominaUploadStatus');
+      if (status) status.innerHTML = '<div class="uploading">Procesando nomina con IA...</div>';
+      var formData = new FormData();
+      formData.append('nomina', file);
+      try {
+        var res = await fetch(API + '/nominas/subir', { method: 'POST', body: formData });
+        var data = await res.json();
+        if (data.nomina) {
+          if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
+          setTimeout(function() { renderNominas(); }, 1000);
+        } else {
+          if (status) status.innerHTML = '<div class="error">Error al procesar la nomina</div>';
+        }
+      } catch(e) {
+        if (status) status.innerHTML = '<div class="error">Error de conexion</div>';
+      }
+    }
+
+    async function borrarNomina(id) {
+      if (!confirm('Seguro que quieres borrar esta nomina?')) return;
+      await fetch(API + '/nominas/borrar/' + id, { method: 'DELETE' });
+      renderNominas();
     }
 
     function generarPDFs() {
