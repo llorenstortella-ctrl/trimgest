@@ -3,7 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'trimgest_admin_2026';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'TrimGest2026!';
 const baseDataDir = path.join(__dirname, '../data');
 
 function getUsuarios() {
