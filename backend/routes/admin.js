@@ -101,4 +101,22 @@ router.get('/empresa/:empresaId', (req, res) => {
   });
 });
 
+
+// POST /admin/plan-gratuito — dar o quitar acceso gratuito
+router.post('/plan-gratuito', (req, res) => {
+  const adminPass = req.headers['x-admin-password'];
+  if (adminPass !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const { empresaId, activo } = req.body;
+  if (!empresaId) return res.status(400).json({ error: 'Falta empresaId' });
+  const usuariosPath = path.join(__dirname, '../data/usuarios.json');
+  const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
+  const idx = usuarios.findIndex(u => u.empresaId === empresaId);
+  if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' });
+  usuarios[idx].plan_gratuito = activo ? true : false;
+  fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2));
+  res.json({ ok: true });
+});
+
 module.exports = router;
