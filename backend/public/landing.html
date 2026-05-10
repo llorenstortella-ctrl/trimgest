@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrimGest — Gestiona tus facturas con IA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    .nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid #22223a; }
+    .nav-logo { font-size: 20px; color: #e8c87a; font-weight: 500; }
+    .nav-btn { background: #e8c87a; color: #1a1500; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .hero { text-align: center; padding: 80px 20px 60px; }
+    .hero-label { font-size: 12px; letter-spacing: 4px; color: #6a6070; text-transform: uppercase; margin-bottom: 16px; }
+    .hero-title { font-size: 48px; font-weight: 400; line-height: 1.2; margin-bottom: 20px; }
+    .hero-title span { color: #e8c87a; }
+    .hero-sub { font-size: 18px; color: #6a6070; max-width: 500px; margin: 0 auto 40px; line-height: 1.6; }
+    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 16px 32px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+    .btn-secondary { background: transparent; color: #e0d8cc; border: 1px solid #2a2a3a; border-radius: 10px; padding: 16px 32px; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-block; }
+    .features { padding: 80px 20px; max-width: 900px; margin: 0 auto; }
+    .features-title { text-align: center; font-size: 32px; font-weight: 400; margin-bottom: 12px; }
+    .features-sub { text-align: center; color: #6a6070; margin-bottom: 48px; font-size: 16px; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .feature { background: #16161e; border: 1px solid #22223a; border-radius: 14px; padding: 24px; }
+    .feature-icon { font-size: 32px; margin-bottom: 12px; }
+    .feature-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #e0d8cc; }
+    .feature-desc { font-size: 14px; color: #6a6070; line-height: 1.6; }
+    .planes { padding: 80px 20px; background: #0c0c10; }
+    .planes-inner { max-width: 900px; margin: 0 auto; }
+    .planes-title { text-align: center; font-size: 32px; font-weight: 400; margin-bottom: 12px; }
+    .planes-sub { text-align: center; color: #6a6070; margin-bottom: 48px; font-size: 16px; }
+    .planes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .plan { background: #16161e; border: 1px solid #22223a; border-radius: 14px; padding: 28px; }
+    .plan.destacado { border-color: #e8c87a; }
+    .plan-badge { font-size: 11px; letter-spacing: 2px; color: #e8c87a; text-transform: uppercase; margin-bottom: 12px; }
+    .plan-nombre { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+    .plan-precio { font-size: 40px; color: #e8c87a; font-weight: 400; margin-bottom: 4px; }
+    .plan-precio span { font-size: 16px; color: #6a6070; }
+    .plan-desc { font-size: 13px; color: #6a6070; margin-bottom: 20px; }
+    .plan-items { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .plan-items li { font-size: 14px; color: #9a90b4; }
+    .plan-items li::before { content: "✓ "; color: #7ec47e; }
+    .plan-btn { width: 100%; background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; display: block; text-align: center; }
+    .plan:not(.destacado) .plan-btn { background: #1e1e28; color: #e0d8cc; border: 1px solid #2a2a3a; }
+    .extra { text-align: center; margin-top: 20px; font-size: 13px; color: #6a6070; }
+    .extra span { color: #e8c87a; }
+    .footer { text-align: center; padding: 40px 20px; border-top: 1px solid #22223a; color: #4a4055; font-size: 13px; }
+    @media (max-width: 480px) {
+      .hero-title { font-size: 32px; }
+      .planes-grid { grid-template-columns: 1fr; }
+      .nav { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-logo">TrimGest</div>
+    <a href="/app" class="nav-btn">Entrar</a>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-label">Gestion trimestral inteligente</div>
+    <h1 class="hero-title">Tus facturas organizadas<br>con <span>inteligencia artificial</span></h1>
+    <p class="hero-sub">Sube tus facturas y nominas, la IA extrae los datos automaticamente. Genera PDFs y Excel listos para tu gestoria en segundos.</p>
+    <div class="hero-btns">
+      <a href="/app" class="btn-primary">Empezar gratis</a>
+      <a href="#planes" class="btn-secondary">Ver planes</a>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2 class="features-title">Todo lo que necesitas</h2>
+    <p class="features-sub">Disenado para autonomos y pequenas empresas espanolas</p>
+    <div class="features-grid">
+      <div class="feature">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">IA extrae los datos</div>
+        <div class="feature-desc">Sube el PDF de tu factura y la IA extrae automaticamente el proveedor, importe, IVA y fecha. Sin teclear nada.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Control por trimestre</div>
+        <div class="feature-desc">Visualiza tus gastos e ingresos por trimestre. Sabes en todo momento cuanto debes a Hacienda antes de que llegue el plazo.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📄</div>
+        <div class="feature-title">PDF listo para gestoria</div>
+        <div class="feature-desc">Genera un PDF con todas tus facturas del trimestre ordenadas y con las originales adjuntas. Enviaselo a tu gestoria en un click.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">👤</div>
+        <div class="feature-title">Nominas incluidas</div>
+        <div class="feature-desc">Sube las nominas de tus empleados y la IA extrae el coste empresa, neto, IRPF y seguridad social automaticamente.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📈</div>
+        <div class="feature-title">Exportar a Excel</div>
+        <div class="feature-desc">Exporta todas tus facturas a Excel con un click. Formato listo para importar en cualquier software de contabilidad.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">💬</div>
+        <div class="feature-title">Asesor IA incluido</div>
+        <div class="feature-desc">Pregunta a tu asesor financiero inteligente como va tu negocio, que puedes deducir o como optimizar tus impuestos.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="planes" id="planes">
+    <div class="planes-inner">
+      <h2 class="planes-title">Planes y precios</h2>
+      <p class="planes-sub">Sin permanencia. Cancela cuando quieras.</p>
+      <div class="planes-grid">
+        <div class="plan">
+          <div class="plan-nombre">Basico</div>
+          <div class="plan-precio">10<span>€/mes</span></div>
+          <div class="plan-desc">Para autonomos y pequenas empresas</div>
+          <ul class="plan-items">
+            <li>100 subidas al mes</li>
+            <li>Facturas de proveedores y clientes</li>
+            <li>Nominas con IA</li>
+            <li>PDF y Excel para gestoria</li>
+            <li>Asesor IA incluido</li>
+            <li>Introduccion manual de facturas</li>
+          </ul>
+          <a href="/app" class="plan-btn">Empezar</a>
+        </div>
+        <div class="plan destacado">
+          <div class="plan-badge">Mas popular</div>
+          <div class="plan-nombre">Estandar</div>
+          <div class="plan-precio">20<span>€/mes</span></div>
+          <div class="plan-desc">Para empresas con mas volumen</div>
+          <ul class="plan-items">
+            <li>200 subidas al mes</li>
+            <li>Todo lo del plan Basico</li>
+            <li>Acceso compartido con gestoria</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <a href="/app" class="plan-btn">Empezar</a>
+        </div>
+        <div class="plan">
+          <div class="plan-nombre">Gestoria</div>
+          <div class="plan-precio">30<span>€/mes</span></div>
+          <div class="plan-desc">Para gestores y asesores fiscales</div>
+          <ul class="plan-items">
+            <li>Panel con todos tus clientes</li>
+            <li>Acceso a datos de cada cliente</li>
+            <li>Descarga PDFs y Excel de cualquier cliente</li>
+            <li>Clientes ilimitados</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <a href="/app" class="plan-btn">Empezar</a>
+        </div>
+      </div>
+      <div class="extra">Subidas extra: <span>0,20€ por subida</span> si superas tu limite mensual</div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>TrimGest &copy; 2026 — Gestion trimestral inteligente para empresas espanolas</p>
+    <p style="margin-top:8px;"><a href="/app" style="color:#e8c87a;text-decoration:none;">Acceder a la app</a></p>
+  </footer>
+
+</body>
+</html>
