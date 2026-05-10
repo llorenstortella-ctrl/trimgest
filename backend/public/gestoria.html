@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TrimGest — Panel Gestoría</title>
+<title>TrimGest — Panel Gestoria</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e8e8e8; min-height: 100vh; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f0f13; color: #e8e8e8; min-height: 100vh; }
 .topbar { background: #1a1a20; border-bottom: 1px solid #2a2a35; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .logo { font-size: 20px; font-weight: 700; color: #e8c87a; letter-spacing: -0.5px; }
-.logo span { color: #e8e8e8; }
 .topbar-right { display: flex; align-items: center; gap: 16px; }
 .nombre-gestoria { font-size: 14px; color: #888; }
 .btn-logout { background: none; border: 1px solid #333; color: #888; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
@@ -19,55 +18,39 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; color: #888; font-size: 14px; transition: all 0.2s; }
 .nav-item:hover { color: #e8e8e8; background: #22222a; }
 .nav-item.active { color: #e8c87a; background: #22222a; border-left: 2px solid #e8c87a; }
-.nav-icon { font-size: 16px; }
 .main { flex: 1; padding: 32px; overflow-y: auto; }
 .page { display: none; }
 .page.active { display: block; }
 .page-title { font-size: 22px; font-weight: 600; margin-bottom: 24px; }
 .card { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
 .card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #e8c87a; }
-.input-group { margin-bottom: 14px; }
-.input-group label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
-.input-group input { width: 100%; background: #0f0f13; border: 1px solid #2a2a35; border-radius: 8px; padding: 10px 14px; color: #e8e8e8; font-size: 14px; outline: none; }
-.input-group input:focus { border-color: #e8c87a; }
+.input-row { margin-bottom: 14px; }
+.input-row label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
+.input-row input { width: 100%; background: #0f0f13; border: 1px solid #2a2a35; border-radius: 8px; padding: 10px 14px; color: #e8e8e8; font-size: 14px; outline: none; }
+.input-row input:focus { border-color: #e8c87a; }
 .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
 .btn-primary { background: #e8c87a; color: #0f0f13; }
 .btn-primary:hover { background: #f0d48a; }
 .btn-secondary { background: #2a2a35; color: #e8e8e8; }
-.btn-secondary:hover { background: #333340; }
-.btn-danger { background: #c0392b; color: #fff; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 .clientes-lista { display: flex; flex-direction: column; gap: 12px; }
 .cliente-card { background: #0f0f13; border: 1px solid #2a2a35; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: border-color 0.2s; }
 .cliente-card:hover { border-color: #e8c87a; }
 .cliente-info h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 .cliente-info p { font-size: 12px; color: #888; }
-.cliente-actions { display: flex; gap: 8px; }
-.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-.badge-pending { background: #3a2f00; color: #e8c87a; }
-.badge-ok { background: #0d2b1a; color: #4caf7d; }
-.badge-rechazada { background: #2b0d0d; color: #e05555; }
-.detalle-cliente { display: none; }
-.detalle-cliente.visible { display: block; }
 .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
 .tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer; background: #2a2a35; color: #888; border: none; }
 .tab.active { background: #e8c87a; color: #0f0f13; font-weight: 600; }
 .tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tabla th { text-align: left; padding: 10px 12px; color: #888; border-bottom: 1px solid #2a2a35; font-weight: 500; }
 .tabla td { padding: 10px 12px; border-bottom: 1px solid #1a1a20; }
-.tabla tr:last-child td { border-bottom: none; }
 .empty { text-align: center; padding: 40px; color: #555; font-size: 14px; }
-.invitacion-card { background: #0f0f13; border: 1px solid #2a2a35; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.invitacion-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-.invitacion-info p { font-size: 12px; color: #888; }
+.inv-card { background: #0f0f13; border: 1px solid #2a2a35; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
 .msg-ok { background: #0d2b1a; color: #4caf7d; border: 1px solid #1a4a2a; }
 .msg-err { background: #2b0d0d; color: #e05555; border: 1px solid #4a1a1a; }
 .back-btn { display: flex; align-items: center; gap: 8px; color: #888; font-size: 13px; cursor: pointer; margin-bottom: 20px; background: none; border: none; }
 .back-btn:hover { color: #e8c87a; }
-.solicitud-card { background: #0f0f13; border: 1px solid #2a2a35; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-
-/* AUTH */
 #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f0f13; }
 .auth-box { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; }
 .auth-logo { font-size: 24px; font-weight: 700; color: #e8c87a; text-align: center; margin-bottom: 8px; }
@@ -79,66 +62,62 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
 <div id="auth-screen">
   <div class="auth-box">
     <div class="auth-logo">TrimGest</div>
-    <div class="auth-sub">Panel de Gestoría</div>
+    <div class="auth-sub">Panel de Gestoria</div>
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Entrar</button>
-      <button class="auth-tab" onclick="switchAuthTab('registro')">Registrarse</button>
+      <button class="auth-tab active" id="tab-btn-login" onclick="switchAuthTab('login')">Entrar</button>
+      <button class="auth-tab" id="tab-btn-registro" onclick="switchAuthTab('registro')">Registrarse</button>
     </div>
     <div id="auth-msg"></div>
     <div id="tab-login">
-      <div class="input-group"><label>Email</label><input type="email" id="login-email" placeholder="gestoria@email.com"></div>
-      <div class="input-group"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <div class="input-row"><label>Email</label><input type="email" id="login-email" placeholder="gestoria@email.com"></div>
+      <div class="input-row"><label>Contrasena</label><input type="password" id="login-pass" placeholder="••••••••"></div>
       <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="doLogin()">Entrar</button>
     </div>
     <div id="tab-registro" style="display:none">
-      <div class="input-group"><label>Nombre de la gestoría</label><input type="text" id="reg-nombre" placeholder="Gestoría Ejemplo SL"></div>
-      <div class="input-group"><label>Email</label><input type="email" id="reg-email" placeholder="gestoria@email.com"></div>
-      <div class="input-group"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
+      <div class="input-row"><label>Nombre de la gestoria</label><input type="text" id="reg-nombre" placeholder="Gestoria Ejemplo SL"></div>
+      <div class="input-row"><label>Email</label><input type="email" id="reg-email" placeholder="gestoria@email.com"></div>
+      <div class="input-row"><label>Contrasena</label><input type="password" id="reg-pass" placeholder="Minimo 6 caracteres"></div>
       <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="doRegistro()">Crear cuenta</button>
     </div>
   </div>
 </div>
 
-<!-- APP SCREEN -->
 <div id="app-screen" style="display:none">
   <div class="topbar">
-    <div class="logo">Trim<span>Gest</span> <span style="font-size:12px;color:#888;font-weight:400;margin-left:8px">Gestoría</span></div>
+    <div class="logo">TrimGest <span style="font-size:12px;color:#888;font-weight:400;margin-left:8px">Gestoria</span></div>
     <div class="topbar-right">
       <span class="nombre-gestoria" id="nombre-gestoria-top"></span>
-      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+      <button class="btn-logout" onclick="logout()">Cerrar sesion</button>
     </div>
   </div>
   <div class="layout">
     <div class="sidebar">
-      <div class="nav-item active" onclick="showPage('clientes')"><span class="nav-icon">🏢</span> Mis clientes</div>
-      <div class="nav-item" onclick="showPage('solicitar')"><span class="nav-icon">➕</span> Solicitar acceso</div>
-      <div class="nav-item" onclick="showPage('invitaciones')"><span class="nav-icon">📨</span> Invitaciones</div>
+      <div class="nav-item active" id="nav-clientes" onclick="showPage('clientes', this)">&#127962; Mis clientes</div>
+      <div class="nav-item" id="nav-solicitar" onclick="showPage('solicitar', this)">&#43; Solicitar acceso</div>
+      <div class="nav-item" id="nav-invitaciones" onclick="showPage('invitaciones', this)">&#128232; Invitaciones</div>
     </div>
     <div class="main">
 
-      <!-- CLIENTES -->
       <div class="page active" id="page-clientes">
-        <div class="page-title">Mis clientes</div>
-        <div id="detalle-wrap" class="detalle-cliente">
-          <button class="back-btn" onclick="cerrarDetalle()">← Volver a clientes</button>
+        <div id="detalle-wrap" style="display:none">
+          <button class="back-btn" onclick="cerrarDetalle()">&#8592; Volver a clientes</button>
           <div class="page-title" id="detalle-nombre"></div>
           <div class="tabs">
-            <button class="tab active" onclick="switchTab('facturas')">Facturas</button>
-            <button class="tab" onclick="switchTab('nominas')">Nóminas</button>
+            <button class="tab active" id="tab-btn-facturas" onclick="switchTab('facturas')">Facturas</button>
+            <button class="tab" id="tab-btn-nominas" onclick="switchTab('nominas')">Nominas</button>
           </div>
-          <div id="tab-facturas">
+          <div id="tab-facturas-content">
             <div class="card">
               <table class="tabla">
-                <thead><tr><th>Número</th><th>Concepto</th><th>Proveedor</th><th>Importe</th><th>Fecha</th><th>Tipo</th></tr></thead>
+                <thead><tr><th>Numero</th><th>Concepto</th><th>Proveedor</th><th>Importe</th><th>Fecha</th><th>Tipo</th></tr></thead>
                 <tbody id="tabla-facturas"></tbody>
               </table>
             </div>
           </div>
-          <div id="tab-nominas" style="display:none">
+          <div id="tab-nominas-content" style="display:none">
             <div class="card">
               <table class="tabla">
                 <thead><tr><th>Empleado</th><th>Mes</th><th>Salario bruto</th><th>Neto</th><th>Fecha</th></tr></thead>
@@ -148,23 +127,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           </div>
         </div>
         <div id="clientes-lista-wrap">
+          <div class="page-title">Mis clientes</div>
           <div id="clientes-lista" class="clientes-lista"></div>
         </div>
       </div>
 
-      <!-- SOLICITAR ACCESO -->
       <div class="page" id="page-solicitar">
         <div class="page-title">Solicitar acceso a cliente</div>
         <div class="card" style="max-width:500px">
           <div class="card-title">Buscar empresa por email</div>
-          <p style="font-size:13px;color:#888;margin-bottom:16px">Introduce el email con el que la empresa está registrada en TrimGest. Recibirá una solicitud de acceso que podrá aceptar o rechazar.</p>
+          <p style="font-size:13px;color:#888;margin-bottom:16px">Introduce el email con el que la empresa esta registrada en TrimGest. Recibira una solicitud que podra aceptar o rechazar.</p>
           <div id="solicitar-msg"></div>
-          <div class="input-group"><label>Email de la empresa</label><input type="email" id="email-empresa" placeholder="empresa@email.com"></div>
+          <div class="input-row"><label>Email de la empresa</label><input type="email" id="email-empresa" placeholder="empresa@email.com"></div>
           <button class="btn btn-primary" onclick="solicitarAcceso()">Enviar solicitud</button>
         </div>
       </div>
 
-      <!-- INVITACIONES -->
       <div class="page" id="page-invitaciones">
         <div class="page-title">Invitaciones recibidas</div>
         <div id="invitaciones-lista"></div>
@@ -175,61 +153,73 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 </div>
 
 <script>
-const API = '';
-let token = localStorage.getItem('gest_token');
-let gestoriaNombre = localStorage.getItem('gest_nombre');
-let clienteActivo = null;
+var API = '';
+var token = localStorage.getItem('gest_token');
+var gestoriaNombre = localStorage.getItem('gest_nombre');
+var clienteActivo = null;
 
 function switchAuthTab(tab) {
   document.getElementById('tab-login').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('tab-registro').style.display = tab === 'registro' ? 'block' : 'none';
-  document.querySelectorAll('.auth-tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'registro'));
-  });
+  document.getElementById('tab-btn-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-btn-registro').classList.toggle('active', tab === 'registro');
+}
+
+function showAuthMsg(msg, err) {
+  var el = document.getElementById('auth-msg');
+  el.innerHTML = '<div class="msg ' + (err ? 'msg-err' : 'msg-ok') + '">' + msg + '</div>';
+  setTimeout(function() { el.innerHTML = ''; }, 4000);
+}
+
+function mostrarMsg(id, msg, err) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = '<div class="msg ' + (err ? 'msg-err' : 'msg-ok') + '">' + msg + '</div>';
+  setTimeout(function() { el.innerHTML = ''; }, 5000);
 }
 
 async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass = document.getElementById('login-pass').value;
+  var email = document.getElementById('login-email').value.trim();
+  var pass = document.getElementById('login-pass').value;
   if (!email || !pass) return showAuthMsg('Completa todos los campos', true);
   try {
-    const r = await fetch(API + '/usuarios/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) });
-    const d = await r.json();
+    var r = await fetch(API + '/usuarios/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass })
+    });
+    var d = await r.json();
     if (!d.ok) return showAuthMsg(d.error || 'Error al entrar', true);
-    if (d.tipo !== 'gestoria' && !d.nombre_empresa?.toLowerCase().includes('gest')) {
-      const usuarios_r = await fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + d.token } });
-      if (!usuarios_r.ok) return showAuthMsg('Esta cuenta no es una gestoría. Usa trimgest.es/app', true);
-    }
+    var test = await fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + d.token } });
+    if (!test.ok) return showAuthMsg('Esta cuenta no es una gestoria. Usa trimgest.es/app', true);
     localStorage.setItem('gest_token', d.token);
     localStorage.setItem('gest_nombre', d.nombre_empresa);
     token = d.token;
     gestoriaNombre = d.nombre_empresa;
     entrarApp();
-  } catch(e) { showAuthMsg('Error de conexión', true); }
+  } catch(e) { showAuthMsg('Error de conexion', true); }
 }
 
 async function doRegistro() {
-  const nombre = document.getElementById('reg-nombre').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass = document.getElementById('reg-pass').value;
+  var nombre = document.getElementById('reg-nombre').value.trim();
+  var email = document.getElementById('reg-email').value.trim();
+  var pass = document.getElementById('reg-pass').value;
   if (!nombre || !email || !pass) return showAuthMsg('Completa todos los campos', true);
-  if (pass.length < 6) return showAuthMsg('La contraseña debe tener al menos 6 caracteres', true);
+  if (pass.length < 6) return showAuthMsg('La contrasena debe tener al menos 6 caracteres', true);
   try {
-    const r = await fetch(API + '/gestoria/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass, nombre_empresa: nombre }) });
-    const d = await r.json();
+    var r = await fetch(API + '/gestoria/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pass, nombre_empresa: nombre })
+    });
+    var d = await r.json();
     if (!d.ok) return showAuthMsg(d.error || 'Error al registrarse', true);
     localStorage.setItem('gest_token', d.token);
     localStorage.setItem('gest_nombre', d.nombre_empresa);
     token = d.token;
     gestoriaNombre = d.nombre_empresa;
     entrarApp();
-  } catch(e) { showAuthMsg('Error de conexión', true); }
-}
-
-function showAuthMsg(msg, err) {
-  const el = document.getElementById('auth-msg');
-  el.innerHTML = '<div class="msg ' + (err ? 'msg-err' : 'msg-ok') + '">' + msg + '</div>';
-  setTimeout(() => { el.innerHTML = ''; }, 4000);
+  } catch(e) { showAuthMsg('Error de conexion', true); }
 }
 
 function entrarApp() {
@@ -246,27 +236,29 @@ function logout() {
   location.reload();
 }
 
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
+  if (el) el.classList.add('active');
   if (id === 'invitaciones') cargarInvitaciones();
 }
 
 async function cargarClientes() {
   try {
-    const r = await fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + token } });
-    const d = await r.json();
-    const lista = document.getElementById('clientes-lista');
-    if (!d.ok || !d.clientes.length) {
-      lista.innerHTML = '<div class="empty">No tienes clientes aún.<br>Solicita acceso o acepta invitaciones.</div>';
+    var r = await fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var lista = document.getElementById('clientes-lista');
+    if (!d.ok || !d.clientes || !d.clientes.length) {
+      lista.innerHTML = '<div class="empty">No tienes clientes aun.<br>Solicita acceso o acepta invitaciones.</div>';
       return;
     }
-    lista.innerHTML = d.clientes.map(c => '<div class="cliente-card" onclick="verCliente('' + c.empresaId + '', '' + c.empresaNombre.replace(/'/g, '') + '')">' +
-      '<div class="cliente-info"><h3>' + c.empresaNombre + '</h3><p>' + c.empresaEmail + '</p></div>' +
-      '<div class="cliente-actions"><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();verCliente('' + c.empresaId + '', '' + c.empresaNombre.replace(/'/g, '') + '')">Ver datos →</button></div>' +
-      '</div>').join('');
+    lista.innerHTML = d.clientes.map(function(c) {
+      return '<div class="cliente-card" onclick="verCliente(' + JSON.stringify(c.empresaId) + ', ' + JSON.stringify(c.empresaNombre) + ')">' +
+        '<div class="cliente-info"><h3>' + c.empresaNombre + '</h3><p>' + c.empresaEmail + '</p></div>' +
+        '<div><button class="btn btn-secondary btn-sm">Ver datos &rarr;</button></div>' +
+        '</div>';
+    }).join('');
   } catch(e) { console.error(e); }
 }
 
@@ -274,95 +266,110 @@ async function verCliente(empresaId, nombre) {
   clienteActivo = empresaId;
   document.getElementById('detalle-nombre').textContent = nombre;
   document.getElementById('clientes-lista-wrap').style.display = 'none';
-  document.getElementById('detalle-wrap').classList.add('visible');
+  document.getElementById('detalle-wrap').style.display = 'block';
   await cargarFacturasCliente(empresaId);
 }
 
 function cerrarDetalle() {
-  document.getElementById('detalle-wrap').classList.remove('visible');
+  document.getElementById('detalle-wrap').style.display = 'none';
   document.getElementById('clientes-lista-wrap').style.display = 'block';
   clienteActivo = null;
 }
 
 function switchTab(tab) {
-  document.getElementById('tab-facturas').style.display = tab === 'facturas' ? 'block' : 'none';
-  document.getElementById('tab-nominas').style.display = tab === 'nominas' ? 'block' : 'none';
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0 && tab === 'facturas') || (i === 1 && tab === 'nominas'));
-  });
+  document.getElementById('tab-facturas-content').style.display = tab === 'facturas' ? 'block' : 'none';
+  document.getElementById('tab-nominas-content').style.display = tab === 'nominas' ? 'block' : 'none';
+  document.getElementById('tab-btn-facturas').classList.toggle('active', tab === 'facturas');
+  document.getElementById('tab-btn-nominas').classList.toggle('active', tab === 'nominas');
   if (tab === 'nominas' && clienteActivo) cargarNominasCliente(clienteActivo);
 }
 
 async function cargarFacturasCliente(empresaId) {
   try {
-    const r = await fetch(API + '/gestoria/cliente/' + empresaId + '/facturas', { headers: { 'Authorization': 'Bearer ' + token } });
-    const d = await r.json();
-    const tbody = document.getElementById('tabla-facturas');
-    if (!d.ok || !d.facturas.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin facturas</td></tr>'; return; }
-    tbody.innerHTML = d.facturas.map(f => '<tr><td>' + (f.numero || '-') + '</td><td>' + (f.concepto || f.descripcion || '-') + '</td><td>' + (f.proveedor || f.emisor || '-') + '</td><td>' + (f.total ? f.total + ' €' : '-') + '</td><td>' + (f.fecha || '-') + '</td><td>' + (f.tipo || '-') + '</td></tr>').join('');
+    var r = await fetch(API + '/gestoria/cliente/' + empresaId + '/facturas', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var tbody = document.getElementById('tabla-facturas');
+    if (!d.ok || !d.facturas || !d.facturas.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin facturas</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.facturas.map(function(f) {
+      return '<tr><td>' + (f.numero || '-') + '</td><td>' + (f.concepto || f.descripcion || '-') + '</td><td>' + (f.proveedor || f.emisor || '-') + '</td><td>' + (f.total ? f.total + ' EUR' : '-') + '</td><td>' + (f.fecha || '-') + '</td><td>' + (f.tipo || '-') + '</td></tr>';
+    }).join('');
   } catch(e) { console.error(e); }
 }
 
 async function cargarNominasCliente(empresaId) {
   try {
-    const r = await fetch(API + '/gestoria/cliente/' + empresaId + '/nominas', { headers: { 'Authorization': 'Bearer ' + token } });
-    const d = await r.json();
-    const tbody = document.getElementById('tabla-nominas');
-    if (!d.ok || !d.nominas.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin nóminas</td></tr>'; return; }
-    tbody.innerHTML = d.nominas.map(n => '<tr><td>' + (n.empleado || n.nombre || '-') + '</td><td>' + (n.mes || '-') + '</td><td>' + (n.salario_bruto ? n.salario_bruto + ' €' : '-') + '</td><td>' + (n.salario_neto ? n.salario_neto + ' €' : '-') + '</td><td>' + (n.fecha || '-') + '</td></tr>').join('');
+    var r = await fetch(API + '/gestoria/cliente/' + empresaId + '/nominas', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var tbody = document.getElementById('tabla-nominas');
+    if (!d.ok || !d.nominas || !d.nominas.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin nominas</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.nominas.map(function(n) {
+      return '<tr><td>' + (n.empleado || n.nombre || '-') + '</td><td>' + (n.mes || '-') + '</td><td>' + (n.salario_bruto ? n.salario_bruto + ' EUR' : '-') + '</td><td>' + (n.salario_neto ? n.salario_neto + ' EUR' : '-') + '</td><td>' + (n.fecha || '-') + '</td></tr>';
+    }).join('');
   } catch(e) { console.error(e); }
 }
 
 async function solicitarAcceso() {
-  const email = document.getElementById('email-empresa').value.trim();
+  var email = document.getElementById('email-empresa').value.trim();
   if (!email) return mostrarMsg('solicitar-msg', 'Introduce el email de la empresa', true);
   try {
-    const r = await fetch(API + '/gestoria/solicitar-acceso', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ emailEmpresa: email }) });
-    const d = await r.json();
+    var r = await fetch(API + '/gestoria/solicitar-acceso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ emailEmpresa: email })
+    });
+    var d = await r.json();
     if (!d.ok) return mostrarMsg('solicitar-msg', d.error || 'Error', true);
-    mostrarMsg('solicitar-msg', 'Solicitud enviada correctamente. La empresa deberá aceptarla desde sus ajustes.', false);
+    mostrarMsg('solicitar-msg', 'Solicitud enviada. La empresa debera aceptarla desde sus ajustes.', false);
     document.getElementById('email-empresa').value = '';
-  } catch(e) { mostrarMsg('solicitar-msg', 'Error de conexión', true); }
+  } catch(e) { mostrarMsg('solicitar-msg', 'Error de conexion', true); }
 }
 
 async function cargarInvitaciones() {
   try {
-    const r = await fetch(API + '/gestoria/invitaciones', { headers: { 'Authorization': 'Bearer ' + token } });
-    const d = await r.json();
-    const lista = document.getElementById('invitaciones-lista');
-    const pendientes = (d.invitaciones || []).filter(i => i.estado === 'pendiente');
-    if (!pendientes.length) { lista.innerHTML = '<div class="empty">No tienes invitaciones pendientes.</div>'; return; }
-    lista.innerHTML = pendientes.map(i => '<div class="invitacion-card">' +
-      '<div class="invitacion-info"><h3>' + i.empresaNombre + '</h3><p>' + i.empresaEmail + ' · ' + new Date(i.fecha).toLocaleDateString('es') + '</p></div>' +
-      '<div style="display:flex;gap:8px">' +
-      '<button class="btn btn-primary btn-sm" onclick="responderInvitacion('' + i.empresaId + '', 'aceptar')">Aceptar</button>' +
-      '<button class="btn btn-secondary btn-sm" onclick="responderInvitacion('' + i.empresaId + '', 'rechazar')">Rechazar</button>' +
-      '</div></div>').join('');
+    var r = await fetch(API + '/gestoria/invitaciones', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var lista = document.getElementById('invitaciones-lista');
+    var pendientes = (d.invitaciones || []).filter(function(i) { return i.estado === 'pendiente'; });
+    if (!pendientes.length) {
+      lista.innerHTML = '<div class="empty">No tienes invitaciones pendientes.</div>';
+      return;
+    }
+    lista.innerHTML = pendientes.map(function(inv) {
+      return '<div class="inv-card">' +
+        '<div><div style="font-size:14px;font-weight:600;">' + inv.empresaNombre + '</div><div style="font-size:12px;color:#888;">' + inv.empresaEmail + '</div></div>' +
+        '<div style="display:flex;gap:8px;">' +
+        '<button class="btn btn-primary btn-sm" onclick="responderInvitacion(' + JSON.stringify(inv.empresaId) + ', ' + JSON.stringify('aceptar') + ')">Aceptar</button>' +
+        '<button class="btn btn-secondary btn-sm" onclick="responderInvitacion(' + JSON.stringify(inv.empresaId) + ', ' + JSON.stringify('rechazar') + ')">Rechazar</button>' +
+        '</div></div>';
+    }).join('');
   } catch(e) { console.error(e); }
 }
 
 async function responderInvitacion(empresaId, accion) {
   try {
-    const r = await fetch(API + '/gestoria/responder-invitacion', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ empresaId, accion }) });
-    const d = await r.json();
+    var r = await fetch(API + '/gestoria/responder-invitacion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ empresaId: empresaId, accion: accion })
+    });
+    var d = await r.json();
     if (!d.ok) return alert(d.error || 'Error');
     cargarInvitaciones();
     if (accion === 'aceptar') cargarClientes();
-  } catch(e) { alert('Error de conexión'); }
+  } catch(e) { alert('Error de conexion'); }
 }
 
-function mostrarMsg(id, msg, err) {
-  const el = document.getElementById(id);
-  el.innerHTML = '<div class="msg ' + (err ? 'msg-err' : 'msg-ok') + '">' + msg + '</div>';
-  setTimeout(() => { el.innerHTML = ''; }, 5000);
-}
-
-// Init
 if (token) {
   fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + token } })
-    .then(r => r.json())
-    .then(d => { if (d.ok !== undefined) entrarApp(); else { localStorage.removeItem('gest_token'); } })
-    .catch(() => {});
+    .then(function(r) { return r.json(); })
+    .then(function(d) { if (d.ok !== undefined) entrarApp(); else localStorage.removeItem('gest_token'); })
+    .catch(function() {});
 }
 </script>
 </body>
