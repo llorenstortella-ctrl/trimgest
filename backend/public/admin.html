@@ -24,8 +24,21 @@
     th { background: #0f0f13; padding: 12px 16px; text-align: left; font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; }
     td { padding: 14px 16px; border-top: 1px solid #22223a; font-size: 14px; }
     .badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: #1a2a1a; color: #7ec47e; }
+    .btn-ver { background: #1a2a1a; border: 1px solid #2a3a2a; color: #7ec47e; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; margin-right: 6px; }
     .btn-borrar { background: #2a1a1a; border: 1px solid #3a1a1a; color: #c06060; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
     .btn-logout { background: none; border: 1px solid #2a2a3a; color: #6a6070; border-radius: 8px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+    .ficha { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f0f13; z-index: 100; padding: 30px; overflow-y: auto; display: none; }
+    .ficha-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .ficha-header h2 { color: #e8c87a; }
+    .ficha-close { background: none; border: none; color: #6a6070; font-size: 24px; cursor: pointer; }
+    .ficha-card { background: #16161e; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+    .ficha-card-title { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 12px; }
+    .ficha-row { font-size: 14px; margin-bottom: 8px; }
+    .ficha-row span { color: #6a6070; }
+    .ficha-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ficha-num { background: #16161e; border-radius: 10px; padding: 16px; text-align: center; }
+    .ficha-num-label { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 8px; }
+    .ficha-num-value { font-size: 36px; color: #e8c87a; }
   </style>
 </head>
 <body>
@@ -33,7 +46,7 @@
   <div class="login" id="loginPanel">
     <div class="logo">TrimGest</div>
     <div class="title">Panel de Admin</div>
-    <input type="password" id="adminPass" placeholder="Contraseña admin" onkeydown="if(event.key==='Enter')loginAdmin()">
+    <input type="password" id="adminPass" placeholder="Contrasena admin" onkeydown="if(event.key==='Enter')loginAdmin()">
     <button class="btn" onclick="loginAdmin()">Entrar</button>
     <div id="loginError" class="error"></div>
   </div>
@@ -60,8 +73,33 @@
     </table>
   </div>
 
+  <div class="ficha" id="fichaPanel">
+    <div class="ficha-header">
+      <h2 id="fichaNombre"></h2>
+      <button class="ficha-close" onclick="cerrarFicha()">X</button>
+    </div>
+    <div class="ficha-card">
+      <div class="ficha-card-title">Datos empresa</div>
+      <div class="ficha-row"><span>Email: </span><span id="fichaEmail"></span></div>
+      <div class="ficha-row"><span>NIF: </span><span id="fichaNif"></span></div>
+      <div class="ficha-row"><span>Direccion: </span><span id="fichaDireccion"></span></div>
+      <div class="ficha-row"><span>Registro: </span><span id="fichaFecha"></span></div>
+      <div class="ficha-row"><span>Plan: </span><span id="fichaPlan" class="badge"></span></div>
+    </div>
+    <div class="ficha-nums">
+      <div class="ficha-num">
+        <div class="ficha-num-label">Facturas</div>
+        <div class="ficha-num-value" id="fichaFacturas"></div>
+      </div>
+      <div class="ficha-num">
+        <div class="ficha-num-label">Nominas</div>
+        <div class="ficha-num-value" id="fichaNominas"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const API = 'https://trimgest.es';
+    var API = 'https://trimgest.es';
     var adminPassword = sessionStorage.getItem('admin_pass');
 
     if (adminPassword) cargarPanel();
@@ -112,6 +150,8 @@
         data.usuarios.forEach(function(u) {
           var fecha = u.fecha_registro ? new Date(u.fecha_registro).toLocaleDateString('es-ES') : '-';
           var tr = document.createElement('tr');
+          tr.dataset.empresaId = u.empresaId;
+          tr.dataset.userId = u.id;
           tr.innerHTML =
             '<td>' + u.nombre_empresa + '</td>' +
             '<td style="color:#6a6070;">' + u.email + '</td>' +
@@ -119,7 +159,11 @@
             '<td>' + u.facturas + '</td>' +
             '<td>' + u.nominas + '</td>' +
             '<td><span class="badge">' + u.plan + '</span></td>' +
-            '<td style="display:flex;gap:6px;"><button onclick="verEmpresa(\'' + u.empresaId + '\')" style="background:#1a2a1a;border:1px solid #2a3a2a;color:#7ec47e;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">Ver</button><button class="btn-borrar" onclick="borrarUsuario(' + u.id + ')">Borrar</button></td>';
+            '<td><button class="btn-ver">Ver</button><button class="btn-borrar">Borrar</button></td>';
+          var btnVer = tr.querySelector('.btn-ver');
+          var btnBorrar = tr.querySelector('.btn-borrar');
+          btnVer.addEventListener('click', function() { verEmpresa(u.empresaId); });
+          btnBorrar.addEventListener('click', function() { borrarUsuario(u.id); });
           tbody.appendChild(tr);
         });
       } catch(e) {
@@ -136,35 +180,19 @@
       var e = data.empresa;
       var fecha = e.fecha_registro ? new Date(e.fecha_registro).toLocaleDateString('es-ES') : '-';
 
-      var div = document.createElement('div');
-      div.id = 'fichaPanel';
-      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;padding:30px;overflow-y:auto;';
-      div.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
-        '<h2 style="color:#e8c87a;">' + e.nombre_empresa + '</h2>' +
-        '<button onclick="document.getElementById('fichaPanel').remove()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">X</button>' +
-        '</div>' +
-        '<div style="display:grid;gap:12px;">' +
-        '<div style="background:#16161e;border-radius:10px;padding:16px;">' +
-        '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin-bottom:12px;">Datos empresa</div>' +
-        '<div style="display:grid;gap:8px;font-size:14px;">' +
-        '<div><span style="color:#6a6070;">Email: </span>' + e.email + '</div>' +
-        '<div><span style="color:#6a6070;">NIF: </span>' + e.nif + '</div>' +
-        '<div><span style="color:#6a6070;">Direccion: </span>' + e.direccion + ' ' + e.cp + ' ' + e.ciudad + ' ' + e.provincia + '</div>' +
-        '<div><span style="color:#6a6070;">Registro: </span>' + fecha + '</div>' +
-        '<div><span style="color:#6a6070;">Plan: </span><span style="background:#1a2a1a;color:#7ec47e;padding:2px 8px;border-radius:6px;font-size:12px;">' + e.plan + '</span></div>' +
-        '</div></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-        '<div style="background:#16161e;border-radius:10px;padding:16px;text-align:center;">' +
-        '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">Facturas</div>' +
-        '<div style="font-size:36px;color:#e8c87a;">' + e.facturas + '</div>' +
-        '</div>' +
-        '<div style="background:#16161e;border-radius:10px;padding:16px;text-align:center;">' +
-        '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">Nominas</div>' +
-        '<div style="font-size:36px;color:#e8c87a;">' + e.nominas + '</div>' +
-        '</div></div>' +
-        '</div>';
-      document.body.appendChild(div);
+      document.getElementById('fichaNombre').textContent = e.nombre_empresa;
+      document.getElementById('fichaEmail').textContent = e.email;
+      document.getElementById('fichaNif').textContent = e.nif;
+      document.getElementById('fichaDireccion').textContent = e.direccion + ' ' + e.cp + ' ' + e.ciudad + ' ' + e.provincia;
+      document.getElementById('fichaFecha').textContent = fecha;
+      document.getElementById('fichaPlan').textContent = e.plan;
+      document.getElementById('fichaFacturas').textContent = e.facturas;
+      document.getElementById('fichaNominas').textContent = e.nominas;
+      document.getElementById('fichaPanel').style.display = 'block';
+    }
+
+    function cerrarFicha() {
+      document.getElementById('fichaPanel').style.display = 'none';
     }
 
     async function borrarUsuario(id) {
