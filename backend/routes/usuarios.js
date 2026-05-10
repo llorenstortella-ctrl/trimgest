@@ -31,7 +31,7 @@ function initEmpresa(empresaId) {
 // Registro
 router.post('/registro', async (req, res) => {
   try {
-    const { email, password, nombre_empresa } = req.body;
+    const { email, password, nombre_empresa, nif, direccion } = req.body;
     if (!email || !password || !nombre_empresa) {
       return res.status(400).json({ error: 'Faltan datos' });
     }
@@ -46,6 +46,8 @@ router.post('/registro', async (req, res) => {
       email,
       password: hash,
       nombre_empresa,
+      nif: nif || '',
+      direccion: direccion || '',
       empresaId,
       plan: 'basico',
       facturas_mes: 0,
@@ -90,6 +92,41 @@ router.post('/verificar-token', (req, res) => {
     res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, empresaId: usuario.empresaId });
   } catch(e) {
     res.status(401).json({ error: 'Token inválido' });
+  }
+});
+
+// Obtener perfil
+router.get('/perfil', (req, res) => {
+  try {
+    const token = req.headers['authorization']?.replace('Bearer ', '');
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const usuarios = getUsuarios();
+    const usuario = usuarios.find(u => u.id === decoded.id);
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', email: usuario.email });
+  } catch(e) {
+    res.status(401).json({ error: 'No autorizado' });
+  }
+});
+
+// Actualizar perfil
+router.put('/perfil', (req, res) => {
+  try {
+    const token = req.headers['authorization']?.replace('Bearer ', '');
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const usuarios = getUsuarios();
+    const idx = usuarios.findIndex(u => u.id === decoded.id);
+    if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const { nombre_empresa, nif, direccion } = req.body;
+    if (nombre_empresa) usuarios[idx].nombre_empresa = nombre_empresa;
+    if (nif !== undefined) usuarios[idx].nif = nif;
+    if (direccion !== undefined) usuarios[idx].direccion = direccion;
+    saveUsuarios(usuarios);
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(401).json({ error: 'No autorizado' });
   }
 });
 
