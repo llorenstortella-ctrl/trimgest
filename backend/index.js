@@ -15,6 +15,7 @@ const pygRouter = require('./routes/pyg');
 const nominasRouter = require('./routes/nominas');
 const exportarRouter = require('./routes/exportar');
 const { router: usuariosRouter } = require('./routes/usuarios');
+const adminRouter = require('./routes/admin');
 app.use(cors());
 app.use(express.json());
 
@@ -26,10 +27,15 @@ app.use('/pyg', pygRouter);
 app.use('/nominas', nominasRouter);
 app.use('/exportar', exportarRouter);
 app.use('/usuarios', usuariosRouter);
+app.use('/admin', adminRouter);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+app.get('/panel-admin', (req, res) => {
+res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
 
 app.listen(PORT, () => {
