@@ -49,6 +49,7 @@ router.get('/usuarios', (req, res) => {
     email: u.email,
     nombre_empresa: u.nombre_empresa,
     plan: u.plan || 'basico',
+    plan_gratuito: u.plan_gratuito || false,
     fecha_registro: u.fecha_registro,
     empresaId: u.empresaId,
     facturas: getFacturasCount(u.empresaId),
