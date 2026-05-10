@@ -275,11 +275,16 @@ async function cargarClientes() {
       return;
     }
     lista.innerHTML = d.clientes.map(function(c) {
-      return '<div class="cliente-card" onclick="verCliente(' + JSON.stringify(c.empresaId) + ', ' + JSON.stringify(c.empresaNombre) + ')">' +
+      return '<div class="cliente-card" data-id="' + c.empresaId + '" data-nombre="' + c.empresaNombre.replace(/"/g, '&quot;') + '">' +
         '<div class="cliente-info"><h3>' + c.empresaNombre + '</h3><p>' + c.empresaEmail + '</p></div>' +
         '<div><button class="btn btn-secondary btn-sm">Ver datos &rarr;</button></div>' +
         '</div>';
     }).join('');
+    lista.querySelectorAll('.cliente-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        verCliente(this.dataset.id, this.dataset.nombre);
+      });
+    });
   } catch(e) { console.error(e); }
 }
 
