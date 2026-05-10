@@ -12,6 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const asesorRouter = require('./routes/asesor');
 const pygRouter = require('./routes/pyg');
+const nominasRouter = require('./routes/nominas');
 app.use(cors());
 app.use(express.json());
 
@@ -20,6 +21,7 @@ app.use('/generar', generarRouter);
 app.use('/auth', authRouter);
 app.use('/asesor', asesorRouter);
 app.use('/pyg', pygRouter);
+app.use('/nominas', nominasRouter);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
