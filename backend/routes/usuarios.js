@@ -104,7 +104,7 @@ router.get('/perfil', (req, res) => {
     const usuarios = getUsuarios();
     const usuario = usuarios.find(u => u.id === decoded.id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', email: usuario.email });
+    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', cp: usuario.cp || '', ciudad: usuario.ciudad || '', provincia: usuario.provincia || '', email: usuario.email });
   } catch(e) {
     res.status(401).json({ error: 'No autorizado' });
   }
@@ -119,10 +119,13 @@ router.put('/perfil', (req, res) => {
     const usuarios = getUsuarios();
     const idx = usuarios.findIndex(u => u.id === decoded.id);
     if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' });
-    const { nombre_empresa, nif, direccion } = req.body;
+    const { nombre_empresa, nif, direccion, cp, ciudad, provincia } = req.body;
     if (nombre_empresa) usuarios[idx].nombre_empresa = nombre_empresa;
     if (nif !== undefined) usuarios[idx].nif = nif;
     if (direccion !== undefined) usuarios[idx].direccion = direccion;
+    if (cp !== undefined) usuarios[idx].cp = cp;
+    if (ciudad !== undefined) usuarios[idx].ciudad = ciudad;
+    if (provincia !== undefined) usuarios[idx].provincia = provincia;
     saveUsuarios(usuarios);
     res.json({ ok: true });
   } catch(e) {
