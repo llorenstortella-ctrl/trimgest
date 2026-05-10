@@ -630,6 +630,11 @@
           '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>' +
           '<button class="btn-marcar" onclick="marcarEnviadas()">Marcar todas como enviadas</button>';
       }
+      botonesEnvio +=
+        '<div style="display:flex;gap:8px;margin-top:10px;">' +
+        '<button onclick="exportarExcel('proveedor')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button>' +
+        '<button onclick="exportarExcel('cliente')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button>' +
+        '</div>';
 
       var optsAno = anos.map(function(a) {
         return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>';
@@ -893,6 +898,26 @@
       if (!confirm('Seguro que quieres borrar esta nomina?')) return;
       await fetch(API + '/nominas/borrar/' + id, { method: 'DELETE' });
       renderNominas();
+    }
+
+    async function exportarExcel(tipo) {
+      var t = window.trimestreSel;
+      var a = window.annoSel;
+      try {
+        var res = await fetch(API + '/exportar/' + tipo + '/' + t + '/' + a);
+        if (!res.ok) throw new Error('Error');
+        var blob = await res.blob();
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = 'TrimGest-' + tipo + '-' + t + '-' + a + '.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+      } catch(e) {
+        alert('Error al exportar');
+      }
     }
 
     function generarPDFs() {
