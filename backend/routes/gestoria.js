@@ -379,4 +379,38 @@ router.get('/invitaciones', (req, res) => {
   }
 });
 
+// POST /gestoria/revocar — empresa revoca acceso a gestoria
+router.post('/revocar', (req, res) => {
+  try {
+    const empresa = getUserFromToken(req);
+    if (!empresa || empresa.tipo === 'gestoria') {
+      return res.status(401).json({ error: 'No autorizado' });
+    }
+    const { gestoriaId } = req.body;
+    if (!gestoriaId) return res.status(400).json({ error: 'Falta gestoriaId' });
+
+    const usuarios = getUsuarios();
+    const empIdx = usuarios.findIndex(u => u.id === empresa.id);
+    if (!usuarios[empIdx].gestoriasAprobadas) usuarios[empIdx].gestoriasAprobadas = [];
+
+    usuarios[empIdx].gestoriasAprobadas = usuarios[empIdx].gestoriasAprobadas.filter(g => g.gestoriaId !== gestoriaId);
+    if (usuarios[empIdx].solicitudesGestoria) {
+      usuarios[empIdx].solicitudesGestoria = usuarios[empIdx].solicitudesGestoria.filter(s => s.gestoriaId !== gestoriaId);
+    }
+
+    const gesIdx = usuarios.findIndex(u => u.empresaId === gestoriaId);
+    if (gesIdx !== -1) {
+      if (usuarios[gesIdx].clientesGestoria) {
+        usuarios[gesIdx].clientesGestoria = usuarios[gesIdx].clientesGestoria.filter(c => c.empresaId !== empresa.empresaId);
+      }
+    }
+
+    saveUsuarios(usuarios);
+    res.json({ ok: true });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error al revocar' });
+  }
+});
+
 module.exports = router;
