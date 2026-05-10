@@ -15,7 +15,7 @@
     .pin-dot.filled { background: #e8c87a; border-color: #e8c87a; }
     .pin-dot.error { background: #c06060; border-color: #c06060; }
     .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 260px; }
-    .pin-btn { background: #16161e; border: 1px solid #22223a; border-radius: 50%; width: 76px; height: 76px; font-size: 24px; color: #f0ede8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; -webkit-tap-highlight-color: transparent; }
+    .pin-btn { background: #16161e; border: 1px solid #22223a; border-radius: 50%; width: 76px; height: 76px; font-size: 24px; color: #f0ede8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
     .pin-btn:active { background: #22223a; transform: scale(0.95); }
     .pin-btn.delete { font-size: 18px; color: #9a90b4; }
     .pin-btn.empty { background: transparent; border: none; cursor: default; }
@@ -88,7 +88,6 @@
     .tab.active { color: #e8c87a; border-bottom-color: #e8c87a; }
     .btn-generar { width: 100%; background: #e8c87a; color: #1a1500; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; }
     .btn-marcar { width: 100%; background: #2a3a2a; color: #7ec47e; border: 1px solid #3a5a3a; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
-    .manual-input { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 8px; border-radius: 8px; font-size: 14px; width: 100%; }
   </style>
 </head>
 <body>
@@ -114,25 +113,25 @@
       <button class="pin-btn" onclick="addPin('9')">9</button>
       <button class="pin-btn empty"></button>
       <button class="pin-btn" onclick="addPin('0')">0</button>
-      <button class="pin-btn delete" onclick="deletePin()">&#9003;</button>
+      <button class="pin-btn delete" onclick="deletePin()">⌫</button>
     </div>
-    <div class="pin-forgot" onclick="showRecovery()">Has olvidado el PIN?</div>
+    <div class="pin-forgot" onclick="showRecovery()">¿Olvidaste el PIN?</div>
     <div id="pinError" class="pin-error"></div>
   </div>
 
   <div class="recovery-screen" id="recoveryScreen">
     <div class="recovery-title">Recuperar acceso</div>
-    <div class="recovery-sub" id="recoveryStep1">Te enviaremos un codigo a feimcateva@gmail.com</div>
-    <button class="btn-recovery" id="btnEnviarCodigo" onclick="enviarCodigo()">Enviar codigo</button>
+    <div class="recovery-sub" id="recoveryStep1">Te enviaremos un código a feimcateva@gmail.com</div>
+    <button class="btn-recovery" id="btnEnviarCodigo" onclick="enviarCodigo()">Enviar código</button>
     <div id="recoveryStep2" style="display:none; flex-direction:column; align-items:center; gap:12px; width:100%; max-width:260px;">
-      <div class="recovery-sub">Introduce el codigo recibido</div>
+      <div class="recovery-sub">Introduce el código recibido</div>
       <input class="recovery-input" id="codigoInput" placeholder="000000" maxlength="6" type="number">
-      <div class="recovery-sub">Nuevo PIN (4 digitos)</div>
+      <div class="recovery-sub">Nuevo PIN (4 dígitos)</div>
       <input class="recovery-input" id="nuevoPinInput" placeholder="0000" maxlength="4" type="password">
       <button class="btn-recovery" onclick="resetearPin()">Cambiar PIN</button>
     </div>
     <div id="recoveryMsg" style="margin-top:12px; font-size:13px;"></div>
-    <button class="btn-back" onclick="showPin()">Volver</button>
+    <button class="btn-back" onclick="showPin()">← Volver</button>
   </div>
 
   <div class="main-app" id="mainApp">
@@ -228,12 +227,12 @@
         document.getElementById('recoveryStep1').style.display = 'none';
         btn.style.display = 'none';
         document.getElementById('recoveryStep2').style.display = 'flex';
-        document.getElementById('recoveryMsg').textContent = 'Codigo enviado a feimcateva@gmail.com';
+        document.getElementById('recoveryMsg').textContent = '✓ Código enviado a feimcateva@gmail.com';
         document.getElementById('recoveryMsg').style.color = '#7ec47e';
       } else {
-        document.getElementById('recoveryMsg').textContent = 'Error enviando el codigo';
+        document.getElementById('recoveryMsg').textContent = 'Error enviando el código';
         document.getElementById('recoveryMsg').style.color = '#c06060';
-        btn.textContent = 'Enviar codigo';
+        btn.textContent = 'Enviar código';
         btn.disabled = false;
       }
     }
@@ -242,7 +241,7 @@
       var codigo = document.getElementById('codigoInput').value;
       var pinNuevo = document.getElementById('nuevoPinInput').value;
       if (pinNuevo.length !== 4) {
-        document.getElementById('recoveryMsg').textContent = 'El PIN debe tener 4 digitos';
+        document.getElementById('recoveryMsg').textContent = 'El PIN debe tener 4 dígitos';
         document.getElementById('recoveryMsg').style.color = '#c06060';
         return;
       }
@@ -253,61 +252,12 @@
       });
       var data = await res.json();
       if (data.ok) {
-        document.getElementById('recoveryMsg').textContent = 'PIN cambiado correctamente';
+        document.getElementById('recoveryMsg').textContent = '✓ PIN cambiado correctamente';
         document.getElementById('recoveryMsg').style.color = '#7ec47e';
         setTimeout(showPin, 1500);
       } else {
         document.getElementById('recoveryMsg').textContent = data.error || 'Error';
         document.getElementById('recoveryMsg').style.color = '#c06060';
-      }
-    }
-
-    function toggleManual() {
-      var form = document.getElementById('manualForm');
-      if (!form) return;
-      form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    async function enviarManual() {
-      var tipo = document.getElementById('manualTipo').value;
-      var nombre = document.getElementById('manualNombre').value;
-      var numero = document.getElementById('manualNumero').value;
-      var fecha = document.getElementById('manualFecha').value;
-      var base = parseFloat(document.getElementById('manualBase').value);
-      var iva = parseFloat(document.getElementById('manualIva').value) || 0;
-      var total = parseFloat(document.getElementById('manualTotal').value);
-      if (!nombre || !numero || !fecha || !base || !total) {
-        document.getElementById('uploadStatus').innerHTML = '<div class="error">Rellena todos los campos obligatorios</div>';
-        return;
-      }
-      document.getElementById('uploadStatus').innerHTML = '<div class="uploading">Guardando...</div>';
-      try {
-        var res = await fetch(API + '/facturas/manual', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tipo: tipo,
-            nombre: nombre,
-            numero_factura: numero,
-            fecha: fecha,
-            base_imponible: base,
-            iva_porcentaje: iva,
-            iva_importe: (base * iva / 100).toFixed(2),
-            total: total,
-            trimestre: window.trimestreSel,
-            anno: window.annoSel
-          })
-        });
-        var data = await res.json();
-        if (data.factura) {
-          window.uploadOpen = false;
-          document.getElementById('uploadStatus').innerHTML = '<div class="success">Factura guardada</div>';
-          setTimeout(function() { renderApp(); }, 1000);
-        } else {
-          document.getElementById('uploadStatus').innerHTML = '<div class="error">Error al guardar</div>';
-        }
-      } catch(e) {
-        document.getElementById('uploadStatus').innerHTML = '<div class="error">Error de conexion</div>';
       }
     }
 
@@ -321,11 +271,11 @@
       div.innerHTML =
         '<div style="background:#16161e;padding:20px;border-bottom:1px solid #22223a;display:flex;justify-content:space-between;align-items:center;">' +
         '<div><div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
-        '<div style="font-size:18px;color:#e8c87a;">Asesor financiero</div></div>' +
-        '<button onclick="cerrarAsesor()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">X</button>' +
+        '<div style="font-size:18px;color:#e8c87a;">&#129302; Asesor financiero</div></div>' +
+        '<button onclick="cerrarAsesor()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">&#215;</button>' +
         '</div>' +
         '<div style="padding:16px;background:#12121a;border-bottom:1px solid #22223a;">' +
-        '<div style="font-size:12px;color:#6a6070;margin-bottom:8px;">Objetivo de beneficio este trimestre</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:8px;">Objetivo de beneficio este trimestre (&#8364;)</div>' +
         '<div style="display:flex;gap:8px;">' +
         '<input id="objetivoInput" type="number" placeholder="ej. 5000" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px 12px;border-radius:8px;font-size:14px;flex:1;">' +
         '<button onclick="guardarObjetivo()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>' +
@@ -334,12 +284,12 @@
         '</div>' +
         '<div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
         '<div style="background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#9a90b4;">' +
-        'Hola, soy tu asesor financiero. Puedo ayudarte a entender como va tu negocio este trimestre.' +
+        'Hola, soy tu asesor financiero. Puedo ayudarte a entender c&oacute;mo va tu negocio este trimestre. &iquest;Qu&eacute; quieres saber?' +
         '</div>' +
         '</div>' +
         '<div style="padding:16px;background:#16161e;border-top:1px solid #22223a;display:flex;gap:8px;">' +
-        '<input id="chatInput" type="text" placeholder="Preguntame lo que quieras..." style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:14px;flex:1;" onkeydown="if(event.key===\'Enter\')enviarMensaje();">' +
-        '<button onclick="enviarMensaje()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px 16px;font-size:16px;cursor:pointer;">-></button>' +
+        '<input id="chatInput" type="text" placeholder="Preg&uacute;ntame lo que quieras..." style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:14px;flex:1;" onkeydown="if(event.key===\'Enter\')enviarMensaje();">' +
+        '<button onclick="enviarMensaje()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px 16px;font-size:16px;cursor:pointer;">&#8594;</button>' +
         '</div>';
       document.body.appendChild(div);
     }
@@ -361,7 +311,7 @@
       var data = await res.json();
       if (data.ok) {
         msg.style.color = '#7ec47e';
-        msg.textContent = 'Objetivo guardado';
+        msg.textContent = '&#10003; Objetivo guardado';
         setTimeout(function() { msg.textContent = ''; }, 2000);
       }
     }
@@ -399,7 +349,7 @@
         window.chatHistorial.push({ role: 'assistant', content: data.respuesta });
       } catch(e) {
         loadingMsg.style.color = '#c06060';
-        loadingMsg.textContent = 'Error de conexion';
+        loadingMsg.textContent = 'Error de conexi&oacute;n';
       }
       messages.scrollTop = messages.scrollHeight;
     }
@@ -419,14 +369,14 @@
         '<button onclick="cambiarPin()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cambiar PIN</button>' +
         '<div id="ajustesMsg" style="font-size:13px;text-align:center;margin-top:4px;"></div>' +
         '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
-        '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">Perdidas y Ganancias</div>' +
-        '<div style="font-size:12px;color:#4a4055;margin-bottom:12px;">Sube el PDF de P&G que te manda la gestoria al final del trimestre</div>' +
-        '<input type="file" id="pygInput" accept="application/pdf,image/*" onchange="subirPyG(this.files[0])" style="display:none">' +
-        '<button onclick="document.getElementById(\'pygInput\').click()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;width:100%;">Subir PDF de P&G</button>' +
+        '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">P&eacute;rdidas y Ganancias</div>' +
+        '<div style="font-size:12px;color:#4a4055;margin-bottom:12px;">Sube el PDF de P&G que te manda la gestor&iacute;a al final del trimestre</div>' +
+       '<input type="file" id="pygInput" accept="application/pdf,image/*" onchange="subirPyG(this.files[0])" style="display:none">' +
+        '<button onclick="document.getElementById(\'pygInput\').click()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;width:100%;">&#128202; Subir PDF de P&G</button>' +
         '<div id="pygMsg" style="font-size:12px;margin-top:8px;text-align:center;"></div>' +
         '</div>' +
         '</div>' +
-        '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">Volver</button>';
+        '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">&#8592; Volver</button>';
       document.body.appendChild(div);
     }
 
@@ -440,7 +390,7 @@
       var nuevo = document.getElementById('pinNuevo').value;
       var confirmar = document.getElementById('pinConfirmar').value;
       var msg = document.getElementById('ajustesMsg');
-      if (nuevo.length !== 4) { msg.style.color='#c06060'; msg.textContent='El PIN debe tener 4 digitos'; return; }
+      if (nuevo.length !== 4) { msg.style.color='#c06060'; msg.textContent='El PIN debe tener 4 d&iacute;gitos'; return; }
       if (nuevo !== confirmar) { msg.style.color='#c06060'; msg.textContent='Los PINs no coinciden'; return; }
       var res = await fetch(API + '/auth/cambiar-pin', {
         method: 'POST',
@@ -450,7 +400,7 @@
       var data = await res.json();
       if (data.ok) {
         msg.style.color='#7ec47e';
-        msg.textContent='PIN cambiado correctamente';
+        msg.textContent='&#10003; PIN cambiado correctamente';
         setTimeout(cerrarAjustes, 1500);
       } else {
         msg.style.color='#c06060';
@@ -462,7 +412,7 @@
       if (!file) return;
       var msg = document.getElementById('pygMsg');
       msg.style.color = '#9a90b4';
-      msg.textContent = 'Procesando...';
+      msg.textContent = '&#9203; Procesando...';
       var formData = new FormData();
       formData.append('pyg', file);
       try {
@@ -470,14 +420,14 @@
         var data = await res.json();
         if (data.ok) {
           msg.style.color = '#7ec47e';
-          msg.textContent = 'P&G procesada correctamente';
+          msg.textContent = '&#10003; P&G procesada correctamente';
         } else {
           msg.style.color = '#c06060';
           msg.textContent = 'Error al procesar el PDF';
         }
       } catch(e) {
         msg.style.color = '#c06060';
-        msg.textContent = 'Error de conexion';
+        msg.textContent = 'Error de conexi&oacute;n';
       }
     }
 
@@ -526,18 +476,18 @@
           listaHTML += '<div class="factura-badges"><span class="factura-badge badge-' + f.tipo + '">' + f.tipo + '</span>';
           if (f.enviado) listaHTML += '<span class="factura-badge badge-enviada">enviada</span>';
           listaHTML += '</div></div>';
-          listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
-          listaHTML += '<div class="factura-desglose">Base ' + formatEur(f.base_imponible) + ' IVA ' + f.iva_porcentaje + '% ' + formatEur(f.iva_importe) + '</div>';
+          listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N&#176; ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
+          listaHTML += '<div class="factura-desglose">Base ' + formatEur(f.base_imponible) + ' &middot; IVA ' + f.iva_porcentaje + '% ' + formatEur(f.iva_importe) + '</div>';
           listaHTML += '<div class="factura-acciones">';
-          listaHTML += '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button>';
-          listaHTML += '<button class="btn-borrar" onclick="borrarFactura(' + f.id + ')">Borrar</button>';
+          listaHTML += '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">&#9998; Editar</button>';
+          listaHTML += '<button class="btn-borrar" onclick="borrarFactura(' + f.id + ')">&#128465; Borrar</button>';
           listaHTML += '</div>';
           listaHTML += '<div class="edit-form" id="edit-' + f.id + '">';
           listaHTML += '<div class="edit-row"><select id="tipo-' + f.id + '"><option value="proveedor"' + (f.tipo==='proveedor'?' selected':'') + '>Proveedor</option><option value="cliente"' + (f.tipo==='cliente'?' selected':'') + '>Cliente</option></select>';
           listaHTML += '<select id="trim-' + f.id + '"><option value="T1"' + (f.trimestre==='T1'?' selected':'') + '>T1</option><option value="T2"' + (f.trimestre==='T2'?' selected':'') + '>T2</option><option value="T3"' + (f.trimestre==='T3'?' selected':'') + '>T3</option><option value="T4"' + (f.trimestre==='T4'?' selected':'') + '>T4</option></select>';
           listaHTML += '<select id="anno-' + f.id + '">' + optsAnnoEdit + '</select></div>';
           listaHTML += '<input class="edit-input" id="nombre-' + f.id + '" value="' + f.nombre + '" placeholder="Nombre">';
-          listaHTML += '<input class="edit-input" id="nfactura-' + f.id + '" value="' + f.numero_factura + '" placeholder="N factura">';
+          listaHTML += '<input class="edit-input" id="nfactura-' + f.id + '" value="' + f.numero_factura + '" placeholder="N&#176; factura">';
           listaHTML += '<input class="edit-input" id="fecha-' + f.id + '" value="' + f.fecha + '" placeholder="DD/MM/YYYY">';
           listaHTML += '<div class="edit-row">';
           listaHTML += '<input class="edit-input" id="base-' + f.id + '" value="' + f.base_imponible + '" placeholder="Base" type="number" style="flex:1">';
@@ -553,8 +503,8 @@
       var botonesEnvio = '';
       if (window.tabSel === 'pendientes' && pendientes.length > 0) {
         botonesEnvio =
-          '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>' +
-          '<button class="btn-marcar" onclick="marcarEnviadas()">Marcar todas como enviadas</button>';
+          '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestor&iacute;a</button>' +
+          '<button class="btn-marcar" onclick="marcarEnviadas()">&#10003; Marcar todas como enviadas</button>';
       }
 
       var optsAno = anos.map(function(a) {
@@ -573,10 +523,10 @@
 
       document.getElementById('app').innerHTML =
         '<div class="header">' +
-        '<div class="header-top"><div><div class="label">TrimGest</div><h1>' + window.trimestreSel + ' ' + window.annoSel + '</h1></div>' +
+        '<div class="header-top"><div><div class="label">TrimGest</div><h1>' + window.trimestreSel + ' &middot; ' + window.annoSel + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;&#65039;</button>' +
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores">' +
@@ -590,32 +540,35 @@
         '<div class="content">' +
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
         '<div class="upload-title">Subir factura</div>' +
-        '<div class="upload-sub">Primero indica que tipo es</div>' +
-        '<div class="tipo-selector">' +
-        '<div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">Proveedor</div>' +
-        '<div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">Cliente</div>' +
-        '</div>' +
-        '<div class="upload-btns">' +
-        '<button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">Elegir PDF</button>' +
-        '<button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">Escanear</button>' +
-        '</div>' +
-        '<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Introducir manual</button>' +
-        '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
-        '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
-        '<input id="manualNombre" class="manual-input" placeholder="Nombre proveedor/cliente">' +
-        '<input id="manualNumero" class="manual-input" placeholder="N factura">' +
-        '<input id="manualFecha" class="manual-input" placeholder="DD/MM/AAAA">' +
-        '<div style="display:flex;gap:6px;">' +
-        '<input id="manualBase" class="manual-input" placeholder="Base" type="number" style="flex:1;">' +
-        '<input id="manualIva" class="manual-input" placeholder="IVA%" type="number" style="flex:0.6;">' +
-        '<input id="manualTotal" class="manual-input" placeholder="Total" type="number" style="flex:1;">' +
-        '</div>' +
-        '<button onclick="enviarManual()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Guardar factura</button>' +
-        '</div>' +
-        '<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
-        '<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
-        '<div id="uploadStatus"></div>' +
-        '</div></div>' +
+        '<div class="upload-sub">Primero indica qu&eacute; tipo es</div>' +
+        ''<div class="tipo-selector">' +
+'<div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">&#128706; Proveedor</div>' +
+'<div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">&#127968; Cliente</div>' +
+'</div>' +
+'<div class="upload-btns">' +
+'<button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">&#128193; Elegir PDF</button>' +
+'<button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">&#128247; Escanear</button>' +
+'</div>' +
+'<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">&#9997;&#65039; Introducir manual</button>' +
+'<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
+'<select id="manualTipo" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<option value="proveedor">Proveedor</option>' +
+'<option value="cliente">Cliente</option>' +
+'</select>' +
+'<input id="manualNombre" placeholder="Nombre proveedor/cliente" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<input id="manualNumero" placeholder="N° factura" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<input id="manualFecha" placeholder="DD/MM/AAAA" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<div style="display:flex;gap:6px;">' +
+'<input id="manualBase" placeholder="Base" type="number" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;flex:1;">' +
+'<input id="manualIva" placeholder="IVA%" type="number" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;flex:0.6;">' +
+'<input id="manualTotal" placeholder="Total" type="number" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;flex:1;">' +
+'</div>' +
+'<button onclick="enviarManual()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Guardar factura</button>' +
+'</div>' +
+'<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+'<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+'<div id="uploadStatus"></div>' +
+'</div></div>' +
         '<div class="tabs">' +
         '<div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div>' +
         '<div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div>' +
@@ -665,7 +618,7 @@
     }
 
     async function borrarFactura(id) {
-      if (!confirm('Seguro que quieres borrar esta factura?')) return;
+      if (!confirm('¿Seguro que quieres borrar esta factura?')) return;
       await fetch(API + '/facturas/borrar/' + id, { method: 'DELETE' });
       renderApp();
     }
@@ -687,70 +640,134 @@
     async function procesarArchivo(file) {
       if (!file) return;
       var status = document.getElementById('uploadStatus');
-      status.innerHTML = '<div class="uploading">Procesando con IA...</div>';
+      status.innerHTML = '<div class="uploading">&#9203; Procesando con IA...</div>';
       var formData = new FormData();
       formData.append('factura', file);
       try {
         var res = await fetch(API + '/facturas/subir?tipo_manual=' + window.tipoSel, { method: 'POST', body: formData });
         var data = await res.json();
         if (data.error === 'duplicado') {
-          status.innerHTML = '<div class="duplicado">Esta factura ya esta en el sistema</div>';
+          status.innerHTML = '<div class="duplicado">&#9888; Esta factura ya est&aacute; en el sistema</div>';
         } else if (data.factura) {
           window.trimestreSel = data.factura.trimestre;
           window.annoSel = String(data.factura.anno);
           window.tipoSel = null;
           window.uploadOpen = false;
-          status.innerHTML = '<div class="success">Factura procesada correctamente</div>';
+          status.innerHTML = '<div class="success">&#10003; Factura procesada correctamente</div>';
           setTimeout(function() { renderApp(); }, 1500);
         } else {
           status.innerHTML = '<div class="error">Error al procesar la factura</div>';
         }
       } catch(e) {
-        status.innerHTML = '<div class="error">Error de conexion</div>';
+        status.innerHTML = '<div class="error">Error de conexi&oacute;n</div>';
       }
     }
 
-    function generarPDFs() {
-      var t = window.trimestreSel;
-      var a = window.annoSel;
-      var div = document.createElement('div');
-      div.id = 'pdfPanel';
-      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:16px;';
-      div.innerHTML =
-        '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
-        '<div style="font-size:20px;color:#f0ede8;margin-bottom:16px;">PDFs para gestoria</div>' +
-        '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">' + t + ' ' + a + '</div>' +
-        '<div id="pdfStatus" style="font-size:13px;color:#9a90b4;min-height:20px;text-align:center;"></div>' +
-        '<button onclick="descargarPDF(\'proveedor\')" style="background:#c06060;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;">PDF Proveedores</button>' +
-        '<button onclick="descargarPDF(\'cliente\')" style="background:#7ec47e;color:#1a2a1a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;">PDF Clientes</button>' +
-        '<button onclick="document.getElementById(\'pdfPanel\').remove()" style="margin-top:16px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">Volver</button>';
-      document.body.appendChild(div);
-    }
+   function generarPDFs() {
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  var div = document.createElement('div');
+  div.id = 'pdfPanel';
+  div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:16px;';
+  div.innerHTML =
+    '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;">TrimGest</div>' +
+    '<div style="font-size:20px;color:#f0ede8;margin-bottom:16px;">PDFs para gestor&iacute;a</div>' +
+    '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">' + t + ' &middot; ' + a + '</div>' +
+    '<div id="pdfStatus" style="font-size:13px;color:#9a90b4;min-height:20px;text-align:center;"></div>' +
+    '<button onclick="descargarPDF(\'proveedor\')" style="background:#c06060;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;">&#128206; PDF Proveedores</button>' +
+    '<button onclick="descargarPDF(\'cliente\')" style="background:#7ec47e;color:#1a2a1a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;width:100%;max-width:300px;">&#128206; PDF Clientes</button>' +
+    '<button onclick="document.getElementById(\'pdfPanel\').remove()" style="margin-top:16px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">&#8592; Volver</button>';
+  document.body.appendChild(div);
+}
 
-    async function descargarPDF(tipo) {
-      var t = window.trimestreSel;
-      var a = window.annoSel;
-      var status = document.getElementById('pdfStatus');
-      status.textContent = 'Generando PDF...';
-      try {
-        var res = await fetch(API + '/generar/pdf/' + tipo + '/' + t + '/' + a);
-        if (!res.ok) throw new Error('Error servidor');
-        var blob = await res.blob();
-        var url = URL.createObjectURL(blob);
-        var link = document.createElement('a');
-        link.href = url;
-        link.download = 'TrimGest-' + tipo + '-' + t + '-' + a + '.pdf';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-        status.style.color = '#7ec47e';
-        status.textContent = 'PDF descargado';
-      } catch(e) {
-        status.style.color = '#c06060';
-        status.textContent = 'Error al generar el PDF';
-      }
-    }
+async function descargarPDF(tipo) {
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  var status = document.getElementById('pdfStatus');
+  status.textContent = '⏳ Generando PDF...';
+  try {
+    var res = await fetch(API + '/generar/pdf/' + tipo + '/' + t + '/' + a);
+    if (!res.ok) throw new Error('Error servidor');
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'TrimGest-' + tipo + '-' + t + '-' + a + '.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    status.style.color = '#7ec47e';
+    status.textContent = '✓ PDF descargado';
+  } catch(e) {
+    status.style.color = '#c06060';
+    status.textContent = 'Error al generar el PDF';
+  }
+}
+
+async function descargarPDF(tipo) {
+  var t = window.trimestreSel;
+  var a = window.annoSel;
+  var status = document.getElementById('pdfStatus');
+  status.textContent = '⏳ Generando PDF...';
+  try {
+    var res = await fetch(API + '/generar/pdf/' + tipo + '/' + t + '/' + a);
+    if (!res.ok) throw new Error('Error servidor');
+    var blob = await res.blob();
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'TrimGest-' + tipo + '-' + t + '-' + a + '.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    status.style.color = '#7ec47e';
+    status.textContent = '✓ PDF descargado';
+  } catch(e) {
+    status.style.color = '#c06060';
+    status.textContent = 'Error al generar el PDF';
+  }
+}
   </script>
+</body>
+</html><script>
+function toggleManual() {
+  var form = document.getElementById('manualForm');
+  if (!form) return;
+  form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+}
+
+async function enviarManual() {
+  var tipo = document.getElementById('manualTipo').value;
+  var nombre = document.getElementById('manualNombre').value;
+  var numero = document.getElementById('manualNumero').value;
+  var fecha = document.getElementById('manualFecha').value;
+  var base = document.getElementById('manualBase').value;
+  var iva = document.getElementById('manualIva').value;
+  var total = document.getElementById('manualTotal').value;
+  if (!nombre || !numero || !fecha || !base || !total) {
+    document.getElementById('uploadStatus').innerHTML = '<div class="error">Rellena todos los campos obligatorios</div>';
+    return;
+  }
+  document.getElementById('uploadStatus').innerHTML = '<div class="uploading">Guardando...</div>';
+  try {
+    var res = await fetch(API + '/facturas/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo, nombre, numero_factura: numero, fecha, base_imponible: base, iva_porcentaje: iva || 0, iva_importe: ((base * (iva || 0)) / 100).toFixed(2), total, trimestre: window.trimestreSel, anno: window.annoSel })
+    });
+    var data = await res.json();
+    if (data.factura) {
+      window.uploadOpen = false;
+      setTimeout(function() { renderApp(); }, 1000);
+    } else {
+      document.getElementById('uploadStatus').innerHTML = '<div class="error">Error al guardar</div>';
+    }
+  } catch(e) {
+    document.getElementById('uploadStatus').innerHTML = '<div class="error">Error de conexión</div>';
+  }
+}
+</script>
 </body>
 </html>
