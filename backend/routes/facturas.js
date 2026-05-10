@@ -137,4 +137,13 @@ router.put('/marcar-enviado', (req, res) => {
   res.json({ mensaje: 'Marcadas como enviadas' });
 });
 
+router.post('/manual', (req, res) => {
+  const facturas = getFacturas();
+  const { tipo, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno } = req.body;
+  const nueva = { id: Date.now(), tipo, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno, archivo: null, enviado: false, fecha_subida: new Date().toISOString() };
+  facturas.push(nueva);
+  saveFacturas(facturas);
+  res.json({ factura: nueva });
+});
+
 module.exports = router;

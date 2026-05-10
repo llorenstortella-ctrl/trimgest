@@ -541,18 +541,34 @@
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
         '<div class="upload-title">Subir factura</div>' +
         '<div class="upload-sub">Primero indica qu&eacute; tipo es</div>' +
-        '<div class="tipo-selector">' +
-        '<div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">&#128706; Proveedor</div>' +
-        '<div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">&#127968; Cliente</div>' +
-        '</div>' +
-        '<div class="upload-btns">' +
-        '<button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">&#128193; Elegir PDF</button>' +
-        '<button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">&#128247; Escanear</button>' +
-        '</div>' +
-        '<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
-        '<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
-        '<div id="uploadStatus"></div>' +
-        '</div></div>' +
+        ''<div class="tipo-selector">' +
+'<div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">&#128706; Proveedor</div>' +
+'<div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">&#127968; Cliente</div>' +
+'</div>' +
+'<div class="upload-btns">' +
+'<button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">&#128193; Elegir PDF</button>' +
+'<button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">&#128247; Escanear</button>' +
+'</div>' +
+'<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">&#9997;&#65039; Introducir manual</button>' +
+'<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
+'<select id="manualTipo" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<option value="proveedor">Proveedor</option>' +
+'<option value="cliente">Cliente</option>' +
+'</select>' +
+'<input id="manualNombre" placeholder="Nombre proveedor/cliente" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<input id="manualNumero" placeholder="N° factura" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<input id="manualFecha" placeholder="DD/MM/AAAA" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;">' +
+'<div style="display:flex;gap:6px;">' +
+'<input id="manualBase" placeholder="Base" type="number" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;flex:1;">' +
+'<input id="manualIva" placeholder="IVA%" type="number" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;flex:0.6;">' +
+'<input id="manualTotal" placeholder="Total" type="number" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px;border-radius:8px;font-size:14px;flex:1;">' +
+'</div>' +
+'<button onclick="enviarManual()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Guardar factura</button>' +
+'</div>' +
+'<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+'<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+'<div id="uploadStatus"></div>' +
+'</div></div>' +
         '<div class="tabs">' +
         '<div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div>' +
         '<div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div>' +
@@ -715,4 +731,41 @@ async function descargarPDF(tipo) {
 }
   </script>
 </body>
-</html>
+</html><script>
+function toggleManual() {
+  var form = document.getElementById('manualForm');
+  if (!form) return;
+  form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+}
+
+async function enviarManual() {
+  var tipo = document.getElementById('manualTipo').value;
+  var nombre = document.getElementById('manualNombre').value;
+  var numero = document.getElementById('manualNumero').value;
+  var fecha = document.getElementById('manualFecha').value;
+  var base = document.getElementById('manualBase').value;
+  var iva = document.getElementById('manualIva').value;
+  var total = document.getElementById('manualTotal').value;
+  if (!nombre || !numero || !fecha || !base || !total) {
+    document.getElementById('uploadStatus').innerHTML = '<div class="error">Rellena todos los campos obligatorios</div>';
+    return;
+  }
+  document.getElementById('uploadStatus').innerHTML = '<div class="uploading">Guardando...</div>';
+  try {
+    var res = await fetch(API + '/facturas/manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo, nombre, numero_factura: numero, fecha, base_imponible: base, iva_porcentaje: iva || 0, iva_importe: ((base * (iva || 0)) / 100).toFixed(2), total, trimestre: window.trimestreSel, anno: window.annoSel })
+    });
+    var data = await res.json();
+    if (data.factura) {
+      window.uploadOpen = false;
+      setTimeout(function() { renderApp(); }, 1000);
+    } else {
+      document.getElementById('uploadStatus').innerHTML = '<div class="error">Error al guardar</div>';
+    }
+  } catch(e) {
+    document.getElementById('uploadStatus').innerHTML = '<div class="error">Error de conexión</div>';
+  }
+}
+</script>
