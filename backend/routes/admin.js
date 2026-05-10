@@ -74,4 +74,31 @@ router.delete('/usuarios/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Obtener ficha de empresa
+router.get('/empresa/:empresaId', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
+
+  const usuarios = getUsuarios();
+  const usuario = usuarios.find(u => u.empresaId === req.params.empresaId);
+  if (!usuario) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+  res.json({
+    ok: true,
+    empresa: {
+      nombre_empresa: usuario.nombre_empresa,
+      email: usuario.email,
+      nif: usuario.nif || '-',
+      direccion: usuario.direccion || '-',
+      cp: usuario.cp || '-',
+      ciudad: usuario.ciudad || '-',
+      provincia: usuario.provincia || '-',
+      plan: usuario.plan || 'basico',
+      fecha_registro: usuario.fecha_registro,
+      facturas: getFacturasCount(usuario.empresaId),
+      nominas: getNominasCount(usuario.empresaId)
+    }
+  });
+});
+
 module.exports = router;

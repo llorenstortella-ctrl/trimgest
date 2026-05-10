@@ -119,12 +119,52 @@
             '<td>' + u.facturas + '</td>' +
             '<td>' + u.nominas + '</td>' +
             '<td><span class="badge">' + u.plan + '</span></td>' +
-            '<td><button class="btn-borrar" onclick="borrarUsuario(' + u.id + ')">Borrar</button></td>';
+            '<td style="display:flex;gap:6px;"><button onclick="verEmpresa('' + u.empresaId + '')" style="background:#1a2a1a;border:1px solid #2a3a2a;color:#7ec47e;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">Ver</button><button class="btn-borrar" onclick="borrarUsuario(' + u.id + ')">Borrar</button></td>';
           tbody.appendChild(tr);
         });
       } catch(e) {
         logout();
       }
+    }
+
+    async function verEmpresa(empresaId) {
+      var res = await fetch(API + '/admin/empresa/' + empresaId, {
+        headers: { 'x-admin-password': adminPassword }
+      });
+      var data = await res.json();
+      if (!data.ok) return;
+      var e = data.empresa;
+      var fecha = e.fecha_registro ? new Date(e.fecha_registro).toLocaleDateString('es-ES') : '-';
+
+      var div = document.createElement('div');
+      div.id = 'fichaPanel';
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;padding:30px;overflow-y:auto;';
+      div.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">' +
+        '<h2 style="color:#e8c87a;">' + e.nombre_empresa + '</h2>' +
+        '<button onclick="document.getElementById('fichaPanel').remove()" style="background:none;border:none;color:#6a6070;font-size:24px;cursor:pointer;">X</button>' +
+        '</div>' +
+        '<div style="display:grid;gap:12px;">' +
+        '<div style="background:#16161e;border-radius:10px;padding:16px;">' +
+        '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin-bottom:12px;">Datos empresa</div>' +
+        '<div style="display:grid;gap:8px;font-size:14px;">' +
+        '<div><span style="color:#6a6070;">Email: </span>' + e.email + '</div>' +
+        '<div><span style="color:#6a6070;">NIF: </span>' + e.nif + '</div>' +
+        '<div><span style="color:#6a6070;">Direccion: </span>' + e.direccion + ' ' + e.cp + ' ' + e.ciudad + ' ' + e.provincia + '</div>' +
+        '<div><span style="color:#6a6070;">Registro: </span>' + fecha + '</div>' +
+        '<div><span style="color:#6a6070;">Plan: </span><span style="background:#1a2a1a;color:#7ec47e;padding:2px 8px;border-radius:6px;font-size:12px;">' + e.plan + '</span></div>' +
+        '</div></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+        '<div style="background:#16161e;border-radius:10px;padding:16px;text-align:center;">' +
+        '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">Facturas</div>' +
+        '<div style="font-size:36px;color:#e8c87a;">' + e.facturas + '</div>' +
+        '</div>' +
+        '<div style="background:#16161e;border-radius:10px;padding:16px;text-align:center;">' +
+        '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">Nominas</div>' +
+        '<div style="font-size:36px;color:#e8c87a;">' + e.nominas + '</div>' +
+        '</div></div>' +
+        '</div>';
+      document.body.appendChild(div);
     }
 
     async function borrarUsuario(id) {
