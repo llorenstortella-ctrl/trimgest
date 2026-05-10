@@ -262,22 +262,23 @@
       }
     }
 
+    window.contadorLineas = 0;
+
     function toggleManual() {
       var form = document.getElementById('manualForm');
       if (!form) return;
       var abierto = form.style.display === 'flex';
       form.style.display = abierto ? 'none' : 'flex';
       if (!abierto) {
-        window.lineasIva = [];
+        window.contadorLineas = 0;
+        var contenedor = document.getElementById('lineasIva');
+        if (contenedor) contenedor.innerHTML = '';
         añadirLineaIva();
       }
     }
 
-    window.lineasIva = [];
-
     function añadirLineaIva() {
-      var idx = window.lineasIva.length;
-      window.lineasIva.push({ base: 0, iva: 21 });
+      var idx = window.contadorLineas++;
       var contenedor = document.getElementById('lineasIva');
       if (!contenedor) return;
       var linea = document.createElement('div');
