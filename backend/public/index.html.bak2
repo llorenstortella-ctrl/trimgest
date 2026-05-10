@@ -42,7 +42,7 @@
     .stat-value { font-size: 20px; color: #c06060; margin-bottom: 4px; }
     .stat-value.verde { color: #7ec47e; }
     .stat-count { font-size: 11px; color: #4a4055; }
-    .content { padding: 20px; padding-bottom: 80px; }
+    .content { padding: 20px; }
     .upload-area { display: none; margin-bottom: 20px; }
     .upload-box { background: #16161e; border: 2px dashed #2a2a3a; border-radius: 14px; padding: 24px 20px; }
     .upload-title { font-size: 16px; color: #e0d8cc; margin-bottom: 6px; text-align: center; }
@@ -89,11 +89,6 @@
     .btn-generar { width: 100%; background: #e8c87a; color: #1a1500; border: none; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 20px; }
     .btn-marcar { width: 100%; background: #2a3a2a; color: #7ec47e; border: 1px solid #3a5a3a; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .manual-input { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 8px; border-radius: 8px; font-size: 14px; width: 100%; }
-    .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: #16161e; border-top: 1px solid #22223a; display: flex; z-index: 50; }
-    .nav-btn { flex: 1; padding: 12px; background: none; border: none; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent; }
-    .nav-btn.active { color: #e8c87a; }
-    .nav-btn.inactive { color: #6a6070; }
-    .nav-icon { font-size: 20px; }
   </style>
 </head>
 <body>
@@ -142,12 +137,12 @@
 
   <div class="main-app" id="mainApp">
     <div id="app"></div>
-    <nav class="nav-bar">
-      <button class="nav-btn active" id="nav-facturas" onclick="cambiarSeccion('facturas')">
-        <span class="nav-icon">&#128196;</span>Facturas
+    <nav style="position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#16161e;border-top:1px solid #22223a;display:flex;z-index:50;">
+      <button onclick="cambiarSeccion('facturas')" id="nav-facturas" style="flex:1;padding:12px;background:none;border:none;color:#e8c87a;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:20px;">&#128196;</span>Facturas
       </button>
-      <button class="nav-btn inactive" id="nav-nominas" onclick="cambiarSeccion('nominas')">
-        <span class="nav-icon">&#128100;</span>Nominas
+      <button onclick="cambiarSeccion('nominas')" id="nav-nominas" style="flex:1;padding:12px;background:none;border:none;color:#6a6070;font-size:11px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span style="font-size:20px;">&#128100;</span>Nominas
       </button>
     </nav>
   </div>
@@ -160,8 +155,6 @@
     window.tipoSel = null;
     window.uploadOpen = false;
     window.chatHistorial = [];
-    window.seccionActual = 'facturas';
-    window.contadorLineas = 0;
     var pinValue = '';
 
     function getTrimestre() {
@@ -277,108 +270,7 @@
       }
     }
 
-    function cambiarSeccion(seccion) {
-      window.seccionActual = seccion;
-      document.getElementById('nav-facturas').className = 'nav-btn ' + (seccion === 'facturas' ? 'active' : 'inactive');
-      document.getElementById('nav-nominas').className = 'nav-btn ' + (seccion === 'nominas' ? 'active' : 'inactive');
-      if (seccion === 'facturas') renderApp();
-      if (seccion === 'nominas') renderNominas();
-    }
-
-    async function renderNominas() {
-      const res = await fetch(API + '/nominas/listar');
-      const data = await res.json();
-      const nominas = data.nominas || [];
-      const annoActual = window.annoSel || String(new Date().getFullYear());
-      const nominasFiltradas = nominas.filter(function(n) { return String(n.anno) === annoActual; });
-      var totalNeto = nominasFiltradas.reduce(function(s, n) { return s + Number(n.neto || 0); }, 0);
-      var totalCoste = nominasFiltradas.reduce(function(s, n) { return s + Number(n.coste_empresa || 0); }, 0);
-
-      var listaHTML = '';
-      if (nominasFiltradas.length === 0) {
-        listaHTML = '<div class="empty">No hay nominas en ' + annoActual + '</div>';
-      } else {
-        var porMes = {};
-        nominasFiltradas.forEach(function(n) {
-          var key = n.mes + ' ' + n.anno;
-          if (!porMes[key]) porMes[key] = [];
-          porMes[key].push(n);
-        });
-        Object.keys(porMes).forEach(function(mes) {
-          listaHTML += '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin:16px 0 8px;">' + mes + '</div>';
-          porMes[mes].forEach(function(n) {
-            listaHTML += '<div class="factura-card">';
-            listaHTML += '<div class="factura-header"><span class="factura-nombre">' + n.trabajador + '</span>';
-            listaHTML += '<span class="factura-total">' + formatEur(n.coste_empresa) + '</span></div>';
-            listaHTML += '<div class="factura-datos">';
-            listaHTML += '<span>Neto: ' + formatEur(n.neto) + '</span>';
-            listaHTML += '<span>IRPF: ' + formatEur(n.irpf_importe) + '</span>';
-            listaHTML += '<span>SS emp: ' + formatEur(n.ss_empresa) + '</span>';
-            listaHTML += '</div>';
-            listaHTML += '<div class="factura-acciones">';
-            listaHTML += '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button>';
-            listaHTML += '</div></div>';
-          });
-        });
-      }
-
-      var anos = [];
-      for (var y = new Date().getFullYear() - 2; y <= new Date().getFullYear() + 1; y++) anos.push(String(y));
-      var optsAno = anos.map(function(a) {
-        return '<option value="' + a + '"' + (annoActual === a ? ' selected' : '') + '>' + a + '</option>';
-      }).join('');
-
-      document.getElementById('app').innerHTML =
-        '<div class="header">' +
-        '<div class="header-top"><div><div class="label">TrimGest</div><h1>Nominas ' + annoActual + '</h1></div>' +
-        '<div style="display:flex;gap:4px;align-items:center;">' +
-        '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
-        '<button class="btn-subir" onclick="subirNomina()">+ Subir</button>' +
-        '</div></div>' +
-        '<div class="selectores"><select onchange="window.annoSel=this.value;renderNominas()">' + optsAno + '</select></div>' +
-        '<div class="stats">' +
-        '<div class="stat"><div class="stat-label">Coste empresa</div><div class="stat-value">' + formatEur(totalCoste) + '</div><div class="stat-count">' + nominasFiltradas.length + ' nominas</div></div>' +
-        '<div class="stat"><div class="stat-label">Neto pagado</div><div class="stat-value verde">' + formatEur(totalNeto) + '</div></div>' +
-        '</div></div>' +
-        '<div class="content">' +
-        '<div id="nominaUploadStatus"></div>' +
-        listaHTML + '</div>';
-    }
-
-    function subirNomina() {
-      var input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'application/pdf';
-      input.onchange = function() { procesarNomina(input.files[0]); };
-      input.click();
-    }
-
-    async function procesarNomina(file) {
-      if (!file) return;
-      var status = document.getElementById('nominaUploadStatus');
-      if (status) status.innerHTML = '<div class="uploading">Procesando nomina con IA...</div>';
-      var formData = new FormData();
-      formData.append('nomina', file);
-      try {
-        var res = await fetch(API + '/nominas/subir', { method: 'POST', body: formData });
-        var data = await res.json();
-        if (data.nomina) {
-          if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
-          setTimeout(function() { renderNominas(); }, 1000);
-        } else {
-          if (status) status.innerHTML = '<div class="error">Error al procesar la nomina</div>';
-        }
-      } catch(e) {
-        if (status) status.innerHTML = '<div class="error">Error de conexion</div>';
-      }
-    }
-
-    async function borrarNomina(id) {
-      if (!confirm('Seguro que quieres borrar esta nomina?')) return;
-      await fetch(API + '/nominas/borrar/' + id, { method: 'DELETE' });
-      renderNominas();
-    }
+    window.contadorLineas = 0;
 
     function toggleManual() {
       var form = document.getElementById('manualForm');
@@ -439,11 +331,13 @@
       var numero = document.getElementById('manualNumero').value;
       var fecha = document.getElementById('manualFecha').value;
       var total = parseFloat(document.getElementById('manualTotal').value);
+
       var contenedor = document.getElementById('lineasIva');
       var lineas = contenedor.querySelectorAll('div[id^="linea-"]');
       var baseTotal = 0;
       var ivaImporteTotal = 0;
       var ivasPorcentaje = [];
+
       lineas.forEach(function(linea) {
         var idx = linea.id.replace('linea-', '');
         var base = parseFloat(document.getElementById('base-' + idx).value) || 0;
@@ -452,21 +346,30 @@
         ivaImporteTotal += base * iva / 100;
         if (iva > 0) ivasPorcentaje.push(iva);
       });
+
       if (!nombre || !numero || !fecha || baseTotal === 0 || !total) {
         document.getElementById('uploadStatus').innerHTML = '<div class="error">Rellena todos los campos obligatorios</div>';
         return;
       }
+
       var ivaPorcentajeResumen = ivasPorcentaje.length > 1 ? ivasPorcentaje.join('+') : (ivasPorcentaje[0] || 0);
+
       document.getElementById('uploadStatus').innerHTML = '<div class="uploading">Guardando...</div>';
       try {
         var res = await fetch(API + '/facturas/manual', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tipo: tipo, nombre: nombre, numero_factura: numero, fecha: fecha,
-            base_imponible: baseTotal.toFixed(2), iva_porcentaje: ivaPorcentajeResumen,
-            iva_importe: ivaImporteTotal.toFixed(2), total: total,
-            trimestre: window.trimestreSel, anno: window.annoSel
+            tipo: tipo,
+            nombre: nombre,
+            numero_factura: numero,
+            fecha: fecha,
+            base_imponible: baseTotal.toFixed(2),
+            iva_porcentaje: ivaPorcentajeResumen,
+            iva_importe: ivaImporteTotal.toFixed(2),
+            total: total,
+            trimestre: window.trimestreSel,
+            anno: window.annoSel
           })
         });
         var data = await res.json();
@@ -500,9 +403,13 @@
         '<div style="display:flex;gap:8px;">' +
         '<input id="objetivoInput" type="number" placeholder="ej. 5000" style="background:#16161e;border:1px solid #2a2a3a;color:#e0d8cc;padding:8px 12px;border-radius:8px;font-size:14px;flex:1;">' +
         '<button onclick="guardarObjetivo()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">Guardar</button>' +
-        '</div><div id="objetivoMsg" style="font-size:12px;margin-top:6px;"></div></div>' +
+        '</div>' +
+        '<div id="objetivoMsg" style="font-size:12px;margin-top:6px;"></div>' +
+        '</div>' +
         '<div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
-        '<div style="background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#9a90b4;">Hola, soy tu asesor financiero. Puedo ayudarte a entender como va tu negocio este trimestre.</div>' +
+        '<div style="background:#16161e;border-radius:12px;padding:14px;font-size:14px;color:#9a90b4;">' +
+        'Hola, soy tu asesor financiero. Puedo ayudarte a entender como va tu negocio este trimestre.' +
+        '</div>' +
         '</div>' +
         '<div style="padding:16px;background:#16161e;border-top:1px solid #22223a;display:flex;gap:8px;">' +
         '<input id="chatInput" type="text" placeholder="Preguntame lo que quieras..." style="background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:12px;border-radius:10px;font-size:14px;flex:1;" onkeydown="if(event.key===\'Enter\')enviarMensaje();">' +
@@ -521,7 +428,8 @@
       var msg = document.getElementById('objetivoMsg');
       if (!objetivo) return;
       var res = await fetch(API + '/asesor/objetivo', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ objetivo: objetivo })
       });
       var data = await res.json();
@@ -550,8 +458,14 @@
       window.chatHistorial.push({ role: 'user', content: mensaje });
       try {
         var res = await fetch(API + '/asesor/chat', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mensaje: mensaje, trimestre: window.trimestreSel, anno: window.annoSel, historial: window.chatHistorial.slice(-6) })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mensaje: mensaje,
+            trimestre: window.trimestreSel,
+            anno: window.annoSel,
+            historial: window.chatHistorial.slice(-6)
+          })
         });
         var data = await res.json();
         loadingMsg.style.color = '#9a90b4';
@@ -580,10 +494,12 @@
         '<div id="ajustesMsg" style="font-size:13px;text-align:center;margin-top:4px;"></div>' +
         '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
         '<div style="font-size:13px;color:#6a6070;margin-bottom:8px;">Perdidas y Ganancias</div>' +
+        '<div style="font-size:12px;color:#4a4055;margin-bottom:12px;">Sube el PDF de P&G que te manda la gestoria al final del trimestre</div>' +
         '<input type="file" id="pygInput" accept="application/pdf,image/*" onchange="subirPyG(this.files[0])" style="display:none">' +
         '<button onclick="document.getElementById(\'pygInput\').click()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;width:100%;">Subir PDF de P&G</button>' +
         '<div id="pygMsg" style="font-size:12px;margin-top:8px;text-align:center;"></div>' +
-        '</div></div>' +
+        '</div>' +
+        '</div>' +
         '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">Volver</button>';
       document.body.appendChild(div);
     }
@@ -601,30 +517,42 @@
       if (nuevo.length !== 4) { msg.style.color='#c06060'; msg.textContent='El PIN debe tener 4 digitos'; return; }
       if (nuevo !== confirmar) { msg.style.color='#c06060'; msg.textContent='Los PINs no coinciden'; return; }
       var res = await fetch(API + '/auth/cambiar-pin', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin_actual: actual, pin_nuevo: nuevo })
       });
       var data = await res.json();
       if (data.ok) {
-        msg.style.color='#7ec47e'; msg.textContent='PIN cambiado correctamente';
+        msg.style.color='#7ec47e';
+        msg.textContent='PIN cambiado correctamente';
         setTimeout(cerrarAjustes, 1500);
       } else {
-        msg.style.color='#c06060'; msg.textContent='PIN actual incorrecto';
+        msg.style.color='#c06060';
+        msg.textContent='PIN actual incorrecto';
       }
     }
 
     async function subirPyG(file) {
       if (!file) return;
       var msg = document.getElementById('pygMsg');
-      msg.style.color = '#9a90b4'; msg.textContent = 'Procesando...';
+      msg.style.color = '#9a90b4';
+      msg.textContent = 'Procesando...';
       var formData = new FormData();
       formData.append('pyg', file);
       try {
         var res = await fetch(API + '/pyg/subir', { method: 'POST', body: formData });
         var data = await res.json();
-        if (data.ok) { msg.style.color = '#7ec47e'; msg.textContent = 'P&G procesada correctamente'; }
-        else { msg.style.color = '#c06060'; msg.textContent = 'Error al procesar el PDF'; }
-      } catch(e) { msg.style.color = '#c06060'; msg.textContent = 'Error de conexion'; }
+        if (data.ok) {
+          msg.style.color = '#7ec47e';
+          msg.textContent = 'P&G procesada correctamente';
+        } else {
+          msg.style.color = '#c06060';
+          msg.textContent = 'Error al procesar el PDF';
+        }
+      } catch(e) {
+        msg.style.color = '#c06060';
+        msg.textContent = 'Error de conexion';
+      }
     }
 
     async function cargarFacturas() {
@@ -686,9 +614,9 @@
           listaHTML += '<input class="edit-input" id="nfactura-' + f.id + '" value="' + f.numero_factura + '" placeholder="N factura">';
           listaHTML += '<input class="edit-input" id="fecha-' + f.id + '" value="' + f.fecha + '" placeholder="DD/MM/YYYY">';
           listaHTML += '<div class="edit-row">';
-          listaHTML += '<input class="edit-input" id="base-edit-' + f.id + '" value="' + f.base_imponible + '" placeholder="Base" type="number" style="flex:1">';
-          listaHTML += '<input class="edit-input" id="iva-edit-' + f.id + '" value="' + f.iva_porcentaje + '" placeholder="IVA%" type="number" style="flex:0.5">';
-          listaHTML += '<input class="edit-input" id="total-edit-' + f.id + '" value="' + f.total + '" placeholder="Total" type="number" style="flex:1">';
+          listaHTML += '<input class="edit-input" id="base-' + f.id + '" value="' + f.base_imponible + '" placeholder="Base" type="number" style="flex:1">';
+          listaHTML += '<input class="edit-input" id="iva-' + f.id + '" value="' + f.iva_porcentaje + '" placeholder="IVA%" type="number" style="flex:0.5">';
+          listaHTML += '<input class="edit-input" id="total-' + f.id + '" value="' + f.total + '" placeholder="Total" type="number" style="flex:1">';
           listaHTML += '</div>';
           listaHTML += '<button class="btn-guardar" onclick="guardarEdicion(' + f.id + ')">Guardar cambios</button>';
           listaHTML += '</div></div>';
@@ -704,8 +632,8 @@
       }
       botonesEnvio +=
         '<div style="display:flex;gap:8px;margin-top:10px;">' +
-        '<button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button>' +
-        '<button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button>' +
+        '<button onclick="exportarExcel('proveedor')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button>' +
+        '<button onclick="exportarExcel('cliente')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button>' +
         '</div>';
 
       var optsAno = anos.map(function(a) {
@@ -757,7 +685,7 @@
         '<input id="manualNumero" class="manual-input" placeholder="N factura">' +
         '<input id="manualFecha" class="manual-input" placeholder="DD/MM/AAAA">' +
         '<div id="lineasIva" style="display:flex;flex-direction:column;gap:6px;"></div>' +
-        '<button onclick="añadirLineaIva()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;width:100%;">+ Añadir linea IVA</button>' +
+        '<button onclick="añadirLineaIva()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;width:100%;">+ Añadir línea IVA</button>' +
         '<div style="display:flex;gap:6px;align-items:center;">' +
         '<span style="font-size:12px;color:#6a6070;white-space:nowrap;">Total:</span>' +
         '<input id="manualTotal" class="manual-input" placeholder="0.00" type="number" style="flex:1;">' +
@@ -804,12 +732,13 @@
         nombre: document.getElementById('nombre-' + id).value,
         numero_factura: document.getElementById('nfactura-' + id).value,
         fecha: document.getElementById('fecha-' + id).value,
-        base_imponible: document.getElementById('base-edit-' + id).value,
-        iva_porcentaje: document.getElementById('iva-edit-' + id).value,
-        total: document.getElementById('total-edit-' + id).value
+        base_imponible: document.getElementById('base-' + id).value,
+        iva_porcentaje: document.getElementById('iva-' + id).value,
+        total: document.getElementById('total-' + id).value
       };
       await fetch(API + '/facturas/editar/' + id, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
       renderApp();
@@ -828,7 +757,8 @@
       });
       const ids = pendientes.map(function(f) { return f.id; });
       await fetch(API + '/facturas/marcar-enviado', {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: ids })
       });
       renderApp();
@@ -858,6 +788,116 @@
       } catch(e) {
         status.innerHTML = '<div class="error">Error de conexion</div>';
       }
+    }
+
+    window.seccionActual = 'facturas';
+
+    function cambiarSeccion(seccion) {
+      window.seccionActual = seccion;
+      document.getElementById('nav-facturas').style.color = seccion === 'facturas' ? '#e8c87a' : '#6a6070';
+      document.getElementById('nav-nominas').style.color = seccion === 'nominas' ? '#e8c87a' : '#6a6070';
+      if (seccion === 'facturas') renderApp();
+      if (seccion === 'nominas') renderNominas();
+    }
+
+    async function renderNominas() {
+      const res = await fetch(API + '/nominas/listar');
+      const data = await res.json();
+      const nominas = data.nominas || [];
+
+      const annoActual = window.annoSel || String(new Date().getFullYear());
+      const nominasFiltradas = nominas.filter(function(n) { return String(n.anno) === annoActual; });
+
+      var totalNeto = nominasFiltradas.reduce(function(s, n) { return s + Number(n.neto || 0); }, 0);
+      var totalCoste = nominasFiltradas.reduce(function(s, n) { return s + Number(n.coste_empresa || 0); }, 0);
+
+      var listaHTML = '';
+      if (nominasFiltradas.length === 0) {
+        listaHTML = '<div class="empty">No hay nominas en ' + annoActual + '</div>';
+      } else {
+        var porMes = {};
+        nominasFiltradas.forEach(function(n) {
+          var key = n.mes + ' ' + n.anno;
+          if (!porMes[key]) porMes[key] = [];
+          porMes[key].push(n);
+        });
+        Object.keys(porMes).forEach(function(mes) {
+          listaHTML += '<div style="font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;margin:16px 0 8px;">' + mes + '</div>';
+          porMes[mes].forEach(function(n) {
+            listaHTML += '<div class="factura-card">';
+            listaHTML += '<div class="factura-header"><span class="factura-nombre">' + n.trabajador + '</span>';
+            listaHTML += '<span class="factura-total">' + formatEur(n.coste_empresa) + '</span></div>';
+            listaHTML += '<div class="factura-datos">';
+            listaHTML += '<span>Neto: ' + formatEur(n.neto) + '</span>';
+            listaHTML += '<span>IRPF: ' + formatEur(n.irpf_importe) + '</span>';
+            listaHTML += '<span>SS emp: ' + formatEur(n.ss_empresa) + '</span>';
+            listaHTML += '</div>';
+            listaHTML += '<div class="factura-acciones">';
+            listaHTML += '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button>';
+            listaHTML += '</div></div>';
+          });
+        });
+      }
+
+      var anos = [];
+      for (var y = new Date().getFullYear() - 2; y <= new Date().getFullYear() + 1; y++) anos.push(String(y));
+      var optsAno = anos.map(function(a) {
+        return '<option value="' + a + '"' + (annoActual === a ? ' selected' : '') + '>' + a + '</option>';
+      }).join('');
+
+      document.getElementById('app').innerHTML =
+        '<div class="header">' +
+        '<div class="header-top"><div><div class="label">TrimGest</div><h1>Nominas ' + annoActual + '</h1></div>' +
+        '<div style="display:flex;gap:4px;align-items:center;">' +
+        '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
+        '<button class="btn-subir" onclick="subirNomina()">+ Subir</button>' +
+        '</div></div>' +
+        '<div class="selectores">' +
+        '<select onchange="window.annoSel=this.value;renderNominas()">' + optsAno + '</select>' +
+        '</div>' +
+        '<div class="stats">' +
+        '<div class="stat"><div class="stat-label">Coste empresa</div><div class="stat-value">' + formatEur(totalCoste) + '</div><div class="stat-count">' + nominasFiltradas.length + ' nominas</div></div>' +
+        '<div class="stat"><div class="stat-label">Neto pagado</div><div class="stat-value verde">' + formatEur(totalNeto) + '</div></div>' +
+        '</div></div>' +
+        '<div class="content" style="padding-bottom:80px;">' +
+        '<div id="nominaUploadStatus"></div>' +
+        listaHTML +
+        '</div>';
+    }
+
+    function subirNomina() {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf';
+      input.onchange = function() { procesarNomina(input.files[0]); };
+      input.click();
+    }
+
+    async function procesarNomina(file) {
+      if (!file) return;
+      var status = document.getElementById('nominaUploadStatus');
+      if (status) status.innerHTML = '<div class="uploading">Procesando nomina con IA...</div>';
+      var formData = new FormData();
+      formData.append('nomina', file);
+      try {
+        var res = await fetch(API + '/nominas/subir', { method: 'POST', body: formData });
+        var data = await res.json();
+        if (data.nomina) {
+          if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
+          setTimeout(function() { renderNominas(); }, 1000);
+        } else {
+          if (status) status.innerHTML = '<div class="error">Error al procesar la nomina</div>';
+        }
+      } catch(e) {
+        if (status) status.innerHTML = '<div class="error">Error de conexion</div>';
+      }
+    }
+
+    async function borrarNomina(id) {
+      if (!confirm('Seguro que quieres borrar esta nomina?')) return;
+      await fetch(API + '/nominas/borrar/' + id, { method: 'DELETE' });
+      renderNominas();
     }
 
     async function exportarExcel(tipo) {
