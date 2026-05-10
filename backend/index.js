@@ -28,7 +28,7 @@ app.use('/nominas', nominasRouter);
 app.use('/exportar', exportarRouter);
 app.use('/usuarios', usuariosRouter);
 app.use('/admin', adminRouter);
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.get('/', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/landing.html'));
@@ -41,6 +41,8 @@ res.sendFile(path.join(__dirname, 'public/index.html'));
 app.get('/panel-admin', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
   console.log(`Servidor TrimGest corriendo en puerto ${PORT}`);
