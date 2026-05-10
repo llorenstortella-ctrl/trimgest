@@ -22,7 +22,7 @@ router.post('/checkout', auth, async (req, res) => {
     if (!PLANES[plan]) return res.status(400).json({ error: 'Plan no valido' });
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card', 'sepa_debit'],
+      payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [{
         price_data: {
