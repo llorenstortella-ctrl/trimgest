@@ -59,34 +59,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
 
   try {
-    // Control de limites
-    const usuariosPath = path.join(__dirname, '../data/usuarios.json');
-    const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
-    const usuIdx = usuarios.findIndex(u => u.empresaId === req.empresaId);
-    if (usuIdx !== -1) {
-      const usu = usuarios[usuIdx];
-      if (!usu.plan_gratuito) {
-        const LIMITES = { basico: 100, estandar: 200, gestoria: 999 };
-        const limite = usu.plan_activo ? (LIMITES[usu.plan] || 100) : 10;
-        const ahora = new Date();
-        const mesActual = ahora.getFullYear() + '-' + (ahora.getMonth() + 1);
-        if (usu.subidas_mes_fecha !== mesActual) {
-          usuarios[usuIdx].subidas_mes = 0;
-          usuarios[usuIdx].subidas_mes_fecha = mesActual;
-        }
-        const subidas = usuarios[usuIdx].subidas_mes || 0;
-        if (subidas >= limite) {
-          fs.unlinkSync(req.file.path);
-          return res.status(403).json({ error: 'limite_alcanzado', limite: limite, subidas: subidas, plan_activo: usu.plan_activo || false });
-        }
-        usuarios[usuIdx].subidas_mes = subidas + 1;
-        usuarios[usuIdx].subidas_mes_fecha = mesActual;
-        fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2));
-      }
-    }
-
-    const sinIA = !usuarios[usuIdx]?.plan_activo && !usuarios[usuIdx]?.plan_gratuito;
-    const datos = sinIA ? { nombre: null, numero_factura: null, fecha: null, base_imponible: null, iva_porcentaje: null, iva_importe: null, total: null } : await extraerDatosFactura(req.file.path);
+    const datos = await extraerDatosFactura(req.file.path);
     const facturas = getFacturas(req.empresaId);
 
     const duplicado = facturas.find(function(f) {
