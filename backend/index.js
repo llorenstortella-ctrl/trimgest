@@ -16,6 +16,7 @@ const nominasRouter = require('./routes/nominas');
 const exportarRouter = require('./routes/exportar');
 const { router: usuariosRouter } = require('./routes/usuarios');
 const adminRouter = require('./routes/admin');
+const stripeRouter = require('./routes/stripe');
 app.use(cors());
 app.use(express.json());
 
@@ -28,6 +29,7 @@ app.use('/nominas', nominasRouter);
 app.use('/exportar', exportarRouter);
 app.use('/usuarios', usuariosRouter);
 app.use('/admin', adminRouter);
+app.use('/stripe', stripeRouter);
 
 
 app.get('/', (req, res) => {
