@@ -335,7 +335,7 @@ async function cargarInvitaciones() {
     var r = await fetch(API + '/gestoria/invitaciones', { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
     var lista = document.getElementById('invitaciones-lista');
-    var pendientes = (d.invitaciones || []).filter(function(i) { return i.estado === 'pendiente'; });
+    var pendientes = (d.invitaciones || []).filter(function(i) { return i.estado === 'invitacion_pendiente' || i.estado === 'pendiente'; });
     if (!pendientes.length) {
       lista.innerHTML = '<div class="empty">No tienes invitaciones pendientes.</div>';
       return;
