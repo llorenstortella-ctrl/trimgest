@@ -241,6 +241,8 @@
       localStorage.removeItem('trimgest_empresa');
       window.token = null;
       window.nombreEmpresa = null;
+      var ajustes = document.getElementById('ajustesPanel');
+      if (ajustes) ajustes.remove();
       document.getElementById('mainApp').style.display = 'none';
       document.getElementById('loginScreen').style.display = 'flex';
     }
