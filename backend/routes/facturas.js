@@ -30,7 +30,7 @@ function saveFacturas(facturas, empresaId) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const empresaId = req.query.empresaId || 'default';
+    const empresaId = req.empresaId || req.query.empresaId || 'default';
     const { uploadsDir } = getEmpresaDirs(empresaId);
     cb(null, uploadsDir);
   },
