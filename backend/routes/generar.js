@@ -113,10 +113,7 @@ router.get('/pdf/:tipo/:trimestre/:anno', authMiddleware, async (req, res) => {
     const { tipo, trimestre, anno } = req.params;
     const usuariosPath = path.join(baseDataDir, 'usuarios.json');
     const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
-    console.log('empresaId:', req.empresaId);
-    console.log('usuarios:', usuarios.map(u => u.empresaId));
     const usuario = usuarios.find(u => u.empresaId === req.empresaId);
-    console.log('usuario encontrado:', usuario ? usuario.nombre_empresa : 'NO');
     const empresa = usuario ? usuario.nombre_empresa : 'Mi Empresa';
     const dbPath = path.join(baseDataDir, 'empresas', req.empresaId, 'facturas.json');
     const uploadsDir = path.join(baseDataDir, 'empresas', req.empresaId, 'uploads');
