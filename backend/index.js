@@ -14,6 +14,7 @@ const asesorRouter = require('./routes/asesor');
 const pygRouter = require('./routes/pyg');
 const nominasRouter = require('./routes/nominas');
 const exportarRouter = require('./routes/exportar');
+const { router: usuariosRouter } = require('./routes/usuarios');
 app.use(cors());
 app.use(express.json());
 
@@ -24,6 +25,7 @@ app.use('/asesor', asesorRouter);
 app.use('/pyg', pygRouter);
 app.use('/nominas', nominasRouter);
 app.use('/exportar', exportarRouter);
+app.use('/usuarios', usuariosRouter);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {

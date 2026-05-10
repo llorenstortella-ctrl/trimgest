@@ -8,18 +8,32 @@ const pdfParse = require('pdf-parse');
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const uploadsDir = path.join(__dirname, '../data/uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+const auth = require('../middleware/auth');
+const baseDataDir = path.join(__dirname, '../data');
 
-const dbPath = path.join(__dirname, '../data/nominas.json');
-if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, JSON.stringify([]));
+function getEmpresaDirs(empresaId) {
+  const empresaDir = path.join(baseDataDir, 'empresas', empresaId);
+  if (!fs.existsSync(empresaDir)) fs.mkdirSync(empresaDir, { recursive: true });
+  const uploadsDir = path.join(empresaDir, 'uploads');
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  const dbPath = path.join(empresaDir, 'nominas.json');
+  if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, JSON.stringify([]));
+  return { uploadsDir, dbPath };
+}
 
-const getNominas = () => JSON.parse(fs.readFileSync(dbPath));
-const saveNominas = (nominas) => fs.writeFileSync(dbPath, JSON.stringify(nominas, null, 2));
+function getNominas(empresaId) {
+  const { dbPath } = getEmpresaDirs(empresaId);
+  return JSON.parse(fs.readFileSync(dbPath));
+}
+
+function saveNominas(nominas, empresaId) {
+  const { dbPath } = getEmpresaDirs(empresaId);
+  fs.writeFileSync(dbPath, JSON.stringify(nominas, null, 2));
+}
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post('/subir', upload.single('nomina'), async (req, res) => {
+router.post('/subir', auth, upload.single('nomina'), async (req, res) => {
   try {
     const fileBuffer = req.file.buffer;
     const pdfData = await pdfParse(fileBuffer);
@@ -60,11 +74,12 @@ ${textoNomina}`
     texto = texto.replace(/```json|```/g, '').trim();
     const datos = JSON.parse(texto);
 
+    const { uploadsDir: empUploads } = getEmpresaDirs(req.empresaId);
     const filename = Date.now() + '-nomina.pdf';
-    const filepath = path.join(uploadsDir, filename);
+    const filepath = path.join(empUploads, filename);
     fs.writeFileSync(filepath, fileBuffer);
 
-    const nominas = getNominas();
+    const nominas = getNominas(req.empresaId);
     const nueva = {
       id: Date.now(),
       ...datos,
@@ -72,7 +87,7 @@ ${textoNomina}`
       fecha_subida: new Date().toISOString()
     };
     nominas.push(nueva);
-    saveNominas(nominas);
+    saveNominas(nominas, req.empresaId);
 
     res.json({ nomina: nueva });
   } catch(e) {
@@ -81,17 +96,17 @@ ${textoNomina}`
   }
 });
 
-router.get('/listar', (req, res) => {
-  res.json({ nominas: getNominas() });
+router.get('/listar', auth, (req, res) => {
+  res.json({ nominas: getNominas(req.empresaId) });
 });
 
-router.delete('/borrar/:id', (req, res) => {
-  const nominas = getNominas();
+router.delete('/borrar/:id', auth, (req, res) => {
+  const nominas = getNominas(req.empresaId);
   const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
   if (idx !== -1) {
     const archivo = nominas[idx].archivo;
     nominas.splice(idx, 1);
-    saveNominas(nominas);
+    saveNominas(nominas, req.empresaId);
     try { fs.unlinkSync(path.join(uploadsDir, archivo)); } catch(e) {}
   }
   res.json({ ok: true });

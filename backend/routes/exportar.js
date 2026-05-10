@@ -4,13 +4,15 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 
-const dbPath = process.env.DATA_PATH || path.join(__dirname, '../data/facturas.json');
-const getFacturas = () => JSON.parse(fs.readFileSync(dbPath));
+const authMiddleware = require('../middleware/auth');
+const baseDataDir = path.join(__dirname, '../data');
 
-router.get('/:tipo/:trimestre/:anno', (req, res) => {
+router.get('/:tipo/:trimestre/:anno', authMiddleware, (req, res) => {
   try {
     const { tipo, trimestre, anno } = req.params;
-    const facturas = getFacturas();
+    const dbPath = path.join(baseDataDir, 'empresas', req.empresaId, 'facturas.json');
+    if (!fs.existsSync(dbPath)) return res.json([]);
+    const facturas = JSON.parse(fs.readFileSync(dbPath));
     const lista = facturas.filter(function(f) {
       return f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno);
     });

@@ -4,17 +4,15 @@ const fs = require('fs');
 const path = require('path');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
-const dbPath = path.join(__dirname, '../data/facturas.json');
-const uploadsDir = path.join(__dirname, '../data/uploads');
-
-const getFacturas = () => JSON.parse(fs.readFileSync(dbPath));
+const authMiddleware = require('../middleware/auth');
+const baseDataDir = path.join(__dirname, '../data');
 
 function formatEur(n) {
   return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
-async function generarPDF(tipo, trimestre, anno, empresa) {
-  const facturas = getFacturas();
+async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir) {
+  const facturas = JSON.parse(require('fs').readFileSync(dbPath));
   const lista = facturas.filter(function(f) {
     return f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno) && !f.enviado;
   });
@@ -110,11 +108,13 @@ async function generarPDF(tipo, trimestre, anno, empresa) {
   return await pdfDoc.save();
 }
 
-router.get('/pdf/:tipo/:trimestre/:anno', async (req, res) => {
+router.get('/pdf/:tipo/:trimestre/:anno', authMiddleware, async (req, res) => {
   try {
     const { tipo, trimestre, anno } = req.params;
     const empresa = 'FEIM CA TEVA S.L.';
-    const pdfBytes = await generarPDF(tipo, trimestre, anno, empresa);
+    const dbPath = path.join(baseDataDir, 'empresas', req.empresaId, 'facturas.json');
+    const uploadsDir = path.join(baseDataDir, 'empresas', req.empresaId, 'uploads');
+    const pdfBytes = await generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir);
     const filename = 'TrimGest-' + tipo + '-' + trimestre + '-' + anno + '.pdf';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=' + filename);

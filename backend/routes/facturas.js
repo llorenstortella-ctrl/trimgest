@@ -5,19 +5,35 @@ const path = require('path');
 const fs = require('fs');
 const { extraerDatosFactura } = require('../services/openai');
 
-const uploadsDir = path.join(__dirname, '../data/uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+const auth = require('../middleware/auth');
+const baseDataDir = path.join(__dirname, '../data');
 
-const dbPath = process.env.DATA_PATH || path.join(__dirname, '../data/facturas.json');
-const dataDir = path.join(__dirname, '../data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, JSON.stringify([]));
+function getEmpresaDirs(empresaId) {
+  const empresaDir = path.join(baseDataDir, 'empresas', empresaId);
+  if (!fs.existsSync(empresaDir)) fs.mkdirSync(empresaDir, { recursive: true });
+  const uploadsDir = path.join(empresaDir, 'uploads');
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+  const dbPath = path.join(empresaDir, 'facturas.json');
+  if (!fs.existsSync(dbPath)) fs.writeFileSync(dbPath, JSON.stringify([]));
+  return { uploadsDir, dbPath };
+}
 
-const getFacturas = () => JSON.parse(fs.readFileSync(dbPath));
-const saveFacturas = (facturas) => fs.writeFileSync(dbPath, JSON.stringify(facturas, null, 2));
+function getFacturas(empresaId) {
+  const { dbPath } = getEmpresaDirs(empresaId);
+  return JSON.parse(fs.readFileSync(dbPath));
+}
+
+function saveFacturas(facturas, empresaId) {
+  const { dbPath } = getEmpresaDirs(empresaId);
+  fs.writeFileSync(dbPath, JSON.stringify(facturas, null, 2));
+}
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
+  destination: (req, file, cb) => {
+    const empresaId = req.query.empresaId || 'default';
+    const { uploadsDir } = getEmpresaDirs(empresaId);
+    cb(null, uploadsDir);
+  },
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
 
@@ -39,12 +55,12 @@ function getAnno(fecha) {
   return parseInt(partes[2]);
 }
 
-router.post('/subir', upload.single('factura'), async (req, res) => {
+router.post('/subir', auth, upload.single('factura'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
 
   try {
     const datos = await extraerDatosFactura(req.file.path);
-    const facturas = getFacturas();
+    const facturas = getFacturas(req.empresaId);
 
     const duplicado = facturas.find(function(f) {
       return f.numero_factura === datos.numero_factura && f.nombre === datos.nombre;
@@ -78,7 +94,7 @@ router.post('/subir', upload.single('factura'), async (req, res) => {
     };
 
     facturas.push(nuevaFactura);
-    saveFacturas(facturas);
+    saveFacturas(facturas, req.empresaId);
     res.json({ mensaje: 'Factura procesada correctamente', factura: nuevaFactura });
   } catch (error) {
     console.error(error);
@@ -86,12 +102,12 @@ router.post('/subir', upload.single('factura'), async (req, res) => {
   }
 });
 
-router.get('/listar', (req, res) => {
-  res.json({ facturas: getFacturas() });
+router.get('/listar', auth, (req, res) => {
+  res.json({ facturas: getFacturas(req.empresaId) });
 });
 
-router.put('/editar/:id', (req, res) => {
-  const facturas = getFacturas();
+router.put('/editar/:id', auth, (req, res) => {
+  const facturas = getFacturas(req.empresaId);
   const idx = facturas.findIndex(f => f.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
   const { tipo, trimestre, anno, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total } = req.body;
@@ -109,40 +125,40 @@ router.put('/editar/:id', (req, res) => {
   if (iva_porcentaje) facturas[idx].iva_porcentaje = parseFloat(iva_porcentaje);
   if (iva_importe) facturas[idx].iva_importe = parseFloat(iva_importe);
   if (total) facturas[idx].total = parseFloat(total);
-  saveFacturas(facturas);
+  saveFacturas(facturas, req.empresaId);
   res.json({ mensaje: 'Actualizada', factura: facturas[idx] });
 });
 
-router.delete('/borrar/:id', (req, res) => {
-  const facturas = getFacturas();
+router.delete('/borrar/:id', auth, (req, res) => {
+  const facturas = getFacturas(req.empresaId);
   const idx = facturas.findIndex(f => f.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
   const archivo = facturas[idx].archivo;
   facturas.splice(idx, 1);
-  saveFacturas(facturas);
+  saveFacturas(facturas, req.empresaId);
   try { fs.unlinkSync(path.join(uploadsDir, archivo)); } catch(e) {}
   res.json({ mensaje: 'Factura borrada' });
 });
 
-router.put('/marcar-enviado', (req, res) => {
+router.put('/marcar-enviado', auth, (req, res) => {
   const { ids } = req.body;
   if (!ids || !ids.length) return res.status(400).json({ error: 'Sin ids' });
-  const facturas = getFacturas();
+  const facturas = getFacturas(req.empresaId);
   const ahora = new Date().toISOString();
   ids.forEach(function(id) {
     const idx = facturas.findIndex(f => f.id === id);
     if (idx !== -1) { facturas[idx].enviado = true; facturas[idx].fecha_envio = ahora; }
   });
-  saveFacturas(facturas);
+  saveFacturas(facturas, req.empresaId);
   res.json({ mensaje: 'Marcadas como enviadas' });
 });
 
-router.post('/manual', (req, res) => {
-  const facturas = getFacturas();
+router.post('/manual', auth, (req, res) => {
+  const facturas = getFacturas(req.empresaId);
   const { tipo, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno } = req.body;
   const nueva = { id: Date.now(), tipo, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno, archivo: null, enviado: false, fecha_subida: new Date().toISOString() };
   facturas.push(nueva);
-  saveFacturas(facturas);
+  saveFacturas(facturas, req.empresaId);
   res.json({ factura: nueva });
 });
 
