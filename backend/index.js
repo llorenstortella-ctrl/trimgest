@@ -17,6 +17,7 @@ const exportarRouter = require('./routes/exportar');
 const { router: usuariosRouter } = require('./routes/usuarios');
 const adminRouter = require('./routes/admin');
 const stripeRouter = require('./routes/stripe');
+const gestoriaRouter = require('./routes/gestoria');
 app.use(cors());
 app.use(express.json());
 
@@ -30,6 +31,7 @@ app.use('/exportar', exportarRouter);
 app.use('/usuarios', usuariosRouter);
 app.use('/admin', adminRouter);
 app.use('/stripe', stripeRouter);
+app.use('/gestoria', gestoriaRouter);
 
 
 app.get('/', (req, res) => {
@@ -38,6 +40,10 @@ res.sendFile(path.join(__dirname, 'public/landing.html'));
 
 app.get('/app', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+app.get('/panel-gestoria', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/gestoria.html'));
 });
 
 app.get('/panel-admin', (req, res) => {
