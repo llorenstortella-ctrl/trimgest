@@ -44,7 +44,7 @@ router.post('/subir', auth, upload.single('nomina'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'Eres un experto en nominas espanolas. Extraes datos de nominas y devuelves solo JSON valido.'
+          content: 'Eres un experto en nominas espanolas. Extraes datos de nominas y devuelves solo JSON valido. IMPORTANTE: Para trabajadores mayores de 65 anos con contrato indefinido y al menos 38 anos y 6 meses cotizados (o mayores de 67 anos con 37 anos cotizados), la empresa tiene reduccion del 100% en cuota empresarial por contingencias comunes segun art. 152 LGSS. En estos casos la ss_empresa real es mucho menor de lo que indica la nomina en el apartado teorico, porque la bonificacion ya esta aplicada en el TC1. Extrae siempre los datos literales del documento sin recalcular.'
         },
         {
           role: 'user',
