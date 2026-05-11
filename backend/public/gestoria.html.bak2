@@ -148,12 +148,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <div class="page-title" id="detalle-nombre"></div>
 
           <div class="tabs">
-            <button class="tab active" id="tab-btn-proveedores" onclick="switchTab('proveedores')">Proveedores</button>
-            <button class="tab" id="tab-btn-clientes" onclick="switchTab('clientes')">Clientes</button>
+            <button class="tab active" id="tab-btn-facturas" onclick="switchTab('facturas')">Facturas</button>
             <button class="tab" id="tab-btn-nominas" onclick="switchTab('nominas')">Nominas</button>
           </div>
 
-          <div id="tab-proveedores-content">
+          <div id="tab-facturas-content">
             <div class="filtros-bar">
               <select id="sel-trimestre" onchange="filtrarFacturas()">
                 <option value="">Todos los trimestres</option>
@@ -168,46 +167,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 <option value="2025">2025</option>
                 <option value="2026">2026</option>
               </select>
+              <select id="sel-tipo" onchange="filtrarFacturas()">
+                <option value="">Todos los tipos</option>
+                <option value="proveedor">Proveedor</option>
+                <option value="cliente">Cliente</option>
+              </select>
             </div>
             <div class="export-bar">
-              <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('proveedor')">&#128196; Excel</button>
-              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('proveedor')">&#128462; PDF</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('proveedor')">&#128196; Excel Proveedores</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('cliente')">&#128196; Excel Clientes</button>
+              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('proveedor')">&#128462; PDF Proveedores</button>
+              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('cliente')">&#128462; PDF Clientes</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
                 <table class="tabla">
-                  <thead><tr><th>Numero</th><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
-                  <tbody id="tabla-proveedores"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <div id="tab-clientes-content" style="display:none">
-            <div class="filtros-bar">
-              <select id="sel-trimestre-cli" onchange="filtrarFacturas()">
-                <option value="">Todos los trimestres</option>
-                <option value="T1">T1</option>
-                <option value="T2">T2</option>
-                <option value="T3">T3</option>
-                <option value="T4">T4</option>
-              </select>
-              <select id="sel-anno-cli" onchange="filtrarFacturas()">
-                <option value="">Todos los anos</option>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
-              </select>
-            </div>
-            <div class="export-bar">
-              <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('cliente')">&#128196; Excel</button>
-              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('cliente')">&#128462; PDF</button>
-            </div>
-            <div class="card">
-              <div class="tabla-wrap">
-                <table class="tabla">
-                  <thead><tr><th>Numero</th><th>Fecha</th><th>Cliente</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
-                  <tbody id="tabla-clientes"></tbody>
+                  <thead><tr><th>Numero</th><th>Fecha</th><th>Proveedor/Cliente</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Tipo</th><th>Acciones</th></tr></thead>
+                  <tbody id="tabla-facturas"></tbody>
                 </table>
               </div>
             </div>
@@ -409,7 +385,7 @@ async function verCliente(empresaId, nombre) {
   document.getElementById('detalle-nombre').textContent = nombre;
   document.getElementById('clientes-lista-wrap').style.display = 'none';
   document.getElementById('detalle-wrap').style.display = 'block';
-  switchTab('proveedores');
+  switchTab('facturas');
   await cargarFacturasCliente(empresaId);
 }
 
@@ -420,11 +396,9 @@ function cerrarDetalle() {
 }
 
 function switchTab(tab) {
-  document.getElementById('tab-proveedores-content').style.display = tab === 'proveedores' ? 'block' : 'none';
-  document.getElementById('tab-clientes-content').style.display = tab === 'clientes' ? 'block' : 'none';
+  document.getElementById('tab-facturas-content').style.display = tab === 'facturas' ? 'block' : 'none';
   document.getElementById('tab-nominas-content').style.display = tab === 'nominas' ? 'block' : 'none';
-  document.getElementById('tab-btn-proveedores').classList.toggle('active', tab === 'proveedores');
-  document.getElementById('tab-btn-clientes').classList.toggle('active', tab === 'clientes');
+  document.getElementById('tab-btn-facturas').classList.toggle('active', tab === 'facturas');
   document.getElementById('tab-btn-nominas').classList.toggle('active', tab === 'nominas');
   if (tab === 'nominas' && clienteActivo) cargarNominasCliente(clienteActivo);
 }
@@ -439,60 +413,17 @@ async function cargarFacturasCliente(empresaId) {
 }
 
 function filtrarFacturas() {
-  var t = document.getElementById('sel-trimestre') ? document.getElementById('sel-trimestre').value : '';
-  var a = document.getElementById('sel-anno') ? document.getElementById('sel-anno').value : '';
-  var tCli = document.getElementById('sel-trimestre-cli') ? document.getElementById('sel-trimestre-cli').value : '';
-  var aCli = document.getElementById('sel-anno-cli') ? document.getElementById('sel-anno-cli').value : '';
-  var validas = todasFacturas.filter(function(f) {
-    if (!f || f.borrado) return false;
-    var nombre = f.nombre || f.proveedor || f.emisor || f.cliente || '';
-    if (!nombre && !f.total) return false;
+  var t = document.getElementById('sel-trimestre').value;
+  var a = document.getElementById('sel-anno').value;
+  var tp = document.getElementById('sel-tipo').value;
+  var lista = todasFacturas.filter(function(f) {
+    if (f.borrado) return false;
+    if (t && f.trimestre !== t) return false;
+    if (a && String(f.anno) !== a) return false;
+    if (tp && f.tipo !== tp) return false;
     return true;
   });
-  var proveedores = validas.filter(function(f) { return f.tipo !== 'cliente'; });
-  var clientes = validas.filter(function(f) { return f.tipo === 'cliente'; });
-  if (t) proveedores = proveedores.filter(function(f) { return f.trimestre === t; });
-  if (a) proveedores = proveedores.filter(function(f) { return String(f.anno) === a; });
-  if (tCli) clientes = clientes.filter(function(f) { return f.trimestre === tCli; });
-  if (aCli) clientes = clientes.filter(function(f) { return String(f.anno) === aCli; });
-  // ordenar proveedores por nombre y fecha
-  var gruposP = {};
-  proveedores.forEach(function(f) {
-    var key = (f.nombre || f.proveedor || f.emisor || 'Sin proveedor').trim();
-    if (!gruposP[key]) gruposP[key] = [];
-    gruposP[key].push(f);
-  });
-  Object.keys(gruposP).forEach(function(k) { gruposP[k].sort(function(a,b) { return (a.fecha||'').localeCompare(b.fecha||''); }); });
-  var provOrdenados = [];
-  Object.keys(gruposP).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(gruposP[k]); });
-  // ordenar clientes por fecha
-  clientes.sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
-  renderTablaProveedores(provOrdenados);
-  renderTablaClientes(clientes);
-}
-
-function renderTablaProveedores(lista) {
-  var tbody = document.getElementById('tabla-proveedores');
-  if (!tbody) return;
-  if (!lista.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin facturas de proveedores</td></tr>'; return; }
-  var filas = '';
-  var provActual = null;
-  lista.forEach(function(f) {
-    var prov = (f.nombre || f.proveedor || f.emisor || 'Sin proveedor').trim();
-    if (prov !== provActual) {
-      filas += '<tr><td colspan="8" style="padding:6px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + prov + '</td></tr>';
-      provActual = prov;
-    }
-    filas += renderFila(f);
-  });
-  tbody.innerHTML = filas;
-}
-
-function renderTablaClientes(lista) {
-  var tbody = document.getElementById('tabla-clientes');
-  if (!tbody) return;
-  if (!lista.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin facturas de clientes</td></tr>'; return; }
-  tbody.innerHTML = lista.map(function(f) { return renderFila(f); }).join('');
+  renderTablaFacturas(lista);
 }
 
 function ordenarFacturas(lista) {
@@ -555,6 +486,7 @@ function renderFila(f) {
     '<td>' + base + '</td>' +
     '<td>' + iva + '</td>' +
     '<td style="font-weight:600;color:#e8c87a">' + total + '</td>' +
+    '<td><span class="badge ' + (f.tipo === 'cliente' ? 'badge-green' : 'badge-gray') + '">' + (f.tipo || '-') + '</span></td>' +
     '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
       (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">Ver PDF</button>' : '') +
       '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
@@ -712,10 +644,8 @@ async function borrarNomina(id) {
 
 async function exportarExcelCliente(tipo) {
   if (!clienteActivo) return;
-  var selT = tipo === 'cliente' ? document.getElementById('sel-trimestre-cli') : document.getElementById('sel-trimestre');
-  var selA = tipo === 'cliente' ? document.getElementById('sel-anno-cli') : document.getElementById('sel-anno');
-  var t = (selT && selT.value) ? selT.value : 'T1';
-  var a = (selA && selA.value) ? selA.value : new Date().getFullYear();
+  var t = document.getElementById('sel-trimestre').value || 'T1';
+  var a = document.getElementById('sel-anno').value || new Date().getFullYear();
   try {
     var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/exportar/' + tipo + '/' + t + '/' + a, { headers: { 'Authorization': 'Bearer ' + token } });
     if (!r.ok) throw new Error('Error');
@@ -745,10 +675,8 @@ async function exportarExcelNominasCliente() {
 
 async function descargarPDFCliente(tipo) {
   if (!clienteActivo) return;
-  var selT = tipo === 'cliente' ? document.getElementById('sel-trimestre-cli') : document.getElementById('sel-trimestre');
-  var selA = tipo === 'cliente' ? document.getElementById('sel-anno-cli') : document.getElementById('sel-anno');
-  var t = (selT && selT.value) ? selT.value : 'T1';
-  var a = (selA && selA.value) ? selA.value : new Date().getFullYear();
+  var t = document.getElementById('sel-trimestre').value || 'T1';
+  var a = document.getElementById('sel-anno').value || new Date().getFullYear();
   try {
     var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/pdf/' + tipo + '/' + t + '/' + a, { headers: { 'Authorization': 'Bearer ' + token } });
     if (!r.ok) throw new Error('Error');
