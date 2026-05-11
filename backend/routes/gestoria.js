@@ -476,7 +476,11 @@ router.put('/cliente/:empresaId/nominas/:id', (req, res) => {
     const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
     const idx = nominas.findIndex(n => String(n.id) === String(id));
     if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
-    nominas[idx] = Object.assign(nominas[idx], req.body);
+    if (req.body._toggleContabilizado) {
+      nominas[idx].contabilizado = !nominas[idx].contabilizado;
+    } else {
+      nominas[idx] = Object.assign(nominas[idx], req.body);
+    }
     fs.writeFileSync(nominasPath, JSON.stringify(nominas, null, 2));
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'Error' }); }
@@ -809,6 +813,80 @@ router.post('/cliente/:empresaId/pdf/nominas-seleccionadas', async (req, res) =>
     const pdfBytes = await pdfDoc.save();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=nominas-seleccionadas.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
+});
+
+// POST /gestoria/cliente/:empresaId/pdf/facturas-seleccionadas
+router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId } = req.params;
+    const { ids, tipo } = req.body;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const facturasPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    const todasFacturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
+    const lista = todasFacturas.filter(f => ids.includes(String(f.id)));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Portada resumen
+    const portada = pdfDoc.addPage([595, 842]);
+    const { width, height } = portada.getSize();
+    portada.drawRectangle({ x: 0, y: height-100, width, height: 100, color: rgb(0.06,0.06,0.1) });
+    portada.drawText('TrimGest', { x: 40, y: height-40, size: 24, font: bold, color: rgb(0.91,0.78,0.48) });
+    portada.drawText(nombreEmpresa, { x: 40, y: height-65, size: 11, font: regular, color: rgb(0.8,0.8,0.8) });
+    portada.drawText('FACTURAS ' + (tipo==='proveedor'?'PROVEEDORES':'CLIENTES') + ' SELECCIONADAS', { x: 40, y: height-85, size: 10, font: regular, color: rgb(0.6,0.6,0.7) });
+
+    let y = height-130;
+    portada.drawText('Nombre', { x: 40, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Fecha', { x: 200, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('N Factura', { x: 280, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Base', { x: 370, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Total', { x: 460, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    y -= 15;
+    portada.drawLine({ start: { x:40, y }, end: { x:555, y }, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
+    y -= 15;
+
+    lista.forEach(function(f) {
+      if (y < 60) return;
+      var nombre = (f.nombre||f.proveedor||f.emisor||f.cliente||'-').substring(0,22);
+      var fecha = (f.fecha||'-').substring(0,12);
+      var num = (f.numero_factura||'-').substring(0,12);
+      var base = Number(f.base_imponible||0).toFixed(2);
+      var total = Number(f.total||0).toFixed(2);
+      portada.drawText(nombre, { x:40, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(fecha, { x:200, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(num, { x:280, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(base+' EUR', { x:370, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(total+' EUR', { x:460, y, size:9, font:bold, color:rgb(0.2,0.5,0.3) });
+      y -= 18;
+    });
+
+    // Adjuntar PDFs originales
+    for (const f of lista) {
+      if (!f.archivo) continue;
+      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', f.archivo);
+      if (!fs.existsSync(archivoPath)) continue;
+      try {
+        const pdfBytes = fs.readFileSync(archivoPath);
+        const facturaPdf = await PDFDocument.load(pdfBytes);
+        const pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
+        pages.forEach(p => pdfDoc.addPage(p));
+      } catch(e) { console.error('Error adjuntando factura:', e.message); }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=facturas-seleccionadas.pdf');
     res.send(Buffer.from(pdfBytes));
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
 });

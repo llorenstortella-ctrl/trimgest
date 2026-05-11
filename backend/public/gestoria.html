@@ -171,12 +171,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             </div>
             <div class="export-bar">
               <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('proveedor')">&#128196; Excel</button>
-              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('proveedor')">📄 PDF</button>
+              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('proveedor')">📄 PDF todas</button>
+              <button class="btn btn-primary btn-sm" onclick="descargarPDFFacturasSeleccionadas('proveedor')">📄 PDF seleccionadas</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
                 <table class="tabla">
-                  <thead><tr><th>Numero</th><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
+                  <thead><tr><th><input type="checkbox" id="check-all-prov" onclick="toggleTodos('prov',this.checked)"></th><th>Numero</th><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
                   <tbody id="tabla-proveedores"></tbody>
                 </table>
               </div>
@@ -201,12 +202,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             </div>
             <div class="export-bar">
               <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('cliente')">&#128196; Excel</button>
-              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('cliente')">📄 PDF</button>
+              <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('cliente')">📄 PDF todas</button>
+              <button class="btn btn-primary btn-sm" onclick="descargarPDFFacturasSeleccionadas('cliente')">📄 PDF seleccionadas</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
                 <table class="tabla">
-                  <thead><tr><th>Numero</th><th>Fecha</th><th>Cliente</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
+                  <thead><tr><th><input type="checkbox" id="check-all-cli" onclick="toggleTodos('cli',this.checked)"></th><th>Numero</th><th>Fecha</th><th>Cliente</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
                   <tbody id="tabla-clientes"></tbody>
                 </table>
               </div>
@@ -560,6 +562,7 @@ function renderFila(f) {
   var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
   var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
   return '<tr>' +
+    '<td><input type="checkbox" class="fact-check" data-id="' + f.id + '" data-tipo="' + (f.tipo||'') + '"></td>' +
     '<td>' + numero + '</td>' +
     '<td>' + fecha + '</td>' +
     '<td>' + nombreProv + '</td>' +
@@ -619,6 +622,7 @@ function renderNominas(lista) {
         (n.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + n.archivo + '" onclick="verArchivoNomina(this.dataset.archivo)">📄 PDF</button>' : '') +
         '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
         '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
+        '<button data-id="' + n.id + '" onclick="toggleContabilizadoNomina(this.dataset.id)" style="background:' + (n.contabilizado?'#0d2b1a':'#1e1e28') + ';border:1px solid ' + (n.contabilizado?'#1a4a2a':'#2a2a3a') + ';color:' + (n.contabilizado?'#4caf7d':'#6a6070') + ';border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">' + (n.contabilizado?'✓ Cont.':'Contabilizar') + '</button>' +
       '</td>' +
     '</tr>';
   });
@@ -892,6 +896,45 @@ async function descargarPDFSeleccionadas() {
 function verArchivoNomina(filename) {
   if (!filename || !clienteActivo) return;
   window.open(API + '/gestoria/cliente/' + clienteActivo + '/archivo-nomina/' + encodeURIComponent(filename) + '?token=' + token, '_blank');
+}
+
+function toggleTodos(tipo, checked) {
+  document.querySelectorAll('.fact-check[data-tipo="' + (tipo==='prov'?'proveedor':'cliente') + '"]').forEach(function(cb) { cb.checked = checked; });
+}
+
+async function descargarPDFFacturasSeleccionadas(tipo) {
+  var ids = [];
+  document.querySelectorAll('.fact-check[data-tipo="' + tipo + '"]:checked').forEach(function(cb) { ids.push(cb.dataset.id); });
+  if (!ids.length) { alert('Selecciona al menos una factura'); return; }
+  if (!clienteActivo) return;
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/pdf/facturas-seleccionadas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ ids: ids, tipo: tipo })
+    });
+    if (!r.ok) throw new Error('Error');
+    var blob = await r.blob();
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url; link.download = clienteNombreActivo + '-facturas-' + tipo + '-seleccionadas.pdf';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  } catch(e) { alert('Error al generar PDF'); }
+}
+
+async function toggleContabilizadoNomina(id) {
+  if (!clienteActivo) return;
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/nominas/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ _toggleContabilizado: true })
+    });
+    var d = await r.json();
+    if (!d.ok) return alert(d.error || 'Error');
+    await cargarNominasCliente(clienteActivo);
+  } catch(e) { alert('Error de conexion'); }
 }
 
 async function solicitarAcceso() {
