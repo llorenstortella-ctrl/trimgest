@@ -649,13 +649,13 @@
         '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:12px;">Mi plan</div>' +
         '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:12px;">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
-        '<div style="font-size:14px;color:#e8c87a;font-weight:600;">' + (perfil.plan_gratuito ? 'Plan gratuito' : perfil.plan === 'estandar' ? 'Plan Estándar' : 'Plan Básico') + '</div>' +
-        '<div style="font-size:12px;color:#6a6070;">' + (perfil.plan_gratuito ? 'Sin límites' : perfil.plan === 'estandar' ? '200 subidas' : '100 subidas') + '</div>' +
+        '<div style="font-size:14px;color:#e8c87a;font-weight:600;">' + (perfil.plan_gratuito ? 'Plan gratuito' : perfil.plan === 'estandar' ? 'Plan Estándar' : perfil.plan === 'basico' ? 'Plan Básico' : 'Plan Free') + '</div>' +
+        '<div style="font-size:12px;color:#6a6070;">' + (perfil.plan_gratuito ? 'Sin límites' : perfil.plan === 'estandar' ? '200 subidas/trimestre' : perfil.plan === 'basico' ? '100 subidas/trimestre' : '10 subidas/trimestre') + '</div>' +
         '</div>' +
-        '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">Documentos subidos: ' + (perfil.facturas_mes || 0) + (perfil.plan_gratuito ? '' : ' / ' + (perfil.plan === 'estandar' ? '200' : '100')) + '</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">Documentos subidos: ' + (perfil.facturas_mes || 0) + (perfil.plan_gratuito ? '' : ' / ' + (perfil.plan === 'estandar' ? '200' : perfil.plan === 'basico' ? '100' : '10')) + '</div>' +
         (perfil.plan_gratuito ? '' :
         '<div style="background:#22223a;border-radius:6px;height:6px;overflow:hidden;">' +
-        '<div style="background:#e8c87a;height:100%;width:' + Math.min(100, Math.round((perfil.facturas_mes || 0) / (perfil.plan === 'estandar' ? 200 : 100) * 100)) + '%;border-radius:6px;"></div>' +
+        '<div style="background:#e8c87a;height:100%;width:' + Math.min(100, Math.round((perfil.facturas_mes || 0) / (perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10) * 100)) + '%;border-radius:6px;"></div>' +
         '</div>') +
         '</div>' +
         '</div>' +

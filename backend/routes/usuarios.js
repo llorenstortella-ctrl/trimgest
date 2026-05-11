@@ -52,7 +52,7 @@ router.post('/registro', async (req, res) => {
       nif: nif || '',
       direccion: direccion || '',
       empresaId,
-      plan: 'basico',
+      plan: 'free',
       facturas_mes: 0,
       mes_actual: new Date().getMonth(),
       fecha_registro: new Date().toISOString(),

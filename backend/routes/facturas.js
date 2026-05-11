@@ -66,8 +66,8 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
     if (usuIdx !== -1) {
       const usu = usuarios[usuIdx];
       if (!usu.plan_gratuito) {
-        const LIMITES = { basico: 100, estandar: 200, gestoria: 999 };
-        const limite = usu.plan_activo ? (LIMITES[usu.plan] || 100) : 10;
+        const LIMITES = { free: 10, basico: 100, estandar: 200, gestoria: 999 };
+        const limite = usu.plan_gratuito ? 99999 : (LIMITES[usu.plan] || 10);
         const ahora = new Date();
         const mesActual = ahora.getFullYear() + '-' + (ahora.getMonth() + 1);
         if (usu.subidas_mes_fecha !== mesActual) {
