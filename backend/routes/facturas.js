@@ -95,7 +95,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
       }
     }
 
-    const sinIA = !usuarios[usuIdx]?.plan_activo && !usuarios[usuIdx]?.plan_gratuito;
+    const sinIA = false;
     const datos = sinIA ? { nombre: null, numero_factura: null, fecha: null, base_imponible: null, iva_porcentaje: null, iva_importe: null, total: null } : await extraerDatosFactura(req.file.path);
     const facturas = getFacturas(req.empresaId);
 
