@@ -111,6 +111,26 @@ router.get('/listar', auth, (req, res) => {
   res.json({ nominas: getNominas(req.empresaId) });
 });
 
+router.put('/editar/:id', auth, (req, res) => {
+  const nominas = getNominas(req.empresaId);
+  const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
+  const { trabajador, mes, anno, devengado, deducciones, neto, irpf_importe, irpf_porcentaje, ss_trabajador, ss_empresa, coste_empresa } = req.body;
+  if (trabajador !== undefined) nominas[idx].trabajador = trabajador;
+  if (mes !== undefined) nominas[idx].mes = mes;
+  if (anno !== undefined) nominas[idx].anno = anno;
+  if (devengado !== undefined) nominas[idx].devengado = parseFloat(devengado);
+  if (deducciones !== undefined) nominas[idx].deducciones = parseFloat(deducciones);
+  if (neto !== undefined) nominas[idx].neto = parseFloat(neto);
+  if (irpf_importe !== undefined) nominas[idx].irpf_importe = parseFloat(irpf_importe);
+  if (irpf_porcentaje !== undefined) nominas[idx].irpf_porcentaje = parseFloat(irpf_porcentaje);
+  if (ss_trabajador !== undefined) nominas[idx].ss_trabajador = parseFloat(ss_trabajador);
+  if (ss_empresa !== undefined) nominas[idx].ss_empresa = parseFloat(ss_empresa);
+  if (coste_empresa !== undefined) nominas[idx].coste_empresa = parseFloat(coste_empresa);
+  saveNominas(nominas, req.empresaId);
+  res.json({ ok: true, nomina: nominas[idx] });
+});
+
 router.delete('/borrar/:id', auth, (req, res) => {
   const nominas = getNominas(req.empresaId);
   const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));

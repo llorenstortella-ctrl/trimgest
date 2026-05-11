@@ -305,7 +305,22 @@
             listaHTML += '<div class="factura-header"><span class="factura-nombre">' + n.trabajador + '</span>';
             listaHTML += '<span class="factura-total">' + formatEur(n.coste_empresa) + '</span></div>';
             listaHTML += '<div class="factura-datos"><span>Neto: ' + formatEur(n.neto) + '</span><span>IRPF: ' + formatEur(n.irpf_importe) + '</span><span>SS emp: ' + formatEur(n.ss_empresa) + '</span></div>';
-            listaHTML += '<div class="factura-acciones"><button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button></div></div>';
+            listaHTML += '<div class="factura-acciones">' +
+              '<button class="btn-accion" onclick="editarNomina(' + n.id + ')">Editar</button>' +
+              '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button>' +
+              '</div>' +
+              '<div class="edit-form" id="edit-nomina-' + n.id + '">' +
+              '<div class="edit-row"><input class="edit-input" id="en-trabajador-' + n.id + '" value="' + (n.trabajador || '') + '" placeholder="Trabajador"></div>' +
+              '<div class="edit-row">' +
+              '<input class="edit-input" id="en-neto-' + n.id + '" value="' + (n.neto || '') + '" placeholder="Neto" style="width:48%">' +
+              '<input class="edit-input" id="en-coste-' + n.id + '" value="' + (n.coste_empresa || '') + '" placeholder="Coste empresa" style="width:48%">' +
+              '</div>' +
+              '<div class="edit-row">' +
+              '<input class="edit-input" id="en-irpf-' + n.id + '" value="' + (n.irpf_importe || '') + '" placeholder="IRPF importe" style="width:48%">' +
+              '<input class="edit-input" id="en-ss-' + n.id + '" value="' + (n.ss_empresa || '') + '" placeholder="SS empresa" style="width:48%">' +
+              '</div>' +
+              '<button class="btn-guardar" onclick="guardarNomina(' + n.id + ')">Guardar cambios</button>' +
+              '</div></div>';
           });
         });
       }
@@ -360,6 +375,32 @@
       } catch(e) {
         if (status) status.innerHTML = '<div class="error">Error de conexion</div>';
       }
+    }
+
+    function editarNomina(id) {
+      var form = document.getElementById('edit-nomina-' + id);
+      if (!form) return;
+      form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    async function guardarNomina(id) {
+      var datos = {
+        trabajador: document.getElementById('en-trabajador-' + id).value,
+        neto: document.getElementById('en-neto-' + id).value,
+        coste_empresa: document.getElementById('en-coste-' + id).value,
+        irpf_importe: document.getElementById('en-irpf-' + id).value,
+        ss_empresa: document.getElementById('en-ss-' + id).value
+      };
+      try {
+        var r = await fetch(API + '/nominas/editar/' + id, {
+          method: 'PUT',
+          headers: getHeaders(),
+          body: JSON.stringify(datos)
+        });
+        var d = await r.json();
+        if (d.ok) { renderNominas(); }
+        else alert(d.error || 'Error al guardar');
+      } catch(e) { alert('Error de conexion'); }
     }
 
     async function borrarNomina(id) {
