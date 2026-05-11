@@ -347,7 +347,7 @@ async function doLogin() {
   var pass = document.getElementById('login-pass').value;
   if (!email || !pass) return showAuthMsg('Completa todos los campos', true);
   try {
-    var r = await fetch(API + '/usuarios/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pass }) });
+    var r = await fetch(API + '/usuarios/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pass, origen: 'gestoria' }) });
     var d = await r.json();
     if (!d.ok) return showAuthMsg(d.error || 'Error al entrar', true);
     var test = await fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + d.token } });
