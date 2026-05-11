@@ -745,8 +745,8 @@
 
     async function responderSolicitudGestoria(gestoriaId, accion) {
       try {
-        console.log('token:', window.token, 'gestoriaId:', gestoriaId, 'accion:', accion);
-        var r = await fetch(API + '/gestoria/responder', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ gestoriaId, accion }) });
+        var tok = window.token || localStorage.getItem('trimgest_token');
+        var r = await fetch(API + '/gestoria/responder', { method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+tok}, body: JSON.stringify({ gestoriaId, accion }) });
         var d = await r.json();
         if (!d.ok) { alert(d.error || 'Error'); return; }
         cargarGestoriasAjustes();
@@ -756,7 +756,8 @@
     async function revocarGestoria(gestoriaId) {
       if (!confirm('Seguro que quieres revocar el acceso a esta gestoria?')) return;
       try {
-        var r = await fetch(API + '/gestoria/revocar', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ gestoriaId }) });
+        var tok = window.token || localStorage.getItem('trimgest_token');
+        var r = await fetch(API + '/gestoria/revocar', { method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+tok}, body: JSON.stringify({ gestoriaId }) });
         var d = await r.json();
         cargarGestoriasAjustes();
       } catch(e) { alert('Error de conexion'); }
