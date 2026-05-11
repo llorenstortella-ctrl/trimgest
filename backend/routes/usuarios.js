@@ -81,7 +81,7 @@ router.post('/login', async (req, res) => {
     const ok = await bcrypt.compare(password, usuario.password);
     if (!ok) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
     if (!usuario.verificado) return res.status(401).json({ error: 'Debes verificar tu email antes de entrar. Revisa tu bandeja de entrada.' });
-    if (usuario.tipo === 'gestoria') return res.status(401).json({ error: 'Esta cuenta es una gestoría. Accede desde trimgest.es/panel-gestoria' });
+    if (usuario.tipo === 'gestoria' && req.body.origen !== 'gestoria') return res.status(401).json({ error: 'Esta cuenta es una gestoría. Accede desde trimgest.es/panel-gestoria' });
     const token = jwt.sign({ id: usuario.id, empresaId: usuario.empresaId }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ ok: true, token, nombre_empresa: usuario.nombre_empresa, empresaId: usuario.empresaId });
   } catch(e) {
