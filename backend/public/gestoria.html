@@ -576,7 +576,7 @@ async function cargarNominasCliente(empresaId) {
     var filas = '';
     nominas.forEach(function(n) {
       var trab = n.trabajador || n.empleado || n.nombre || 'Sin nombre';
-      var bruto = n.devengado || n.salario_bruto || 0;
+      var bruto = n.coste_empresa || n.devengado || n.salario_bruto || 0;
       var neto = n.neto || n.salario_neto || 0;
       filas += '<tr>' +
         '<td>' + trab + '</td>' +
