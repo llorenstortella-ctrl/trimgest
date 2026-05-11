@@ -48,6 +48,7 @@ router.get('/usuarios', (req, res) => {
     id: u.id,
     email: u.email,
     nombre_empresa: u.nombre_empresa,
+    tipo: u.tipo || 'empresa',
     plan: u.plan || 'basico',
     plan_gratuito: u.plan_gratuito || false,
     fecha_registro: u.fecha_registro,
