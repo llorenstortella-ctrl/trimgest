@@ -560,7 +560,7 @@ router.get('/cliente/:empresaId/exportar/nominas/:anno', (req, res) => {
     const dbPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
     if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
     const nominas = JSON.parse(fs.readFileSync(dbPath));
-    const lista = nominas.filter(n => String(n.anno) === String(anno));
+    const lista = nominas;
     const datos = lista.map(n => ({
       'Trabajador': n.trabajador || n.empleado || n.nombre || '',
       'Mes': n.mes || '',
