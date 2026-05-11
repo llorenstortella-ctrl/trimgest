@@ -5,6 +5,7 @@ const path = require('path');
 const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const auth = require('../middleware/auth');
 
 const baseDataDir = path.join(__dirname, '../data');
 
@@ -63,8 +64,7 @@ function getResumenFinanciero(trimestre, anno, empresaId) {
   };
 }
 
-router.post('/objetivo', (req, res) => {
-  const auth = require('../middleware/auth');
+router.post('/objetivo', auth, (req, res) => {
   const { objetivo } = req.body;
   const empresaId = req.empresaId || req.body.empresaId;
   const config = getConfigEmpresa(empresaId);
@@ -73,7 +73,7 @@ router.post('/objetivo', (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/chat', async (req, res) => {
+router.post('/chat', auth, async (req, res) => {
   const { mensaje, trimestre, anno, historial } = req.body;
   const empresaId = req.empresaId || req.body.empresaId;
   const usuariosPath = path.join(baseDataDir, 'usuarios.json');
