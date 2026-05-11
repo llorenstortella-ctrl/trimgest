@@ -573,7 +573,7 @@ async function cargarNominasCliente(empresaId) {
     // agrupar por trabajador, dentro por fecha
     var grupos = {};
     nominas.forEach(function(n) {
-      var key = (n.empleado || n.nombre || 'Sin nombre').trim();
+      var key = (n.trabajador || n.empleado || n.nombre || 'Sin nombre').trim();
       if (!grupos[key]) grupos[key] = [];
       grupos[key].push(n);
     });
@@ -582,7 +582,7 @@ async function cargarNominasCliente(empresaId) {
     });
     var filas = '';
     Object.keys(grupos).sort().forEach(function(trabajador) {
-      filas += '<tr><td colspan="8" style="padding:8px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + trabajador + '</td></tr>';
+      filas += '<tr><td colspan="6" style="padding:8px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + trab + '</td></tr>';
       grupos[trabajador].forEach(function(n) {
         filas += '<tr>' +
           '<td>' + (n.empleado || n.nombre || '-') + '</td>' +
@@ -665,7 +665,7 @@ function abrirEditarNomina(id) {
     .then(function(d) {
       var n = (d.nominas || []).find(function(x) { return String(x.id) === String(id); });
       if (!n) return;
-      document.getElementById('en-empleado').value = n.empleado || n.nombre || '';
+      document.getElementById('en-empleado').value = n.trabajador || n.empleado || n.nombre || '';
       document.getElementById('en-mes').value = n.mes || '';
       document.getElementById('en-anno').value = n.anno || '';
       document.getElementById('en-bruto').value = n.salario_bruto || '';
