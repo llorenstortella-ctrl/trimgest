@@ -63,7 +63,6 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       usuarios[idx].plan = plan;
       usuarios[idx].plan_activo = true;
       usuarios[idx].stripe_customer = session.customer;
-      usuarios[idx].stripe_subscription = session.subscription;
       saveUsuarios(usuarios);
     }
   }
@@ -81,44 +80,6 @@ router.get('/plan', auth, (req, res) => {
     plan_activo: usuario.plan_activo || false,
     limite: PLANES[usuario.plan || 'basico'].limite
   });
-});
-
-// POST /stripe/cancelar — cancelar suscripcion
-router.post('/cancelar', auth, async (req, res) => {
-  try {
-    const usuarios = getUsuarios();
-    const usuario = usuarios.find(u => u.empresaId === req.empresaId);
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!usuario.stripe_subscription) return res.json({ ok: true, mensaje: 'Sin suscripcion activa' });
-    await stripe.subscriptions.update(usuario.stripe_subscription, { cancel_at_period_end: true });
-    const idx = usuarios.findIndex(u => u.empresaId === req.empresaId);
-    usuarios[idx].baja_solicitada = true;
-    usuarios[idx].baja_fecha = new Date().toISOString();
-    saveUsuarios(usuarios);
-    res.json({ ok: true });
-  } catch(e) {
-    console.error(e);
-    res.status(500).json({ error: 'Error al cancelar: ' + e.message });
-  }
-});
-
-// POST /stripe/cancelar — cancelar suscripcion
-router.post('/cancelar', auth, async (req, res) => {
-  try {
-    const usuarios = getUsuarios();
-    const usuario = usuarios.find(u => u.empresaId === req.empresaId);
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!usuario.stripe_subscription) return res.json({ ok: true, mensaje: 'Sin suscripcion activa' });
-    await stripe.subscriptions.update(usuario.stripe_subscription, { cancel_at_period_end: true });
-    const idx = usuarios.findIndex(u => u.empresaId === req.empresaId);
-    usuarios[idx].baja_solicitada = true;
-    usuarios[idx].baja_fecha = new Date().toISOString();
-    saveUsuarios(usuarios);
-    res.json({ ok: true });
-  } catch(e) {
-    console.error(e);
-    res.status(500).json({ error: 'Error al cancelar: ' + e.message });
-  }
 });
 
 module.exports = router;

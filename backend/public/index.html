@@ -686,7 +686,7 @@
     async function solicitarBaja() {
       if (!confirm('¿Seguro que quieres solicitar la baja? Perderás todos tus datos. Esta acción no se puede deshacer.')) return;
       try {
-        var res = await fetch(API + '/usuarios/baja', { method: 'POST', headers: getHeaders() });
+        var res = await fetch(API + '/stripe/cancelar', { method: 'POST', headers: getHeaders() });
         var data = await res.json();
         if (data.ok) {
           alert('Solicitud de baja recibida. Nos pondremos en contacto contigo.');
