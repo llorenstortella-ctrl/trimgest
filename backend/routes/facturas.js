@@ -68,11 +68,21 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
       if (!usu.plan_gratuito) {
         const LIMITES = { free: 10, basico: 100, estandar: 200, gestoria: 999 };
         const limite = usu.plan_gratuito ? 99999 : (LIMITES[usu.plan] || 10);
-        const ahora = new Date();
-        const mesActual = ahora.getFullYear() + '-' + (ahora.getMonth() + 1);
-        if (usu.subidas_mes_fecha !== mesActual) {
+        function getTrimestreFiscal() {
+          const hoy = new Date();
+          const mes = hoy.getMonth() + 1;
+          const dia = hoy.getDate();
+          const anyo = hoy.getFullYear();
+          if (mes === 1 && dia <= 31) return 'T4-' + (anyo - 1);
+          if (mes < 4 || (mes === 4 && dia <= 25)) return 'T1-' + anyo;
+          if (mes < 7 || (mes === 7 && dia <= 25)) return 'T2-' + anyo;
+          if (mes < 10 || (mes === 10 && dia <= 25)) return 'T3-' + anyo;
+          return 'T4-' + anyo;
+        }
+        const trimestreActual = getTrimestreFiscal();
+        if (usu.trimestre_fiscal !== trimestreActual) {
           usuarios[usuIdx].subidas_mes = 0;
-          usuarios[usuIdx].subidas_mes_fecha = mesActual;
+          usuarios[usuIdx].trimestre_fiscal = trimestreActual;
         }
         const subidas = usuarios[usuIdx].subidas_mes || 0;
         if (subidas >= limite) {
@@ -80,7 +90,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
           return res.status(403).json({ error: 'limite_alcanzado', limite: limite, subidas: subidas, plan_activo: usu.plan_activo || false });
         }
         usuarios[usuIdx].subidas_mes = subidas + 1;
-        usuarios[usuIdx].subidas_mes_fecha = mesActual;
+        usuarios[usuIdx].trimestre_fiscal = trimestreActual;
         fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2));
       }
     }
