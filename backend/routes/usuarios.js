@@ -1,4 +1,6 @@
 const express = require('express');
+const { enviarVerificacion } = require('../utils/email');
+const crypto = require('crypto');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
@@ -41,6 +43,7 @@ router.post('/registro', async (req, res) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const empresaId = 'emp_' + Date.now();
+    const verToken = crypto.randomBytes(32).toString('hex');
     const nuevo = {
       id: Date.now(),
       email,
@@ -52,13 +55,16 @@ router.post('/registro', async (req, res) => {
       plan: 'basico',
       facturas_mes: 0,
       mes_actual: new Date().getMonth(),
-      fecha_registro: new Date().toISOString()
+      fecha_registro: new Date().toISOString(),
+      verificado: false,
+      ver_token: verToken
     };
     usuarios.push(nuevo);
     saveUsuarios(usuarios);
     initEmpresa(empresaId);
+    try { await enviarVerificacion(email, nombre_empresa, verToken); } catch(e) { console.error('Error email verificacion:', e); }
     const token = jwt.sign({ id: nuevo.id, empresaId }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ ok: true, token, nombre_empresa, empresaId });
+    res.json({ ok: true, token, nombre_empresa, empresaId, verificacion_pendiente: true });
   } catch(e) {
     console.error(e);
     res.status(500).json({ error: 'Error en registro' });

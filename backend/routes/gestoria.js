@@ -1,4 +1,5 @@
 const express = require('express');
+const { enviarInvitacionGestoria } = require('../utils/email');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
@@ -115,7 +116,7 @@ router.post('/solicitar-acceso', (req, res) => {
 });
 
 // POST /gestoria/invitar — empresa invita a gestoria por email
-router.post('/invitar', (req, res) => {
+router.post('/invitar', async (req, res) => {
   try {
     const empresa = getUserFromToken(req);
     if (!empresa || empresa.tipo === 'gestoria') {
@@ -166,6 +167,9 @@ router.post('/invitar', (req, res) => {
     }
 
     saveUsuarios(usuarios);
+    if (gesIdx !== -1) {
+      try { await enviarInvitacionGestoria(emailGestoria, empresa.nombre_empresa); } catch(e) { console.error('Error email invitacion:', e); }
+    }
     res.json({ ok: true, mensaje: gesIdx !== -1 ? 'Invitación enviada a la gestoría' : 'Invitación registrada — la gestoría debe registrarse con ese email' });
   } catch(e) {
     console.error(e);

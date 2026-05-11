@@ -42,6 +42,13 @@ app.get('/app', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+app.get('/verificar', (req, res) => {
+  const token = req.query.token;
+  if (!token) return res.redirect('/app');
+  const usuariosRouter = require('./routes/usuarios');
+  res.redirect('https://trimgest.es/usuarios/verificar?token=' + token);
+});
+
 app.get('/privacidad', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/privacidad.html'));
 });
