@@ -48,21 +48,10 @@ router.post('/subir', auth, upload.single('nomina'), async (req, res) => {
         },
         {
           role: 'user',
-          content: `Eres un experto en nominas espanolas. Extrae los datos de esta nomina con maxima precision y devuelve SOLO el JSON, sin texto adicional ni markdown.
-
-INSTRUCCIONES IMPORTANTES:
-- "neto" = liquido a percibir (lo que cobra el trabajador)
-- "devengado" = total devengado (suma de todos los conceptos positivos)
-- "deducciones" = total deducciones (suma de IRPF + SS trabajador + otras deducciones)
-- "irpf_importe" = importe en euros descontado por IRPF ESTE MES (no el porcentaje acumulado)
-- "irpf_porcentaje" = porcentaje de retencion IRPF aplicado
-- "ss_trabajador" = cuota SS que paga el TRABAJADOR (contingencias comunes + desempleo + FP del trabajador)
-- "ss_empresa" = cuota SS que paga la EMPRESA (contingencias comunes empresa + AT/EP + desempleo empresa + FP empresa + FOGASA)
-- "coste_empresa" = devengado + ss_empresa (coste total para la empresa)
-
+          content: `Extrae los siguientes datos de esta nomina y devuelve SOLO este JSON sin texto adicional:
 {
   "trabajador": "nombre completo del trabajador",
-  "mes": "nombre del mes en minusculas (enero, febrero...)",
+  "mes": "nombre del mes en español en minusculas (enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre)",
   "anno": numero_del_anno,
   "devengado": numero,
   "deducciones": numero,
