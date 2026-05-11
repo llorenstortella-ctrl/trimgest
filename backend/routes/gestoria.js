@@ -207,7 +207,7 @@ router.post('/responder', (req, res) => {
     if (!usuarios[empIdx].solicitudesGestoria) usuarios[empIdx].solicitudesGestoria = [];
     if (!usuarios[empIdx].gestoriasAprobadas) usuarios[empIdx].gestoriasAprobadas = [];
 
-    const solIdx = usuarios[empIdx].solicitudesGestoria.findIndex(s => s.gestoriaId === gestoriaId);
+    const solIdx = usuarios[empIdx].solicitudesGestoria.findIndex(s => s.gestoriaId === gestoriaId && (s.estado === 'pendiente' || s.estado === 'invitacion_pendiente'));
     if (solIdx === -1) return res.status(404).json({ error: 'Solicitud no encontrada' });
 
     const solicitud = usuarios[empIdx].solicitudesGestoria[solIdx];
