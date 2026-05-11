@@ -11,8 +11,7 @@ const saveUsuarios = (u) => fs.writeFileSync(path.join(baseDataDir, 'usuarios.js
 
 const PLANES = {
   basico: { precio: 1000, nombre: 'Plan Basico', limite: 100 },
-  estandar: { precio: 2000, nombre: 'Plan Estandar', limite: 200 },
-  gestoria: { precio: 3000, nombre: 'Plan Gestoria', limite: 999 }
+  estandar: { precio: 2000, nombre: 'Plan Estandar', limite: 200 }
 };
 
 // Crear sesion de pago
