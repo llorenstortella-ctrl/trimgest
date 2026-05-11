@@ -284,6 +284,12 @@
 
     init();
 
+    // Detectar #registro en la URL
+    if (window.location.hash === '#registro') {
+      history.replaceState(null, '', '/app');
+      mostrarRegistro();
+    }
+
     function cambiarSeccion(seccion) {
       window.seccionActual = seccion;
       document.getElementById('nav-facturas').className = 'nav-btn ' + (seccion === 'facturas' ? 'active' : 'inactive');
