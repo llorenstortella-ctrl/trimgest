@@ -495,47 +495,6 @@ router.delete('/cliente/:empresaId/nominas/:id', (req, res) => {
   } catch(e) { res.status(500).json({ error: 'Error' }); }
 });
 
-// GET /gestoria/cliente/:empresaId/exportar/:tipo/:trimestre/:anno — exportar Excel
-router.get('/cliente/:empresaId/exportar/:tipo/:trimestre/:anno', async (req, res) => {
-  try {
-    const gestoria = getUserFromToken(req);
-    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
-    const { empresaId, tipo, trimestre, anno } = req.params;
-    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
-    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
-    const usuarios = getUsuarios();
-    const empresa = usuarios.find(u => u.empresaId === empresaId);
-    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
-    req.empresaId = empresaId;
-    req.query.empresa = nombreEmpresa;
-    req.params.tipo = tipo;
-    req.params.trimestre = trimestre;
-    req.params.anno = anno;
-    const exportarRouter = require('./exportar');
-    exportarRouter.handle ? exportarRouter.handle(req, res) : res.status(500).json({ error: 'Exportar no disponible' });
-  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar' }); }
-});
-
-// GET /gestoria/cliente/:empresaId/pdf/:tipo/:trimestre/:anno — generar PDF
-router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) => {
-  try {
-    const gestoria = getUserFromToken(req);
-    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
-    const { empresaId, tipo, trimestre, anno } = req.params;
-    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
-    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
-    const usuarios = getUsuarios();
-    const empresa = usuarios.find(u => u.empresaId === empresaId);
-    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
-    req.empresaId = empresaId;
-    req.query.empresa = nombreEmpresa;
-    req.params.tipo = tipo;
-    req.params.trimestre = trimestre;
-    req.params.anno = anno;
-    const generarRouter = require('./generar');
-    generarRouter.handle ? generarRouter.handle(req, res) : res.status(500).json({ error: 'Generar no disponible' });
-  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
-});
 
 
 // GET /gestoria/cliente/:empresaId/archivo/:filename — ver archivo escaneado
@@ -552,6 +511,92 @@ router.get('/cliente/:empresaId/archivo/:filename', (req, res) => {
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
     res.sendFile(filePath);
   } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/exportar/:tipo/:trimestre/:anno — exportar Excel
+router.get('/cliente/:empresaId/exportar/:tipo/:trimestre/:anno', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, tipo, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const XLSX = require('xlsx');
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
+    const facturas = JSON.parse(fs.readFileSync(dbPath));
+    const lista = facturas.filter(f => f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno) && !f.borrado);
+    const datos = lista.map(f => ({
+      'Nombre': f.nombre || '',
+      'N Factura': f.numero_factura || '',
+      'Fecha': f.fecha || '',
+      'Base Imponible': Number(f.base_imponible) || 0,
+      'IVA %': f.iva_porcentaje || 0,
+      'IVA Importe': Number(f.iva_importe) || 0,
+      'Total': Number(f.total) || 0,
+      'Trimestre': f.trimestre || '',
+      'Anno': f.anno || ''
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
+    ws['!cols'] = [{ wch: 30 },{ wch: 15 },{ wch: 12 },{ wch: 15 },{ wch: 8 },{ wch: 15 },{ wch: 15 },{ wch: 10 },{ wch: 8 }];
+    XLSX.utils.book_append_sheet(wb, ws, tipo === 'proveedor' ? 'Proveedores' : 'Clientes');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-' + tipo + '-' + trimestre + '-' + anno + '.xlsx');
+    res.send(buffer);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/exportar/nominas/:anno — exportar Excel nominas
+router.get('/cliente/:empresaId/exportar/nominas/:anno', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const XLSX = require('xlsx');
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
+    const nominas = JSON.parse(fs.readFileSync(dbPath));
+    const lista = nominas.filter(n => String(n.anno) === String(anno) && !n.borrado);
+    const datos = lista.map(n => ({
+      'Trabajador': n.trabajador || n.empleado || n.nombre || '',
+      'Mes': n.mes || '',
+      'Anno': n.anno || '',
+      'Devengado': Number(n.devengado || n.salario_bruto) || 0,
+      'Neto': Number(n.neto || n.salario_neto) || 0
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
+    XLSX.utils.book_append_sheet(wb, ws, 'Nominas');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-nominas-' + anno + '.xlsx');
+    res.send(buffer);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar nominas' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/pdf/:tipo/:trimestre/:anno — generar PDF
+router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, tipo, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    const uploadsDir = path.join(dataDir, 'empresas', empresaId, 'uploads');
+    const { generarPDFGestoria } = require('./generar');
+    const pdfBytes = await generarPDFGestoria(tipo, trimestre, anno, nombreEmpresa, dbPath, uploadsDir);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-' + tipo + '-' + trimestre + '-' + anno + '.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
 });
 
 module.exports = router;

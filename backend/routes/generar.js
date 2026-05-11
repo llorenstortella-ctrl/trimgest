@@ -126,3 +126,4 @@ router.get('/pdf/:tipo/:trimestre/:anno', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.generarPDFGestoria = generarPDF;
