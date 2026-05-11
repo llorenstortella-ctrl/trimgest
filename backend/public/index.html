@@ -792,13 +792,41 @@
       var totalCli = cliPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
 
       var listaHTML = '';
+      // ordenar: proveedores agrupados por nombre y fecha, clientes solo por fecha
+      function ordenarListaEmpresa(arr) {
+        var provs = arr.filter(function(f) { return f.tipo !== 'cliente'; });
+        var clis = arr.filter(function(f) { return f.tipo === 'cliente'; });
+        var grupos = {};
+        provs.forEach(function(f) {
+          var key = (f.nombre || 'Sin proveedor').trim();
+          if (!grupos[key]) grupos[key] = [];
+          grupos[key].push(f);
+        });
+        Object.keys(grupos).forEach(function(k) {
+          grupos[k].sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+        });
+        var provOrdenados = [];
+        Object.keys(grupos).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(grupos[k]); });
+        clis.sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+        return provOrdenados.concat(clis);
+      }
+      lista = ordenarListaEmpresa(lista);
+
       if (lista.length === 0) {
         listaHTML = '<div class="empty">No hay facturas en este apartado</div>';
       } else {
         listaHTML = '<div class="facturas-list">';
+        var provActualEmp = null;
         for (var i = 0; i < lista.length; i++) {
           var f = lista[i];
           var optsAnnoEdit = anos.map(function(a) { return '<option value="' + a + '"' + (String(f.anno)===a?' selected':'') + '>' + a + '</option>'; }).join('');
+          if (f.tipo !== 'cliente') {
+            var provNombre = (f.nombre || 'Sin proveedor').trim();
+            if (provNombre !== provActualEmp) {
+              listaHTML += '<div style="padding:8px 4px;font-size:11px;font-weight:600;color:#9a90b4;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #2a2a3a;margin-bottom:4px;">' + provNombre + '</div>';
+              provActualEmp = provNombre;
+            }
+          }
           listaHTML += '<div class="factura-card' + (f.enviado ? ' enviada' : '') + '">';
           listaHTML += '<div class="factura-header"><span class="factura-nombre">' + f.nombre + '</span>';
           listaHTML += '<div class="factura-badges"><span class="factura-badge badge-' + f.tipo + '">' + f.tipo + '</span>';

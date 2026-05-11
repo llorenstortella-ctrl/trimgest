@@ -426,26 +426,66 @@ function filtrarFacturas() {
   renderTablaFacturas(lista);
 }
 
+function ordenarFacturas(lista) {
+  var proveedores = lista.filter(function(f) { return f.tipo !== 'cliente'; });
+  var clientes = lista.filter(function(f) { return f.tipo === 'cliente'; });
+  // proveedores: agrupar por proveedor, dentro por fecha
+  var gruposP = {};
+  proveedores.forEach(function(f) {
+    var key = (f.proveedor || f.emisor || 'Sin proveedor').trim();
+    if (!gruposP[key]) gruposP[key] = [];
+    gruposP[key].push(f);
+  });
+  Object.keys(gruposP).sort().forEach(function(k) {
+    gruposP[k].sort(function(a, b) { return (a.fecha || '').localeCompare(b.fecha || ''); });
+  });
+  var provOrdenados = [];
+  Object.keys(gruposP).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(gruposP[k]); });
+  // clientes: solo por fecha
+  clientes.sort(function(a, b) { return (a.fecha || '').localeCompare(b.fecha || ''); });
+  return { proveedores: provOrdenados, clientes: clientes };
+}
+
 function renderTablaFacturas(lista) {
   var tbody = document.getElementById('tabla-facturas');
   if (!lista.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin facturas</td></tr>'; return; }
-  tbody.innerHTML = lista.map(function(f) {
-    return '<tr>' +
-      '<td>' + (f.numero || '-') + '</td>' +
-      '<td>' + (f.fecha || '-') + '</td>' +
-      '<td>' + (f.proveedor || f.emisor || f.cliente || '-') + '</td>' +
-      '<td>' + (f.concepto || f.descripcion || '-') + '</td>' +
-      '<td>' + (f.base_imponible ? f.base_imponible + ' EUR' : '-') + '</td>' +
-      '<td>' + (f.iva ? f.iva + '%' : '-') + '</td>' +
-      '<td style="font-weight:600;color:#e8c87a">' + (f.total ? f.total + ' EUR' : '-') + '</td>' +
-      '<td><span class="badge ' + (f.tipo === 'cliente' ? 'badge-green' : 'badge-gray') + '">' + (f.tipo || '-') + '</span></td>' +
-      '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
-        (f.archivo ? '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">Ver PDF</button>' : '') +
-        '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
-        '<button class="btn btn-danger btn-sm" data-id="' + f.id + '" onclick="borrarFactura(this.dataset.id)">Borrar</button>' +
-      '</td>' +
-    '</tr>';
-  }).join('');
+  var ordenado = ordenarFacturas(lista);
+  var filas = '';
+  if (ordenado.proveedores.length) {
+    filas += '<tr><td colspan="9" style="padding:10px 12px;font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;background:#0f0f13;">Proveedores</td></tr>';
+    var provActual = null;
+    ordenado.proveedores.forEach(function(f) {
+      var prov = (f.proveedor || f.emisor || 'Sin proveedor').trim();
+      if (prov !== provActual) {
+        filas += '<tr><td colspan="9" style="padding:6px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + prov + '</td></tr>';
+        provActual = prov;
+      }
+      filas += renderFila(f);
+    });
+  }
+  if (ordenado.clientes.length) {
+    filas += '<tr><td colspan="9" style="padding:10px 12px;font-size:11px;letter-spacing:2px;color:#6a6070;text-transform:uppercase;background:#0f0f13;">Clientes</td></tr>';
+    ordenado.clientes.forEach(function(f) { filas += renderFila(f); });
+  }
+  tbody.innerHTML = filas;
+}
+
+function renderFila(f) {
+  return '<tr>' +
+    '<td>' + (f.numero || '-') + '</td>' +
+    '<td>' + (f.fecha || '-') + '</td>' +
+    '<td>' + (f.proveedor || f.emisor || f.cliente || '-') + '</td>' +
+    '<td>' + (f.concepto || f.descripcion || '-') + '</td>' +
+    '<td>' + (f.base_imponible ? f.base_imponible + ' EUR' : '-') + '</td>' +
+    '<td>' + (f.iva ? f.iva + '%' : '-') + '</td>' +
+    '<td style="font-weight:600;color:#e8c87a">' + (f.total ? f.total + ' EUR' : '-') + '</td>' +
+    '<td><span class="badge ' + (f.tipo === 'cliente' ? 'badge-green' : 'badge-gray') + '">' + (f.tipo || '-') + '</span></td>' +
+    '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+      (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">Ver PDF</button>' : '') +
+      '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
+      '<button class="btn btn-danger btn-sm" data-id="' + f.id + '" onclick="borrarFactura(this.dataset.id)">Borrar</button>' +
+    '</td>' +
+  '</tr>';
 }
 
 async function cargarNominasCliente(empresaId) {
@@ -455,21 +495,36 @@ async function cargarNominasCliente(empresaId) {
     var tbody = document.getElementById('tabla-nominas');
     var nominas = (d.nominas || []).filter(function(n) { return !n.borrado; });
     if (!nominas.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin nominas</td></tr>'; return; }
-    tbody.innerHTML = nominas.map(function(n) {
-      return '<tr>' +
-        '<td>' + (n.empleado || n.nombre || '-') + '</td>' +
-        '<td>' + (n.mes || '-') + '</td>' +
-        '<td>' + (n.anno || '-') + '</td>' +
-        '<td>' + (n.salario_bruto ? n.salario_bruto + ' EUR' : '-') + '</td>' +
-        '<td>' + (n.seg_social ? n.seg_social + ' EUR' : '-') + '</td>' +
-        '<td>' + (n.irpf ? n.irpf + ' EUR' : '-') + '</td>' +
-        '<td style="font-weight:600;color:#e8c87a">' + (n.salario_neto ? n.salario_neto + ' EUR' : '-') + '</td>' +
-        '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
-          '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
-          '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
-        '</td>' +
-      '</tr>';
-    }).join('');
+    // agrupar por trabajador, dentro por fecha
+    var grupos = {};
+    nominas.forEach(function(n) {
+      var key = (n.empleado || n.nombre || 'Sin nombre').trim();
+      if (!grupos[key]) grupos[key] = [];
+      grupos[key].push(n);
+    });
+    Object.keys(grupos).forEach(function(k) {
+      grupos[k].sort(function(a, b) { return (a.anno || '').toString().localeCompare((b.anno || '').toString()) || (a.mes || '').localeCompare(b.mes || ''); });
+    });
+    var filas = '';
+    Object.keys(grupos).sort().forEach(function(trabajador) {
+      filas += '<tr><td colspan="8" style="padding:8px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + trabajador + '</td></tr>';
+      grupos[trabajador].forEach(function(n) {
+        filas += '<tr>' +
+          '<td>' + (n.empleado || n.nombre || '-') + '</td>' +
+          '<td>' + (n.mes || '-') + '</td>' +
+          '<td>' + (n.anno || '-') + '</td>' +
+          '<td>' + (n.salario_bruto ? n.salario_bruto + ' EUR' : '-') + '</td>' +
+          '<td>' + (n.seg_social ? n.seg_social + ' EUR' : '-') + '</td>' +
+          '<td>' + (n.irpf ? n.irpf + ' EUR' : '-') + '</td>' +
+          '<td style="font-weight:600;color:#e8c87a">' + (n.salario_neto ? n.salario_neto + ' EUR' : '-') + '</td>' +
+          '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+            '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
+            '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
+          '</td>' +
+        '</tr>';
+      });
+    });
+    tbody.innerHTML = filas;
   } catch(e) { console.error(e); }
 }
 
