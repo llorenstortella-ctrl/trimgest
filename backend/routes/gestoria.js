@@ -599,4 +599,60 @@ router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) =>
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
 });
 
+// GET /gestoria/cliente/:empresaId/pdf/nominas/:anno — PDF nominas
+router.get('/cliente/:empresaId/pdf/nominas/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const nominasPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const lista = nominas.filter(n => String(n.anno) === String(anno));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const page = pdfDoc.addPage([595, 842]);
+    const { width, height } = page.getSize();
+
+    page.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: rgb(0.06, 0.06, 0.1) });
+    page.drawText('TrimGest', { x: 40, y: height - 40, size: 24, font: bold, color: rgb(0.91, 0.78, 0.48) });
+    page.drawText(nombreEmpresa, { x: 40, y: height - 65, size: 11, font: regular, color: rgb(0.8, 0.8, 0.8) });
+    page.drawText('NOMINAS ' + anno, { x: 40, y: height - 85, size: 10, font: regular, color: rgb(0.6, 0.6, 0.7) });
+
+    let y = height - 130;
+    page.drawText('Trabajador', { x: 40, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    page.drawText('Mes', { x: 220, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    page.drawText('Coste empresa', { x: 300, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    page.drawText('Neto', { x: 420, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    y -= 15;
+    page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.3, 0.3, 0.4) });
+    y -= 15;
+
+    lista.forEach(function(n) {
+      if (y < 60) return;
+      var trab = (n.trabajador || n.empleado || n.nombre || '-').substring(0, 28);
+      var mes = (n.mes || '-').substring(0, 10);
+      var bruto = n.coste_empresa || n.devengado || 0;
+      var neto = n.neto || n.salario_neto || 0;
+      page.drawText(trab, { x: 40, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      page.drawText(mes, { x: 220, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      page.drawText(Number(bruto).toFixed(2) + ' EUR', { x: 300, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      page.drawText(Number(neto).toFixed(2) + ' EUR', { x: 420, y, size: 9, font: bold, color: rgb(0.2, 0.5, 0.3) });
+      y -= 20;
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=nominas-' + anno + '.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF nominas' }); }
+});
+
 module.exports = router;

@@ -786,6 +786,7 @@
       var pendientes = facturasT.filter(function(f) { return !f.enviado; });
       var enviadas = facturasT.filter(function(f) { return f.enviado; });
       var lista = window.tabSel === 'pendientes' ? pendientes : enviadas;
+      if (window.filtroTipo) lista = lista.filter(function(f) { return f.tipo === window.filtroTipo; });
       var provPend = pendientes.filter(function(f) { return f.tipo === 'proveedor'; });
       var cliPend = pendientes.filter(function(f) { return f.tipo === 'cliente'; });
       var totalProv = provPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
@@ -870,6 +871,11 @@
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores"><select onchange="window.trimestreSel=this.value;renderApp()">' + optsTrim + '</select><select onchange="window.annoSel=this.value;renderApp()">' + optsAno + '</select></div>' +
+        '<div style="display:flex;gap:6px;padding:0 16px 8px;">' +
+        '<button onclick="window.filtroTipo=null;renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (!window.filtroTipo?'#e8c87a':'#1e1e28') + ';color:' + (!window.filtroTipo?'#0f0f13':'#9a90b4') + ';font-weight:600;">Todos</button>' +
+        '<button onclick="window.filtroTipo='proveedor';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='proveedor'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='proveedor'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Proveedores</button>' +
+        '<button onclick="window.filtroTipo='cliente';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='cliente'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='cliente'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Clientes</button>' +
+        '</div>' +
         '<div class="stats">' +
         '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' pendientes</div></div>' +
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +
