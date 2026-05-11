@@ -582,7 +582,7 @@ async function cargarNominasCliente(empresaId) {
     });
     var filas = '';
     Object.keys(grupos).sort().forEach(function(trabajador) {
-      filas += '<tr><td colspan="6" style="padding:8px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + trab + '</td></tr>';
+      filas += '<tr><td colspan="6" style="padding:8px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + key + '</td></tr>';
       grupos[trabajador].forEach(function(n) {
         filas += '<tr>' +
           '<td>' + (n.empleado || n.nombre || '-') + '</td>' +
