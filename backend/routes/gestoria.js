@@ -422,4 +422,119 @@ router.post('/revocar', (req, res) => {
   }
 });
 
+
+// PUT /gestoria/cliente/:empresaId/facturas/:id — editar factura
+router.put('/cliente/:empresaId/facturas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const facturasPath = path.join(dir, 'facturas.json');
+    const facturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
+    const idx = facturas.findIndex(f => String(f.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Factura no encontrada' });
+    facturas[idx] = Object.assign(facturas[idx], req.body);
+    fs.writeFileSync(facturasPath, JSON.stringify(facturas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// DELETE /gestoria/cliente/:empresaId/facturas/:id — borrar factura
+router.delete('/cliente/:empresaId/facturas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const facturasPath = path.join(dir, 'facturas.json');
+    let facturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
+    facturas = facturas.filter(f => String(f.id) !== String(id));
+    fs.writeFileSync(facturasPath, JSON.stringify(facturas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// PUT /gestoria/cliente/:empresaId/nominas/:id — editar nomina
+router.put('/cliente/:empresaId/nominas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const nominasPath = path.join(dir, 'nominas.json');
+    const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const idx = nominas.findIndex(n => String(n.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
+    nominas[idx] = Object.assign(nominas[idx], req.body);
+    fs.writeFileSync(nominasPath, JSON.stringify(nominas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// DELETE /gestoria/cliente/:empresaId/nominas/:id — borrar nomina
+router.delete('/cliente/:empresaId/nominas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const nominasPath = path.join(dir, 'nominas.json');
+    let nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    nominas = nominas.filter(n => String(n.id) !== String(id));
+    fs.writeFileSync(nominasPath, JSON.stringify(nominas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/exportar/:tipo/:trimestre/:anno — exportar Excel
+router.get('/cliente/:empresaId/exportar/:tipo/:trimestre/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, tipo, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    req.empresaId = empresaId;
+    req.query.empresa = nombreEmpresa;
+    req.params.tipo = tipo;
+    req.params.trimestre = trimestre;
+    req.params.anno = anno;
+    const exportarRouter = require('./exportar');
+    exportarRouter.handle ? exportarRouter.handle(req, res) : res.status(500).json({ error: 'Exportar no disponible' });
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/pdf/:tipo/:trimestre/:anno — generar PDF
+router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, tipo, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    req.empresaId = empresaId;
+    req.query.empresa = nombreEmpresa;
+    req.params.tipo = tipo;
+    req.params.trimestre = trimestre;
+    req.params.anno = anno;
+    const generarRouter = require('./generar');
+    generarRouter.handle ? generarRouter.handle(req, res) : res.status(500).json({ error: 'Generar no disponible' });
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
+});
+
 module.exports = router;
