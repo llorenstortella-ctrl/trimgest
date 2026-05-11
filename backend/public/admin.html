@@ -177,7 +177,7 @@
             '<td style="color:#6a6070;">' + fecha + '</td>' +
             '<td>' + u.facturas + '</td>' +
             '<td>' + u.nominas + '</td>' +
-            '<td><span class="badge' + (u.plan_gratuito ? ' badge-gratis' : '') + '">' + (u.plan_gratuito ? '★ gratis' : u.plan) + '</span></td>' +
+            '<td><span class="badge' + (u.tipo === 'gestoria' ? ' badge-gestoria' : u.plan_gratuito ? ' badge-gratis' : '') + '">' + (u.tipo === 'gestoria' ? '⚖ Gestoría' : u.plan_gratuito ? '★ gratis' : u.plan) + '</span></td>' +
             '<td>' +
             '<button class="btn-gratis' + (u.plan_gratuito ? ' activo' : '') + '">' + (u.plan_gratuito ? '★' : 'Gratis') + '</button>' +
             '<button class="btn-ver">Ver</button>' +
