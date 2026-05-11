@@ -6,34 +6,35 @@ const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const baseDataDir = path.join(__dirname, '../data');
+const dbPath = process.env.DATA_PATH || path.join(__dirname, '../data/facturas.json');
+const configPath = process.env.DATA_PATH
+  ? path.join(path.dirname(process.env.DATA_PATH), 'config.json')
+  : path.join(__dirname, '../data/config.json');
+const pygPath = process.env.DATA_PATH
+  ? path.join(path.dirname(process.env.DATA_PATH), 'pyg.json')
+  : path.join(__dirname, '../data/pyg.json');
 
-function getFacturasEmpresa(empresaId) {
-  const p = path.join(baseDataDir, 'empresas', empresaId, 'facturas.json');
-  if (!fs.existsSync(p)) return [];
-  return JSON.parse(fs.readFileSync(p));
-}
+const getFacturas = () => {
+  if (!fs.existsSync(dbPath)) return [];
+  return JSON.parse(fs.readFileSync(dbPath));
+};
 
-function getConfigEmpresa(empresaId) {
-  const p = path.join(baseDataDir, 'empresas', empresaId, 'config.json');
-  if (!fs.existsSync(p)) return { objetivo_trimestre: null };
-  return JSON.parse(fs.readFileSync(p));
-}
+const getConfig = () => {
+  if (!fs.existsSync(configPath)) return { pin: '1234', objetivo_trimestre: null };
+  return JSON.parse(fs.readFileSync(configPath));
+};
 
-function saveConfigEmpresa(empresaId, config) {
-  const dir = path.join(baseDataDir, 'empresas', empresaId);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(config, null, 2));
-}
+const saveConfig = (config) => {
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+};
 
-function getPyGEmpresa(empresaId) {
-  const p = path.join(baseDataDir, 'empresas', empresaId, 'pyg.json');
-  if (!fs.existsSync(p)) return null;
-  return JSON.parse(fs.readFileSync(p));
-}
+const getPyG = () => {
+  if (!fs.existsSync(pygPath)) return null;
+  return JSON.parse(fs.readFileSync(pygPath));
+};
 
-function getResumenFinanciero(trimestre, anno, empresaId) {
-  const facturas = getFacturasEmpresa(empresaId);
+function getResumenFinanciero(trimestre, anno) {
+  const facturas = getFacturas();
   const del_periodo = facturas.filter(f =>
     f.trimestre === trimestre && String(f.anno) === String(anno)
   );
@@ -44,7 +45,7 @@ function getResumenFinanciero(trimestre, anno, empresaId) {
   const totalGastos = proveedores.reduce((s, f) => s + Number(f.total), 0);
   const totalIngresos = clientes.reduce((s, f) => s + Number(f.total), 0);
   const beneficioEstimado = totalIngresos - totalGastos;
-  const pyg = getPyGEmpresa(empresaId);
+  const pyg = getPyG();
 
   return {
     trimestre,
@@ -54,33 +55,25 @@ function getResumenFinanciero(trimestre, anno, empresaId) {
     total_gastos: totalGastos.toFixed(2),
     total_ingresos: totalIngresos.toFixed(2),
     beneficio_estimado: beneficioEstimado.toFixed(2),
-    objetivo_trimestre: getConfigEmpresa(empresaId).objetivo_trimestre || null,
+    objetivo_trimestre: getConfig().objetivo_trimestre || null,
     proveedores_detalle: proveedores.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
     clientes_detalle: clientes.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
     pyg_actual: pyg ? pyg.ejercicio_actual : null,
-    pyg_anterior: pyg ? pyg.ejercicio_anterior : null,
-    empresaId
+    pyg_anterior: pyg ? pyg.ejercicio_anterior : null
   };
 }
 
 router.post('/objetivo', (req, res) => {
-  const auth = require('../middleware/auth');
   const { objetivo } = req.body;
-  const empresaId = req.empresaId || req.body.empresaId;
-  const config = getConfigEmpresa(empresaId);
+  const config = getConfig();
   config.objetivo_trimestre = parseFloat(objetivo);
-  saveConfigEmpresa(empresaId, config);
+  saveConfig(config);
   res.json({ ok: true });
 });
 
 router.post('/chat', async (req, res) => {
   const { mensaje, trimestre, anno, historial } = req.body;
-  const empresaId = req.empresaId || req.body.empresaId;
-  const usuariosPath = path.join(baseDataDir, 'usuarios.json');
-  const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
-  const usuario = usuarios.find(u => u.empresaId === empresaId);
-  const nombreEmpresa = usuario ? usuario.nombre_empresa : 'tu empresa';
-  const resumen = getResumenFinanciero(trimestre, anno, empresaId);
+  const resumen = getResumenFinanciero(trimestre, anno);
 
   const pygActualTexto = resumen.pyg_actual ? `
 DATOS P&G AÑO ACTUAL (${resumen.pyg_actual.anno}):
@@ -101,7 +94,7 @@ DATOS P&G AÑO ANTERIOR (${resumen.pyg_anterior.anno}):
   const messages = [
     {
       role: 'system',
-      content: `Eres el asesor financiero personal de ${nombreEmpresa}, una pequeña empresa española.
+      content: `Eres el asesor financiero personal de FEIM CA TEVA S.L., una pequeña empresa española.
 
 Tu rol es orientar al propietario sobre su situación financiera de forma clara, en lenguaje simple y sin jerga contable. Eres como un amigo que sabe de números.
 
