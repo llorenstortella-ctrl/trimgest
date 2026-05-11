@@ -525,7 +525,7 @@ router.get('/cliente/:empresaId/exportar/:tipo/:trimestre/:anno', (req, res) => 
     const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
     if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
     const facturas = JSON.parse(fs.readFileSync(dbPath));
-    const lista = facturas.filter(f => f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno) && !f.borrado);
+    const lista = facturas.filter(f => f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno));
     const datos = lista.map(f => ({
       'Nombre': f.nombre || '',
       'N Factura': f.numero_factura || '',
@@ -560,7 +560,7 @@ router.get('/cliente/:empresaId/exportar/nominas/:anno', (req, res) => {
     const dbPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
     if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
     const nominas = JSON.parse(fs.readFileSync(dbPath));
-    const lista = nominas.filter(n => String(n.anno) === String(anno) && !n.borrado);
+    const lista = nominas.filter(n => String(n.anno) === String(anno));
     const datos = lista.map(n => ({
       'Trabajador': n.trabajador || n.empleado || n.nombre || '',
       'Mes': n.mes || '',
@@ -592,7 +592,7 @@ router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) =>
     const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
     const uploadsDir = path.join(dataDir, 'empresas', empresaId, 'uploads');
     const { generarPDFGestoria } = require('./generar');
-    const pdfBytes = await generarPDFGestoria(tipo, trimestre, anno, nombreEmpresa, dbPath, uploadsDir);
+    const pdfBytes = await generarPDFGestoria(tipo, trimestre, anno, nombreEmpresa, dbPath, uploadsDir, true);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-' + tipo + '-' + trimestre + '-' + anno + '.pdf');
     res.send(Buffer.from(pdfBytes));

@@ -11,9 +11,10 @@ function formatEur(n) {
   return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
-async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir) {
+async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir, todasLasFacturas) {
   const facturas = JSON.parse(require('fs').readFileSync(dbPath));
   const lista = facturas.filter(function(f) {
+    if (todasLasFacturas) return f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno);
     return f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno) && !f.enviado;
   });
 
