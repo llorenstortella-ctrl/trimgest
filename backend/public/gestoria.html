@@ -440,6 +440,7 @@ function renderTablaFacturas(lista) {
       '<td style="font-weight:600;color:#e8c87a">' + (f.total ? f.total + ' EUR' : '-') + '</td>' +
       '<td><span class="badge ' + (f.tipo === 'cliente' ? 'badge-green' : 'badge-gray') + '">' + (f.tipo || '-') + '</span></td>' +
       '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+        (f.archivo ? '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">Ver PDF</button>' : '') +
         '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
         '<button class="btn btn-danger btn-sm" data-id="' + f.id + '" onclick="borrarFactura(this.dataset.id)">Borrar</button>' +
       '</td>' +
@@ -622,6 +623,11 @@ async function descargarPDFCliente(tipo) {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
   } catch(e) { alert('Error al generar PDF. Selecciona trimestre y ano primero.'); }
+}
+
+function verArchivo(filename) {
+  if (!filename || !clienteActivo) return;
+  window.open(API + '/gestoria/cliente/' + clienteActivo + '/archivo/' + encodeURIComponent(filename) + '?token=' + token, '_blank');
 }
 
 async function solicitarAcceso() {

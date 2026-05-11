@@ -537,4 +537,21 @@ router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) =>
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
 });
 
+
+// GET /gestoria/cliente/:empresaId/archivo/:filename — ver archivo escaneado
+router.get('/cliente/:empresaId/archivo/:filename', (req, res) => {
+  try {
+    const tokenQuery = req.query.token;
+    if (tokenQuery) req.headers['authorization'] = 'Bearer ' + tokenQuery;
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, filename } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const filePath = path.join(dataDir, 'empresas', empresaId, 'uploads', filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    res.sendFile(filePath);
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
 module.exports = router;
