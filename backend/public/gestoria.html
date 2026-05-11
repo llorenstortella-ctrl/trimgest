@@ -582,35 +582,57 @@ async function cargarNominasCliente(empresaId) {
     var r = await fetch(API + '/gestoria/cliente/' + empresaId + '/nominas', { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
     if (!d.ok) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Error: ' + (d.error||'desconocido') + '</td></tr>'; return; }
-    var nominas = d.nominas || [];
-    window.todasNominas = nominas;
-    // poblar selector empleados
+    window.todasNominas = d.nominas || [];
     var selEmp = document.getElementById('sel-empleado');
     if (selEmp) {
-      var trabajadores = [...new Set(nominas.map(function(n) { return n.trabajador || n.empleado || n.nombre || ''; }).filter(Boolean))].sort();
+      var trabajadores = [];
+      window.todasNominas.forEach(function(n) {
+        var t = n.trabajador || n.empleado || n.nombre || '';
+        if (t && trabajadores.indexOf(t) === -1) trabajadores.push(t);
+      });
+      trabajadores.sort();
       selEmp.innerHTML = '<option value="">Todos los trabajadores</option>' + trabajadores.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
     }
-    if (!nominas.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin nominas</td></tr>'; return; }
-    var filas = '';
-    nominas.forEach(function(n) {
-      var trab = n.trabajador || n.empleado || n.nombre || 'Sin nombre';
-      var bruto = n.coste_empresa || n.devengado || n.salario_bruto || 0;
-      var neto = n.neto || n.salario_neto || 0;
-      filas += '<tr>' +
-        '<td>' + trab + '</td>' +
-        '<td>' + (n.mes || '-') + '</td>' +
-        '<td>' + (n.anno || '-') + '</td>' +
-        '<td>' + (bruto ? Number(bruto).toFixed(2) + ' EUR' : '-') + '</td>' +
-        '<td style="font-weight:600;color:#e8c87a">' + (neto ? Number(neto).toFixed(2) + ' EUR' : '-') + '</td>' +
-        '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
-          (n.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (n.archivo||'') + '" onclick="verArchivoNomina(this.dataset.archivo)">📄 PDF</button>' : '') +
-          '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
-          '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
-        '</td>' +
-      '</tr>';
-    });
-    tbody.innerHTML = filas;
+    renderNominas(window.todasNominas);
   } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="6" class="empty">Error de conexion</td></tr>'; }
+}
+
+function renderNominas(lista) {
+  var tbody = document.getElementById('tabla-nominas');
+  if (!tbody) return;
+  if (!lista || !lista.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin nominas</td></tr>'; return; }
+  var filas = '';
+  lista.forEach(function(n) {
+    var trab = n.trabajador || n.empleado || n.nombre || 'Sin nombre';
+    var bruto = n.coste_empresa || n.devengado || n.salario_bruto || 0;
+    var neto = n.neto || n.salario_neto || 0;
+    filas += '<tr>' +
+      '<td>' + trab + '</td>' +
+      '<td>' + (n.mes || '-') + '</td>' +
+      '<td>' + (n.anno || '-') + '</td>' +
+      '<td>' + (bruto ? Number(bruto).toFixed(2) + ' EUR' : '-') + '</td>' +
+      '<td style="font-weight:600;color:#e8c87a">' + (neto ? Number(neto).toFixed(2) + ' EUR' : '-') + '</td>' +
+      '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+        (n.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + n.archivo + '" onclick="verArchivoNomina(this.dataset.archivo)">📄 PDF</button>' : '') +
+        '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
+        '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
+      '</td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = filas;
+}
+
+function filtrarNominas() {
+  if (!window.todasNominas) return;
+  var emp = document.getElementById('sel-empleado') ? document.getElementById('sel-empleado').value : '';
+  var anno = document.getElementById('sel-anno-nom') ? document.getElementById('sel-anno-nom').value : '';
+  var lista = window.todasNominas.filter(function(n) {
+    var trab = n.trabajador || n.empleado || n.nombre || '';
+    if (emp && trab !== emp) return false;
+    if (anno && String(n.anno) !== anno) return false;
+    return true;
+  });
+  renderNominas(lista);
 }
 
 function abrirEditarFactura(id) {
