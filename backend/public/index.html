@@ -705,7 +705,7 @@
           listaEl.innerHTML = d.aprobadas.map(function(g) {
             return '<div style="background:#0d2b1a;border:1px solid #1a4a2a;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
               '<div><div style="font-size:13px;color:#4caf7d;font-weight:600;">' + g.gestoriaNombre + '</div><div style="font-size:11px;color:#6a6070;">' + g.gestoriaEmail + '</div></div>' +
-              '<button onclick="revocarGestoria(' + JSON.stringify(g.gestoriaId) + ')" style="background:none;border:1px solid #3a1a1a;color:#c06060;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Revocar</button>' +
+              '<button data-gid="' + g.gestoriaId + '" onclick="revocarGestoria(this.dataset.gid)" style="background:none;border:1px solid #3a1a1a;color:#c06060;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Revocar</button>' +
               '</div>';
           }).join('');
         } else {
@@ -718,8 +718,8 @@
               return '<div style="background:#1e1e28;border:1px solid #2a2a3a;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
                 '<div><div style="font-size:13px;color:#e0d8cc;">' + s.gestoriaNombre + '</div><div style="font-size:11px;color:#6a6070;">' + s.gestoriaEmail + '</div></div>' +
                 '<div style="display:flex;gap:6px;">' +
-                '<button onclick="responderSolicitudGestoria(' + JSON.stringify(s.gestoriaId) + ', \'aceptar\')" style="background:#e8c87a;color:#1a1500;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Aceptar</button>' +
-                '<button onclick="responderSolicitudGestoria(' + JSON.stringify(s.gestoriaId) + ', \'rechazar\')" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Rechazar</button>' +
+                '<button data-gid="' + s.gestoriaId + '" data-accion="aceptar" onclick="responderSolicitudGestoria(this.dataset.gid, this.dataset.accion)" style="background:#e8c87a;color:#1a1500;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Aceptar</button>' +
+                '<button data-gid="' + s.gestoriaId + '" data-accion="rechazar" onclick="responderSolicitudGestoria(this.dataset.gid, this.dataset.accion)" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Rechazar</button>' +
                 '</div></div>';
             }).join('');
           } else {
