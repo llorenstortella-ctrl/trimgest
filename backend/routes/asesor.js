@@ -33,6 +33,12 @@ function getPyGEmpresa(empresaId) {
   return JSON.parse(fs.readFileSync(p));
 }
 
+function getNominasEmpresa(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'nominas.json');
+  if (!fs.existsSync(p)) return [];
+  return JSON.parse(fs.readFileSync(p));
+}
+
 function getResumenFinanciero(trimestre, anno, empresaId) {
   const facturas = getFacturasEmpresa(empresaId);
   const del_periodo = facturas.filter(f =>
@@ -44,7 +50,17 @@ function getResumenFinanciero(trimestre, anno, empresaId) {
 
   const totalGastos = proveedores.reduce((s, f) => s + Number(f.total), 0);
   const totalIngresos = clientes.reduce((s, f) => s + Number(f.total), 0);
-  const beneficioEstimado = totalIngresos - totalGastos;
+
+  const nominas = getNominasEmpresa(empresaId);
+  const nominasPeriodo = nominas.filter(n => {
+    if (!n.fecha) return false;
+    const d = new Date(n.fecha);
+    const t = Math.ceil((d.getMonth() + 1) / 3);
+    return String(t) === String(trimestre).replace('Q','') && String(d.getFullYear()) === String(anno);
+  });
+  const totalNominas = nominasPeriodo.reduce((s, n) => s + Number(n.coste_empresa || n.salario_bruto || 0), 0);
+
+  const beneficioEstimado = totalIngresos - totalGastos - totalNominas;
   const pyg = getPyGEmpresa(empresaId);
 
   return {
@@ -52,12 +68,15 @@ function getResumenFinanciero(trimestre, anno, empresaId) {
     anno,
     num_facturas_proveedor: proveedores.length,
     num_facturas_cliente: clientes.length,
+    num_nominas: nominasPeriodo.length,
     total_gastos: totalGastos.toFixed(2),
     total_ingresos: totalIngresos.toFixed(2),
+    total_nominas: totalNominas.toFixed(2),
     beneficio_estimado: beneficioEstimado.toFixed(2),
     objetivo_trimestre: getConfigEmpresa(empresaId).objetivo_trimestre || null,
     proveedores_detalle: proveedores.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
     clientes_detalle: clientes.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
+    nominas_detalle: nominasPeriodo.map(n => ({ empleado: n.empleado || n.nombre || 'Empleado', coste: n.coste_empresa || n.salario_bruto || 0, mes: n.mes || n.fecha })),
     pyg_actual: pyg ? pyg.ejercicio_actual : null,
     pyg_anterior: pyg ? pyg.ejercicio_anterior : null,
     empresaId
@@ -105,10 +124,11 @@ DATOS P&G AÑO ANTERIOR (${resumen.pyg_anterior.anno}):
 
 Tu rol es orientar al propietario sobre su situación financiera de forma clara, en lenguaje simple y sin jerga contable. Eres como un amigo que sabe de números.
 
-DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno} (facturas subidas en TrimGest):
+DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno}:
 - Facturas de proveedores: ${resumen.num_facturas_proveedor} facturas, total gastos: ${resumen.total_gastos}€
 - Facturas de clientes: ${resumen.num_facturas_cliente} facturas, total ingresos: ${resumen.total_ingresos}€
-- Beneficio estimado (solo facturas): ${resumen.beneficio_estimado}€
+- Nominas: ${resumen.num_nominas} nominas, coste total: ${resumen.total_nominas}€
+- Beneficio estimado (ingresos - gastos - nominas): ${resumen.beneficio_estimado}€
 ${resumen.objetivo_trimestre ? `- Objetivo de beneficio este trimestre: ${resumen.objetivo_trimestre}€` : '- Sin objetivo de beneficio definido'}
 
 ${pygActualTexto}
