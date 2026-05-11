@@ -745,6 +745,7 @@
 
     async function responderSolicitudGestoria(gestoriaId, accion) {
       try {
+        console.log('token:', window.token, 'gestoriaId:', gestoriaId, 'accion:', accion);
         var r = await fetch(API + '/gestoria/responder', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ gestoriaId, accion }) });
         var d = await r.json();
         if (!d.ok) { alert(d.error || 'Error'); return; }
