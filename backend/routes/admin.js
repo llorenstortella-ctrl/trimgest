@@ -165,4 +165,46 @@ router.get('/backup', (req, res) => {
   }
 });
 
+
+// POST /admin/restore — restaurar backup
+router.post('/restore', express.json({ limit: '50mb' }), (req, res) => {
+  const adminPass = req.headers['x-admin-password'];
+  if (adminPass !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const backup = req.body;
+    if (!backup.usuarios) return res.status(400).json({ error: 'Backup invalido' });
+
+    const dataDir = path.join(__dirname, '../data');
+
+    // Restaurar usuarios.json
+    fs.writeFileSync(path.join(dataDir, 'usuarios.json'), JSON.stringify(backup.usuarios, null, 2));
+
+    // Restaurar empresas
+    if (backup.empresas) {
+      const empresasDir = path.join(dataDir, 'empresas');
+      if (!fs.existsSync(empresasDir)) fs.mkdirSync(empresasDir, { recursive: true });
+
+      Object.keys(backup.empresas).forEach(empresaId => {
+        const dir = path.join(empresasDir, empresaId);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        const empresa = backup.empresas[empresaId];
+        const archivos = ['facturas', 'nominas', 'config', 'pyg'];
+        archivos.forEach(nombre => {
+          if (empresa[nombre]) {
+            fs.writeFileSync(path.join(dir, nombre + '.json'), JSON.stringify(empresa[nombre], null, 2));
+          }
+        });
+      });
+    }
+
+    res.json({ ok: true, mensaje: 'Backup restaurado correctamente' });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error al restaurar: ' + e.message });
+  }
+});
+
 module.exports = router;

@@ -70,6 +70,8 @@
       <h1>TrimGest Admin</h1>
       <div class="header-btns">
         <button class="btn-backup" onclick="descargarBackup()">&#8595; Backup</button>
+        <button class="btn-backup" onclick="restaurarBackup()" style="background:#2a1a2a;border-color:#6a2a6a;color:#c87ae8;">&#8593; Restaurar</button>
+        <input type="file" id="inputRestore" accept=".json" style="display:none" onchange="procesarRestore(this)">
         <button class="btn-logout" onclick="logout()">Cerrar sesion</button>
       </div>
     </div>
@@ -235,6 +237,37 @@
         body: JSON.stringify({ empresaId: empresaId, activo: activo })
       });
       cargarPanel();
+    }
+
+    function restaurarBackup() {
+      if (!confirm('ATENCION: Esto sobreescribira todos los datos actuales con el backup. Estas seguro?')) return;
+      document.getElementById('inputRestore').click();
+    }
+
+    async function procesarRestore(input) {
+      var file = input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          var backup = JSON.parse(e.target.result);
+          var r = await fetch(API + '/admin/restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+            body: JSON.stringify(backup)
+          });
+          var d = await r.json();
+          if (d.ok) {
+            alert('Backup restaurado correctamente. Recarga la pagina.');
+            cargarPanel();
+          } else {
+            alert('Error: ' + (d.error || 'Error desconocido'));
+          }
+        } catch(err) {
+          alert('Error al procesar el archivo: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
     }
 
     function descargarBackup() {
