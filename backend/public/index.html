@@ -645,6 +645,20 @@
         '<div id="ajGestoriaMsg" style="font-size:12px;margin-bottom:8px;"></div>' +
         '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;margin-top:12px;">Solicitudes pendientes</div>' +
         '<div id="ajSolicitudesLista" style="margin-bottom:16px;"></div>' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:12px;">Mi plan</div>' +
+        '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+        '<div style="font-size:14px;color:#e8c87a;font-weight:600;">' + (perfil.plan_gratuito ? 'Plan gratuito' : perfil.plan === 'estandar' ? 'Plan Estándar' : 'Plan Básico') + '</div>' +
+        '<div style="font-size:12px;color:#6a6070;">' + (perfil.plan_gratuito ? 'Sin límites' : perfil.plan === 'estandar' ? '200 subidas' : '100 subidas') + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">Documentos subidos: ' + (perfil.facturas_mes || 0) + (perfil.plan_gratuito ? '' : ' / ' + (perfil.plan === 'estandar' ? '200' : '100')) + '</div>' +
+        (perfil.plan_gratuito ? '' :
+        '<div style="background:#22223a;border-radius:6px;height:6px;overflow:hidden;">' +
+        '<div style="background:#e8c87a;height:100%;width:' + Math.min(100, Math.round((perfil.facturas_mes || 0) / (perfil.plan === 'estandar' ? 200 : 100) * 100)) + '%;border-radius:6px;"></div>' +
+        '</div>') +
+        '</div>' +
+        '</div>' +
         '<button onclick="cerrarAjustes();mostrarPlanes()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px;">Ver planes y precios</button>' +
         '<button onclick="cerrarSesion()" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cerrar sesion</button>' +
         '</div></div>' +
