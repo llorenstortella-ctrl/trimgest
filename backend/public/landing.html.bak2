@@ -150,19 +150,18 @@
           </ul>
           <a href="/app" class="plan-btn">Empezar</a>
         </div>
-        <div class="plan" style="border-color:#7ec47e;">
-          <div class="plan-badge" style="color:#7ec47e;">Para gestores</div>
+        <div class="plan">
           <div class="plan-nombre">Gestoria</div>
-          <div class="plan-precio" style="color:#7ec47e;">Gratis</div>
+          <div class="plan-precio">30<span>€/mes</span></div>
           <div class="plan-desc">Para gestores y asesores fiscales</div>
           <ul class="plan-items">
             <li>Panel con todos tus clientes</li>
             <li>Acceso a datos de cada cliente</li>
             <li>Descarga PDFs y Excel de cualquier cliente</li>
             <li>Clientes ilimitados</li>
-            <li>Sin coste para la gestoria</li>
+            <li>Soporte prioritario</li>
           </ul>
-          <a href="/panel-gestoria" class="plan-btn" style="background:#7ec47e;">Registrarse gratis</a>
+          <a href="/app" class="plan-btn">Empezar</a>
         </div>
       </div>
       <div class="extra">Subidas extra: <span>0,20€ por subida</span> si superas tu limite mensual</div>
