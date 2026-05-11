@@ -141,6 +141,21 @@
     window.token = localStorage.getItem('trimgest_token');
     window.nombreEmpresa = localStorage.getItem('trimgest_empresa');
 
+    // Gestionar retorno de Stripe
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const pago = params.get('pago');
+      const plan = params.get('plan');
+      if (pago === 'ok' && plan) {
+        window.history.replaceState({}, '', '/app');
+        setTimeout(function() {
+          alert('¡Pago completado! Tu plan ' + (plan === 'estandar' ? 'Estándar' : 'Básico') + ' ya está activo.');
+        }, 1000);
+      } else if (pago === 'cancelado') {
+        window.history.replaceState({}, '', '/app');
+      }
+    })();
+
     function getHeaders() {
       return {
         'Content-Type': 'application/json',

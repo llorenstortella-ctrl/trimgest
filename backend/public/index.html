@@ -788,6 +788,25 @@
 
     async function renderApp() {
       var facturas = await cargarFacturas();
+      var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
+      var perfil = await perfilRes.json();
+      var bannerHTML = '';
+      if (!perfil.plan_gratuito) {
+        var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
+        var usadas = perfil.facturas_mes || 0;
+        var pct = Math.round(usadas / limite * 100);
+        if (perfil.plan === 'free') {
+          bannerHTML = '<div style="background:#1a1a2a;border:1px solid #2a2a5a;border-radius:10px;padding:12px 16px;margin:8px 16px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<span style="font-size:13px;color:#9a90b4;">Plan gratuito &mdash; <b style=\'color:#e8c87a;\'>' + usadas + ' de 10</b> subidas usadas</span>' +
+            '<button onclick="cerrarAjustes&&cerrarAjustes();mostrarPlanes()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Actualizar plan</button>' +
+            '</div>';
+        } else if (pct >= 80) {
+          bannerHTML = '<div style="background:#1a2a1a;border:1px solid #2a4a2a;border-radius:10px;padding:12px 16px;margin:8px 16px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<span style="font-size:13px;color:#9a90b4;">Has usado <b style=\'color:#e8c87a;\'>' + usadas + ' de ' + limite + '</b> subidas este trimestre</span>' +
+            '<button onclick="cerrarAjustes&&cerrarAjustes();mostrarPlanes()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Actualizar plan</button>' +
+            '</div>';
+        }
+      }
       var anno = new Date().getFullYear();
       if (!window.trimestreSel) window.trimestreSel = getTrimestre();
       if (!window.annoSel) window.annoSel = String(anno);
@@ -896,6 +915,7 @@
         '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' pendientes</div></div>' +
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +
         '</div></div>' +
+        bannerHTML +
         '<div class="content">' +
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
         '<div class="upload-title">Subir factura</div><div class="upload-sub">Primero indica que tipo es</div>' +
