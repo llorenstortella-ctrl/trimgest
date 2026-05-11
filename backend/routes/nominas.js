@@ -54,8 +54,8 @@ INSTRUCCIONES IMPORTANTES:
 - "neto" = liquido a percibir (lo que cobra el trabajador)
 - "devengado" = total devengado (suma de todos los conceptos positivos)
 - "deducciones" = total deducciones (suma de IRPF + SS trabajador + otras deducciones)
-- "irpf_importe" = importe en euros descontado por IRPF ESTE MES (no el porcentaje acumulado)
-- "irpf_porcentaje" = porcentaje de retencion IRPF aplicado
+- "irpf_importe" = importe en EUROS descontado por IRPF este mes. Busca el valor numerico en la columna DEDUCCION junto a la linea IRPF. NUNCA uses el porcentaje acumulado como importe.
+- "irpf_porcentaje" = porcentaje de retencion IRPF. En la linea BASE IRPF del PDF aparece: base, importe retenido y porcentaje. Extrae el porcentaje directamente.
 - "ss_trabajador" = cuota SS que paga el TRABAJADOR (contingencias comunes + desempleo + FP del trabajador)
 - "ss_empresa" = cuota SS que paga la EMPRESA (contingencias comunes empresa + AT/EP + desempleo empresa + FP empresa + FOGASA)
 - "coste_empresa" = devengado + ss_empresa (coste total para la empresa)
