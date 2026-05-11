@@ -220,7 +220,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <div class="card">
               <div class="tabla-wrap">
                 <table class="tabla">
-                  <thead><tr><th>Empleado</th><th>Mes</th><th>Ano</th><th>Salario bruto</th><th>Seg. Social</th><th>IRPF</th><th>Neto</th><th>Acciones</th></tr></thead>
+                  <thead><tr><th>Trabajador</th><th>Mes</th><th>Ano</th><th>Bruto</th><th>Neto</th><th>Acciones</th></tr></thead>
                   <tbody id="tabla-nominas"></tbody>
                 </table>
               </div>
@@ -569,7 +569,7 @@ async function cargarNominasCliente(empresaId) {
     var d = await r.json();
     var tbody = document.getElementById('tabla-nominas');
     var nominas = (d.nominas || []).filter(function(n) { return !n.borrado; });
-    if (!nominas.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin nominas</td></tr>'; return; }
+    if (!nominas.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin nominas</td></tr>'; return; }
     // agrupar por trabajador, dentro por fecha
     var grupos = {};
     nominas.forEach(function(n) {
