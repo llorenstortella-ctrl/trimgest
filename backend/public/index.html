@@ -184,6 +184,12 @@
         });
         var data = await res.json();
         if (data.ok) {
+          if (data.verificacion_pendiente) {
+            alert('✅ Cuenta creada. Revisa tu email y verifica tu cuenta antes de entrar.');
+            document.getElementById('registroScreen').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            return;
+          }
           window.token = data.token;
           window.nombreEmpresa = data.nombre_empresa;
           localStorage.setItem('trimgest_token', data.token);
