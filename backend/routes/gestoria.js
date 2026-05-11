@@ -655,4 +655,88 @@ router.get('/cliente/:empresaId/pdf/nominas/:anno', async (req, res) => {
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF nominas' }); }
 });
 
+// GET /gestoria/cliente/:empresaId/archivo-nomina/:filename — ver PDF nomina original
+router.get('/cliente/:empresaId/archivo-nomina/:filename', (req, res) => {
+  try {
+    const tokenQuery = req.query.token;
+    if (tokenQuery) req.headers['authorization'] = 'Bearer ' + tokenQuery;
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, filename } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const filePath = path.join(dataDir, 'empresas', empresaId, 'uploads', filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    res.sendFile(filePath);
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/pdf/nominas/:anno — PDF dossier nominas
+router.get('/cliente/:empresaId/pdf/nominas/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const nominasPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const lista = anno === 'todas' ? nominas : nominas.filter(n => String(n.anno) === String(anno));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Portada resumen
+    const portada = pdfDoc.addPage([595, 842]);
+    const { width, height } = portada.getSize();
+    portada.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: rgb(0.06, 0.06, 0.1) });
+    portada.drawText('TrimGest', { x: 40, y: height - 40, size: 24, font: bold, color: rgb(0.91, 0.78, 0.48) });
+    portada.drawText(nombreEmpresa, { x: 40, y: height - 65, size: 11, font: regular, color: rgb(0.8, 0.8, 0.8) });
+    portada.drawText('NOMINAS ' + anno, { x: 40, y: height - 85, size: 10, font: regular, color: rgb(0.6, 0.6, 0.7) });
+
+    let y = height - 130;
+    portada.drawText('Trabajador', { x: 40, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    portada.drawText('Mes', { x: 220, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    portada.drawText('Coste empresa', { x: 300, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    portada.drawText('Neto', { x: 430, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    y -= 15;
+    portada.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.3, 0.3, 0.4) });
+    y -= 15;
+    lista.forEach(function(n) {
+      if (y < 60) return;
+      var trab = (n.trabajador || n.empleado || n.nombre || '-').substring(0, 28);
+      var bruto = n.coste_empresa || n.devengado || 0;
+      var neto = n.neto || n.salario_neto || 0;
+      portada.drawText(trab, { x: 40, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      portada.drawText((n.mes || '-'), { x: 220, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      portada.drawText(Number(bruto).toFixed(2) + ' EUR', { x: 300, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      portada.drawText(Number(neto).toFixed(2) + ' EUR', { x: 430, y, size: 9, font: bold, color: rgb(0.2, 0.5, 0.3) });
+      y -= 18;
+    });
+
+    // Adjuntar PDFs originales de cada nomina
+    for (const n of lista) {
+      if (!n.archivo) continue;
+      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', n.archivo);
+      if (!fs.existsSync(archivoPath)) continue;
+      try {
+        const pdfBytes = fs.readFileSync(archivoPath);
+        const nominaPdf = await PDFDocument.load(pdfBytes);
+        const pages = await pdfDoc.copyPages(nominaPdf, nominaPdf.getPageIndices());
+        pages.forEach(p => pdfDoc.addPage(p));
+      } catch(e) { console.error('Error adjuntando nomina:', n.archivo, e.message); }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=nominas-' + anno + '.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF nominas' }); }
+});
+
 module.exports = router;

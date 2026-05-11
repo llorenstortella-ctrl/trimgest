@@ -214,9 +214,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           </div>
 
           <div id="tab-nominas-content" style="display:none">
+            <div class="filtros-bar">
+              <select id="sel-empleado" onchange="filtrarNominas()">
+                <option value="">Todos los trabajadores</option>
+              </select>
+              <select id="sel-anno-nom" onchange="filtrarNominas()">
+                <option value="">Todos los anos</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+              </select>
+            </div>
             <div class="export-bar">
-              <button class="btn btn-secondary btn-sm" onclick="exportarExcelNominasCliente()">📊 Excel Nominas</button>
-              <button class="btn btn-secondary btn-sm" onclick="descargarPDFNominasCliente()">📄 PDF Nominas</button>
+              <button class="btn btn-secondary btn-sm" onclick="descargarPDFNominasCliente()">📄 PDF todas las nominas</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
@@ -573,6 +583,13 @@ async function cargarNominasCliente(empresaId) {
     var d = await r.json();
     if (!d.ok) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Error: ' + (d.error||'desconocido') + '</td></tr>'; return; }
     var nominas = d.nominas || [];
+    window.todasNominas = nominas;
+    // poblar selector empleados
+    var selEmp = document.getElementById('sel-empleado');
+    if (selEmp) {
+      var trabajadores = [...new Set(nominas.map(function(n) { return n.trabajador || n.empleado || n.nombre || ''; }).filter(Boolean))].sort();
+      selEmp.innerHTML = '<option value="">Todos los trabajadores</option>' + trabajadores.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('');
+    }
     if (!nominas.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin nominas</td></tr>'; return; }
     var filas = '';
     nominas.forEach(function(n) {
@@ -585,7 +602,8 @@ async function cargarNominasCliente(empresaId) {
         '<td>' + (n.anno || '-') + '</td>' +
         '<td>' + (bruto ? Number(bruto).toFixed(2) + ' EUR' : '-') + '</td>' +
         '<td style="font-weight:600;color:#e8c87a">' + (neto ? Number(neto).toFixed(2) + ' EUR' : '-') + '</td>' +
-        '<td style="display:flex;gap:6px;">' +
+        '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+          (n.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (n.archivo||'') + '" onclick="verArchivoNomina(this.dataset.archivo)">📄 PDF</button>' : '') +
           '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
           '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
         '</td>' +
@@ -771,6 +789,45 @@ async function descargarPDFNominasCliente() {
 function verArchivo(filename) {
   if (!filename || !clienteActivo) return;
   window.open(API + '/gestoria/cliente/' + clienteActivo + '/archivo/' + encodeURIComponent(filename) + '?token=' + token, '_blank');
+}
+
+function filtrarNominas() {
+  if (!window.todasNominas) return;
+  var emp = document.getElementById('sel-empleado') ? document.getElementById('sel-empleado').value : '';
+  var anno = document.getElementById('sel-anno-nom') ? document.getElementById('sel-anno-nom').value : '';
+  var lista = window.todasNominas.filter(function(n) {
+    var trab = n.trabajador || n.empleado || n.nombre || '';
+    if (emp && trab !== emp) return false;
+    if (anno && String(n.anno) !== anno) return false;
+    return true;
+  });
+  var tbody = document.getElementById('tabla-nominas');
+  if (!tbody) return;
+  if (!lista.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin nominas</td></tr>'; return; }
+  var filas = '';
+  lista.forEach(function(n) {
+    var trab = n.trabajador || n.empleado || n.nombre || 'Sin nombre';
+    var bruto = n.coste_empresa || n.devengado || n.salario_bruto || 0;
+    var neto = n.neto || n.salario_neto || 0;
+    filas += '<tr>' +
+      '<td>' + trab + '</td>' +
+      '<td>' + (n.mes || '-') + '</td>' +
+      '<td>' + (n.anno || '-') + '</td>' +
+      '<td>' + (bruto ? Number(bruto).toFixed(2) + ' EUR' : '-') + '</td>' +
+      '<td style="font-weight:600;color:#e8c87a">' + (neto ? Number(neto).toFixed(2) + ' EUR' : '-') + '</td>' +
+      '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+        (n.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (n.archivo||'') + '" onclick="verArchivoNomina(this.dataset.archivo)">📄 PDF</button>' : '') +
+        '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
+        '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
+      '</td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = filas;
+}
+
+function verArchivoNomina(filename) {
+  if (!filename || !clienteActivo) return;
+  window.open(API + '/gestoria/cliente/' + clienteActivo + '/archivo-nomina/' + encodeURIComponent(filename) + '?token=' + token, '_blank');
 }
 
 async function solicitarAcceso() {
