@@ -80,6 +80,7 @@ router.post('/login', async (req, res) => {
     if (!usuario) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
     const ok = await bcrypt.compare(password, usuario.password);
     if (!ok) return res.status(401).json({ error: 'Email o contraseña incorrectos' });
+    if (!usuario.verificado) return res.status(401).json({ error: 'Debes verificar tu email antes de entrar. Revisa tu bandeja de entrada.' });
     const token = jwt.sign({ id: usuario.id, empresaId: usuario.empresaId }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ ok: true, token, nombre_empresa: usuario.nombre_empresa, empresaId: usuario.empresaId });
   } catch(e) {
@@ -136,6 +137,24 @@ router.put('/perfil', (req, res) => {
     res.json({ ok: true });
   } catch(e) {
     res.status(401).json({ error: 'No autorizado' });
+  }
+});
+
+
+// Verificar email
+router.get('/verificar', (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) return res.status(400).send('<h2>Token no válido</h2>');
+    const usuarios = getUsuarios();
+    const idx = usuarios.findIndex(u => u.ver_token === token);
+    if (idx === -1) return res.status(400).send('<h2>Token no válido o ya usado</h2>');
+    usuarios[idx].verificado = true;
+    usuarios[idx].ver_token = null;
+    saveUsuarios(usuarios);
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TrimGest</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f5;}div{text-align:center;padding:40px;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.1);}</style></head><body><div><h2>✅ Email verificado</h2><p>Tu cuenta está activa. Ya puedes entrar a TrimGest.</p><br><a href="https://trimgest.es/app" style="background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;">Entrar a la app</a></div></body></html>`);
+  } catch(e) {
+    res.status(500).send('<h2>Error al verificar</h2>');
   }
 });
 
