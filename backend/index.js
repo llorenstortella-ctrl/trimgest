@@ -42,6 +42,10 @@ app.get('/app', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+app.get('/recuperar', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/recuperar.html'));
+});
+
 app.get('/verificar', (req, res) => {
   const token = req.query.token;
   if (!token) return res.redirect('/app');

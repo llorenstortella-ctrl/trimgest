@@ -1,5 +1,5 @@
 const express = require('express');
-const { enviarVerificacion } = require('../utils/email');
+const { enviarVerificacion, enviarRecuperacion } = require('../utils/email');
 const crypto = require('crypto');
 const router = express.Router();
 const fs = require('fs');

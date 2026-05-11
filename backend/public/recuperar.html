@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar contrasena — TrimGest</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .box { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; }
+    .logo { font-size: 24px; font-weight: 700; color: #e8c87a; text-align: center; margin-bottom: 8px; }
+    .sub { text-align: center; color: #888; font-size: 13px; margin-bottom: 28px; }
+    .input-row { margin-bottom: 14px; }
+    .input-row label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; }
+    .input-row input { width: 100%; background: #0f0f13; border: 1px solid #2a2a35; border-radius: 8px; padding: 10px 14px; color: #e8e8e8; font-size: 14px; outline: none; }
+    .input-row input:focus { border-color: #e8c87a; }
+    .btn { width: 100%; background: #e8c87a; color: #0f0f13; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; text-align: center; }
+    .msg-ok { background: #0d2b1a; color: #4caf7d; border: 1px solid #1a4a2a; }
+    .msg-err { background: #2b0d0d; color: #e05555; border: 1px solid #4a1a1a; }
+    .back { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+    .back a { color: #e8c87a; text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">TrimGest</div>
+  <div class="sub" id="subtitulo">Recuperar contrasena</div>
+  <div id="msg"></div>
+  <div id="form-email">
+    <div class="input-row"><label>Email de tu cuenta</label><input type="email" id="email" placeholder="tu@email.com"></div>
+    <button class="btn" onclick="solicitarRecuperacion()">Enviar enlace</button>
+  </div>
+  <div id="form-pass" style="display:none">
+    <div class="input-row"><label>Nueva contrasena</label><input type="password" id="pass1" placeholder="Minimo 6 caracteres"></div>
+    <div class="input-row"><label>Repetir contrasena</label><input type="password" id="pass2" placeholder="Repite la contrasena"></div>
+    <button class="btn" onclick="cambiarContrasena()">Guardar contrasena</button>
+  </div>
+  <div class="back"><a href="/app">Volver al inicio</a></div>
+</div>
+<script>
+  var API = '';
+  var token = new URLSearchParams(window.location.search).get('token');
+
+  if (token) {
+    document.getElementById('form-email').style.display = 'none';
+    document.getElementById('form-pass').style.display = 'block';
+    document.getElementById('subtitulo').textContent = 'Nueva contrasena';
+  }
+
+  function mostrarMsg(msg, err) {
+    var el = document.getElementById('msg');
+    el.innerHTML = '<div class="msg ' + (err ? 'msg-err' : 'msg-ok') + '">' + msg + '</div>';
+  }
+
+  async function solicitarRecuperacion() {
+    var email = document.getElementById('email').value.trim();
+    if (!email) return mostrarMsg('Introduce tu email', true);
+    try {
+      var r = await fetch(API + '/usuarios/recuperar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        mostrarMsg('Si el email existe, recibiras un enlace en breve.', false);
+        document.getElementById('form-email').style.display = 'none';
+      } else {
+        mostrarMsg(d.error || 'Error', true);
+      }
+    } catch(e) { mostrarMsg('Error de conexion', true); }
+  }
+
+  async function cambiarContrasena() {
+    var pass1 = document.getElementById('pass1').value;
+    var pass2 = document.getElementById('pass2').value;
+    if (!pass1 || pass1.length < 6) return mostrarMsg('La contrasena debe tener al menos 6 caracteres', true);
+    if (pass1 !== pass2) return mostrarMsg('Las contrasenas no coinciden', true);
+    try {
+      var r = await fetch(API + '/usuarios/nueva-contrasena', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, password: pass1 })
+      });
+      var d = await r.json();
+      if (d.ok) {
+        mostrarMsg('Contrasena cambiada correctamente. Redirigiendo...', false);
+        setTimeout(function() { window.location.href = '/app'; }, 2000);
+      } else {
+        mostrarMsg(d.error || 'Error', true);
+      }
+    } catch(e) { mostrarMsg('Error de conexion', true); }
+  }
+</script>
+</body>
+</html>
