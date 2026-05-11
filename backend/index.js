@@ -42,6 +42,10 @@ app.get('/app', (req, res) => {
 res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+app.get('/privacidad', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/privacidad.html'));
+});
+
 app.get('/panel-gestoria', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/gestoria.html'));
 });
