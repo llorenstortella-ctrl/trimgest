@@ -46,10 +46,21 @@
     .extra { text-align: center; margin-top: 20px; font-size: 13px; color: #6a6070; }
     .extra span { color: #e8c87a; }
     .footer { text-align: center; padding: 40px 20px; border-top: 1px solid #22223a; color: #4a4055; font-size: 13px; }
-    @media (max-width: 480px) {
-      .hero-title { font-size: 32px; }
+    @media (max-width: 768px) {
+      .nav { padding: 14px 20px; }
+      .hero { padding: 50px 20px 40px; }
+      .hero-title { font-size: 30px; line-height: 1.25; }
+      .hero-sub { font-size: 15px; }
+      .btn-primary, .btn-secondary { padding: 14px 24px; font-size: 15px; width: 100%; text-align: center; }
+      .hero-btns { flex-direction: column; align-items: center; gap: 10px; }
+      .features { padding: 50px 16px; }
+      .features-title { font-size: 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .planes { padding: 50px 16px; }
+      .planes-title { font-size: 24px; }
       .planes-grid { grid-template-columns: 1fr; }
-      .nav { padding: 16px 20px; }
+      .plan { padding: 22px; }
+      .plan-precio { font-size: 34px; }
     }
   </style>
 </head>
@@ -57,7 +68,10 @@
 
   <nav class="nav">
     <div class="nav-logo">TrimGest</div>
-    <a href="/app" class="nav-btn">Entrar</a>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <a href="/panel-gestoria" style="font-size:13px;color:#6a6070;text-decoration:none;">Soy gestoría</a>
+      <a href="/app" class="nav-btn">Entrar</a>
+    </div>
   </nav>
 
   <section class="hero">
@@ -65,7 +79,7 @@
     <h1 class="hero-title">Tus facturas organizadas<br>con <span>inteligencia artificial</span></h1>
     <p class="hero-sub">Sube tus facturas y nominas, la IA extrae los datos automaticamente. Genera PDFs y Excel listos para tu gestoria en segundos.</p>
     <div class="hero-btns">
-      <a href="/app" class="btn-primary">Empezar gratis</a>
+      <a href="/app#registro" class="btn-primary">Empezar gratis</a>
       <a href="#planes" class="btn-secondary">Ver planes</a>
     </div>
   </section>
@@ -113,18 +127,33 @@
       <p class="planes-sub">Sin permanencia. Cancela cuando quieras.</p>
       <div class="planes-grid">
         <div class="plan">
-          <div class="plan-nombre">Basico</div>
-          <div class="plan-precio">10<span>€/mes</span></div>
-          <div class="plan-desc">Para autonomos y pequenas empresas</div>
+          <div class="plan-badge" style="color:#9a90b4;">Empieza gratis</div>
+          <div class="plan-nombre">Free</div>
+          <div class="plan-precio">0<span>€/mes</span></div>
+          <div class="plan-desc">Para probar sin compromiso</div>
           <ul class="plan-items">
-            <li>100 subidas al mes</li>
+            <li>10 subidas por trimestre</li>
             <li>Facturas de proveedores y clientes</li>
             <li>Nominas con IA</li>
             <li>PDF y Excel para gestoria</li>
             <li>Asesor IA incluido</li>
             <li>Introduccion manual de facturas</li>
           </ul>
-          <a href="/app" class="plan-btn">Empezar</a>
+          <a href="/app#registro" class="plan-btn">Empezar gratis</a>
+        </div>
+        <div class="plan">
+          <div class="plan-nombre">Basico</div>
+          <div class="plan-precio">10<span>€/mes</span></div>
+          <div class="plan-desc">Para autonomos y pequenas empresas</div>
+          <ul class="plan-items">
+            <li>100 subidas por trimestre</li>
+            <li>Facturas de proveedores y clientes</li>
+            <li>Nominas con IA</li>
+            <li>PDF y Excel para gestoria</li>
+            <li>Asesor IA incluido</li>
+            <li>Introduccion manual de facturas</li>
+          </ul>
+          <a href="/app#registro" class="plan-btn">Empezar</a>
         </div>
         <div class="plan destacado">
           <div class="plan-badge">Mas popular</div>
@@ -132,34 +161,36 @@
           <div class="plan-precio">20<span>€/mes</span></div>
           <div class="plan-desc">Para empresas con mas volumen</div>
           <ul class="plan-items">
-            <li>200 subidas al mes</li>
+            <li>200 subidas por trimestre</li>
             <li>Todo lo del plan Basico</li>
             <li>Acceso compartido con gestoria</li>
             <li>Soporte prioritario</li>
           </ul>
-          <a href="/app" class="plan-btn">Empezar</a>
+          <a href="/app#registro" class="plan-btn">Empezar</a>
         </div>
-        <div class="plan">
+        <div class="plan" style="border-color:#7ec47e;">
+          <div class="plan-badge" style="color:#7ec47e;">Para gestores</div>
           <div class="plan-nombre">Gestoria</div>
-          <div class="plan-precio">30<span>€/mes</span></div>
+          <div class="plan-precio" style="color:#7ec47e;">Gratis</div>
           <div class="plan-desc">Para gestores y asesores fiscales</div>
           <ul class="plan-items">
             <li>Panel con todos tus clientes</li>
             <li>Acceso a datos de cada cliente</li>
             <li>Descarga PDFs y Excel de cualquier cliente</li>
             <li>Clientes ilimitados</li>
-            <li>Soporte prioritario</li>
+            <li>Sin coste para la gestoria</li>
           </ul>
-          <a href="/app" class="plan-btn">Empezar</a>
+          <a href="/panel-gestoria" class="plan-btn" style="background:#7ec47e;">Registrarse gratis</a>
         </div>
       </div>
-      <div class="extra">Subidas extra: <span>0,20€ por subida</span> si superas tu limite mensual</div>
+      <div class="extra">Subidas extra: <span>0,20€ por subida</span> si superas tu limite trimestral</div>
     </div>
   </section>
 
   <footer class="footer">
     <p>TrimGest &copy; 2026 — Gestion trimestral inteligente para empresas espanolas</p>
-    <p style="margin-top:8px;"><a href="/app" style="color:#e8c87a;text-decoration:none;">Acceder a la app</a></p>
+    <p style="margin-top:8px;"><a href="/app" style="color:#e8c87a;text-decoration:none;">Acceder a la app</a> &nbsp;·&nbsp; <a href="/privacidad" style="color:#6a6070;text-decoration:none;">Privacidad y terminos</a></p>
+    <p style="margin-top:16px;"><a href="/panel-admin" style="color:#1a1520;font-size:10px;text-decoration:none;">·</a></p>
   </footer>
 
 </body>
