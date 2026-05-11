@@ -432,7 +432,7 @@ function ordenarFacturas(lista) {
   // proveedores: agrupar por proveedor, dentro por fecha
   var gruposP = {};
   proveedores.forEach(function(f) {
-    var key = (f.proveedor || f.emisor || 'Sin proveedor').trim();
+    var key = (f.nombre || f.proveedor || f.emisor || 'Sin proveedor').trim();
     if (!gruposP[key]) gruposP[key] = [];
     gruposP[key].push(f);
   });
@@ -471,14 +471,21 @@ function renderTablaFacturas(lista) {
 }
 
 function renderFila(f) {
+  var numero = f.numero_factura || f.numero || '-';
+  var fecha = f.fecha || '-';
+  var nombreProv = f.nombre || f.proveedor || f.emisor || f.cliente || '-';
+  var concepto = f.concepto || f.descripcion || '-';
+  var base = f.base_imponible ? Number(f.base_imponible).toFixed(2) + ' EUR' : '-';
+  var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
+  var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
   return '<tr>' +
-    '<td>' + (f.numero || '-') + '</td>' +
-    '<td>' + (f.fecha || '-') + '</td>' +
-    '<td>' + (f.proveedor || f.emisor || f.cliente || '-') + '</td>' +
-    '<td>' + (f.concepto || f.descripcion || '-') + '</td>' +
-    '<td>' + (f.base_imponible ? f.base_imponible + ' EUR' : '-') + '</td>' +
-    '<td>' + (f.iva ? f.iva + '%' : '-') + '</td>' +
-    '<td style="font-weight:600;color:#e8c87a">' + (f.total ? f.total + ' EUR' : '-') + '</td>' +
+    '<td>' + numero + '</td>' +
+    '<td>' + fecha + '</td>' +
+    '<td>' + nombreProv + '</td>' +
+    '<td>' + concepto + '</td>' +
+    '<td>' + base + '</td>' +
+    '<td>' + iva + '</td>' +
+    '<td style="font-weight:600;color:#e8c87a">' + total + '</td>' +
     '<td><span class="badge ' + (f.tipo === 'cliente' ? 'badge-green' : 'badge-gray') + '">' + (f.tipo || '-') + '</span></td>' +
     '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
       (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">Ver PDF</button>' : '') +
@@ -532,12 +539,12 @@ function abrirEditarFactura(id) {
   var f = todasFacturas.find(function(x) { return String(x.id) === String(id); });
   if (!f) return;
   editandoFacturaId = id;
-  document.getElementById('ef-numero').value = f.numero || '';
+  document.getElementById('ef-numero').value = f.numero_factura || f.numero || '';
   document.getElementById('ef-fecha').value = f.fecha || '';
-  document.getElementById('ef-proveedor').value = f.proveedor || f.emisor || f.cliente || '';
+  document.getElementById('ef-proveedor').value = f.nombre || f.proveedor || f.emisor || f.cliente || '';
   document.getElementById('ef-concepto').value = f.concepto || f.descripcion || '';
   document.getElementById('ef-base').value = f.base_imponible || '';
-  document.getElementById('ef-iva').value = f.iva || '';
+  document.getElementById('ef-iva').value = f.iva_porcentaje || f.iva || '';
   document.getElementById('ef-total').value = f.total || '';
   document.getElementById('ef-tipo').value = f.tipo || 'proveedor';
   document.getElementById('modal-factura').style.display = 'flex';
@@ -546,12 +553,14 @@ function abrirEditarFactura(id) {
 async function guardarFactura() {
   if (!editandoFacturaId || !clienteActivo) return;
   var body = {
-    numero: document.getElementById('ef-numero').value,
+    numero_factura: document.getElementById('ef-numero').value,
     fecha: document.getElementById('ef-fecha').value,
+    nombre: document.getElementById('ef-proveedor').value,
     proveedor: document.getElementById('ef-proveedor').value,
     emisor: document.getElementById('ef-proveedor').value,
     concepto: document.getElementById('ef-concepto').value,
     base_imponible: parseFloat(document.getElementById('ef-base').value) || 0,
+    iva_porcentaje: parseFloat(document.getElementById('ef-iva').value) || 0,
     iva: parseFloat(document.getElementById('ef-iva').value) || 0,
     total: parseFloat(document.getElementById('ef-total').value) || 0,
     tipo: document.getElementById('ef-tipo').value
