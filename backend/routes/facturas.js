@@ -152,6 +152,11 @@ router.put('/editar/:id', auth, (req, res) => {
   if (trimestre) facturas[idx].trimestre = trimestre;
   if (anno) facturas[idx].anno = parseInt(anno);
   if (nombre) facturas[idx].nombre = nombre;
+  if (req.body._toggleContabilizado) {
+    facturas[idx].contabilizado = !facturas[idx].contabilizado;
+    saveFacturas(facturas, req.empresaId);
+    return res.json({ ok: true });
+  }
   if (numero_factura) facturas[idx].numero_factura = numero_factura;
   if (fecha) {
     facturas[idx].fecha = fecha;

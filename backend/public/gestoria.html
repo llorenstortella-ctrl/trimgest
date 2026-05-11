@@ -568,9 +568,10 @@ function renderFila(f) {
     '<td>' + iva + '</td>' +
     '<td style="font-weight:600;color:#e8c87a">' + total + '</td>' +
     '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
-      (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">Ver PDF</button>' : '') +
+      (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
       '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
       '<button class="btn btn-danger btn-sm" data-id="' + f.id + '" onclick="borrarFactura(this.dataset.id)">Borrar</button>' +
+      '<button data-id="' + f.id + '" onclick="toggleContabilizadoGestoria(this.dataset.id)" style="background:' + (f.contabilizado?'#0d2b1a':'#1e1e28') + ';border:1px solid ' + (f.contabilizado?'#1a4a2a':'#2a2a3a') + ';color:' + (f.contabilizado?'#4caf7d':'#6a6070') + ';border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">' + (f.contabilizado?'✓ Cont.':'Contabilizar') + '</button>' +
     '</td>' +
   '</tr>';
 }
@@ -808,6 +809,20 @@ async function descargarPDFNominasCliente() {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
   } catch(e) { alert('Error al generar PDF de nominas'); }
+}
+
+async function toggleContabilizadoGestoria(id) {
+  if (!clienteActivo) return;
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/facturas/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ _toggleContabilizado: true })
+    });
+    var d = await r.json();
+    if (!d.ok) return alert(d.error || 'Error');
+    await cargarFacturasCliente(clienteActivo);
+  } catch(e) { alert('Error de conexion'); }
 }
 
 function verArchivo(filename) {

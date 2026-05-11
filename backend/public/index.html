@@ -835,7 +835,11 @@
           listaHTML += '</div></div>';
           listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
           listaHTML += '<div class="factura-desglose">Base ' + formatEur(f.base_imponible) + ' IVA ' + f.iva_porcentaje + '% ' + formatEur(f.iva_importe) + '</div>';
-          listaHTML += '<div class="factura-acciones"><button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button><button class="btn-borrar" onclick="borrarFactura(' + f.id + ')">Borrar</button></div>';
+          var contColor = f.contabilizado ? '#0d2b1a' : '#1e1e28';
+          var contBorder = f.contabilizado ? '1px solid #1a4a2a' : '1px solid #2a2a3a';
+          var contTextColor = f.contabilizado ? '#4caf7d' : '#6a6070';
+          var contTexto = f.contabilizado ? '✓ Contabilizado' : 'Contabilizar';
+          listaHTML += '<div class="factura-acciones"><button onclick="toggleContabilizado(' + f.id + ')" style="background:' + contColor + ';border:' + contBorder + ';color:' + contTextColor + ';border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;">' + contTexto + '</button><button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button><button class="btn-borrar" onclick="borrarFactura(' + f.id + ')">Borrar</button></div>';
           listaHTML += '<div class="edit-form" id="edit-' + f.id + '">';
           listaHTML += '<div class="edit-row"><select id="tipo-' + f.id + '"><option value="proveedor"' + (f.tipo==='proveedor'?' selected':'') + '>Proveedor</option><option value="cliente"' + (f.tipo==='cliente'?' selected':'') + '>Cliente</option></select>';
           listaHTML += '<select id="trim-' + f.id + '"><option value="T1"' + (f.trimestre==='T1'?' selected':'') + '>T1</option><option value="T2"' + (f.trimestre==='T2'?' selected':'') + '>T2</option><option value="T3"' + (f.trimestre==='T3'?' selected':'') + '>T3</option><option value="T4"' + (f.trimestre==='T4'?' selected':'') + '>T4</option></select>';
@@ -963,7 +967,15 @@
       } catch(e) { status.innerHTML = '<div class="error">Error de conexion</div>'; }
     }
 
-    async function exportarExcel(tipo) {
+    async function toggleContabilizado(id) {
+  try {
+    var r = await fetch(API + '/facturas/editar/' + id, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ _toggleContabilizado: true }) });
+    await r.json();
+    renderApp();
+  } catch(e) { alert('Error'); }
+}
+
+async function exportarExcel(tipo) {
       try {
         var res = await fetch(API + '/exportar/' + tipo + '/' + window.trimestreSel + '/' + window.annoSel, { headers: getHeaders() });
         if (!res.ok) throw new Error('Error');

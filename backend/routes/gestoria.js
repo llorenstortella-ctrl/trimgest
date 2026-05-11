@@ -436,7 +436,11 @@ router.put('/cliente/:empresaId/facturas/:id', (req, res) => {
     const facturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
     const idx = facturas.findIndex(f => String(f.id) === String(id));
     if (idx === -1) return res.status(404).json({ error: 'Factura no encontrada' });
-    facturas[idx] = Object.assign(facturas[idx], req.body);
+    if (req.body._toggleContabilizado) {
+      facturas[idx].contabilizado = !facturas[idx].contabilizado;
+    } else {
+      facturas[idx] = Object.assign(facturas[idx], req.body);
+    }
     fs.writeFileSync(facturasPath, JSON.stringify(facturas, null, 2));
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'Error' }); }
