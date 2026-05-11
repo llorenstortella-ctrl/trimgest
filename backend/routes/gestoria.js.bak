@@ -1,6 +1,5 @@
 const express = require('express');
-const { enviarInvitacionGestoria, enviarVerificacion } = require('../utils/email');
-const crypto = require('crypto');
+const { enviarInvitacionGestoria } = require('../utils/email');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
@@ -43,7 +42,6 @@ router.post('/registro', async (req, res) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const gestoriaId = 'ges_' + Date.now();
-    const verToken = crypto.randomBytes(32).toString('hex');
     const nuevo = {
       id: Date.now(),
       email,
@@ -54,15 +52,12 @@ router.post('/registro', async (req, res) => {
       clientesGestoria: [],
       solicitudesEnviadas: [],
       plan: 'basico',
-      fecha_registro: new Date().toISOString(),
-      verificado: false,
-      ver_token: verToken
+      fecha_registro: new Date().toISOString()
     };
     usuarios.push(nuevo);
     saveUsuarios(usuarios);
-    try { await enviarVerificacion(email, nombre_empresa, verToken); } catch(e) { console.error('Error email verificacion gestoria:', e); }
     const token = jwt.sign({ id: nuevo.id, empresaId: gestoriaId, tipo: 'gestoria' }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ ok: true, token, nombre_empresa, empresaId: gestoriaId, tipo: 'gestoria', verificacion_pendiente: true });
+    res.json({ ok: true, token, nombre_empresa, empresaId: gestoriaId, tipo: 'gestoria' });
   } catch(e) {
     console.error(e);
     res.status(500).json({ error: 'Error en registro' });

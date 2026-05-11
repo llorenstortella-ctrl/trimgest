@@ -207,22 +207,4 @@ router.post('/restore', express.json({ limit: '50mb' }), (req, res) => {
   }
 });
 
-
-// POST /admin/verificar-usuario — verificar email de usuario manualmente
-router.post('/verificar-usuario', (req, res) => {
-  const adminPass = req.headers['x-admin-password'];
-  if (adminPass !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
-    return res.status(401).json({ error: 'No autorizado' });
-  }
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Falta email' });
-  const usuarios = getUsuarios();
-  const idx = usuarios.findIndex(u => u.email === email);
-  if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' });
-  usuarios[idx].verificado = true;
-  usuarios[idx].ver_token = null;
-  saveUsuarios(usuarios);
-  res.json({ ok: true, mensaje: 'Usuario verificado: ' + email });
-});
-
 module.exports = router;
