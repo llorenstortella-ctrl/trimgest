@@ -120,4 +120,49 @@ router.post('/plan-gratuito', (req, res) => {
   res.json({ ok: true });
 });
 
+
+// GET /admin/backup — descargar backup completo de datos
+router.get('/backup', (req, res) => {
+  const adminPass = req.headers['x-admin-password'];
+  if (adminPass !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const dataDir = path.join(__dirname, '../data');
+    const backup = {};
+
+    // usuarios.json
+    const usuariosPath = path.join(dataDir, 'usuarios.json');
+    if (fs.existsSync(usuariosPath)) {
+      backup.usuarios = JSON.parse(fs.readFileSync(usuariosPath));
+    }
+
+    // empresas
+    backup.empresas = {};
+    const empresasDir = path.join(dataDir, 'empresas');
+    if (fs.existsSync(empresasDir)) {
+      const empresas = fs.readdirSync(empresasDir);
+      empresas.forEach(empresaId => {
+        backup.empresas[empresaId] = {};
+        const dir = path.join(empresasDir, empresaId);
+        const archivos = ['facturas.json', 'nominas.json', 'config.json', 'pyg.json'];
+        archivos.forEach(archivo => {
+          const p = path.join(dir, archivo);
+          if (fs.existsSync(p)) {
+            backup.empresas[empresaId][archivo.replace('.json', '')] = JSON.parse(fs.readFileSync(p));
+          }
+        });
+      });
+    }
+
+    const fecha = new Date().toISOString().split('T')[0];
+    res.setHeader('Content-Disposition', 'attachment; filename=trimgest-backup-' + fecha + '.json');
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(backup, null, 2));
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error al generar backup' });
+  }
+});
+
 module.exports = router;

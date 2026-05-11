@@ -6,7 +6,7 @@
   <title>TrimGest Admin</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
+    body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; }
     .login { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 12px; }
     .logo { font-size: 13px; letter-spacing: 4px; color: #6a6070; text-transform: uppercase; }
     .title { font-size: 24px; color: #e8c87a; margin-bottom: 20px; }
@@ -14,33 +14,45 @@
     .btn { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; max-width: 300px; }
     .error { color: #c06060; font-size: 13px; }
     .panel { display: none; }
-    .header { background: #16161e; padding: 20px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-    .header h1 { font-size: 20px; color: #e8c87a; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-    .stat { background: #16161e; border-radius: 10px; padding: 16px; }
-    .stat-label { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 6px; }
-    .stat-value { font-size: 28px; color: #e8c87a; }
-    table { width: 100%; border-collapse: collapse; background: #16161e; border-radius: 12px; overflow: hidden; }
-    th { background: #0f0f13; padding: 12px 16px; text-align: left; font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; }
-    td { padding: 14px 16px; border-top: 1px solid #22223a; font-size: 14px; }
+    .header { background: #16161e; padding: 16px 20px; border-radius: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .header h1 { font-size: 18px; color: #e8c87a; }
+    .header-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .stat { background: #16161e; border-radius: 10px; padding: 14px; }
+    .stat-label { font-size: 10px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-size: 24px; color: #e8c87a; }
+    .tabla-wrap { overflow-x: auto; border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; background: #16161e; min-width: 600px; }
+    th { background: #0f0f13; padding: 10px 14px; text-align: left; font-size: 10px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 12px 14px; border-top: 1px solid #22223a; font-size: 13px; }
     .badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: #1a2a1a; color: #7ec47e; }
-    .btn-ver { background: #1a2a1a; border: 1px solid #2a3a2a; color: #7ec47e; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; margin-right: 6px; }
-    .btn-borrar { background: #2a1a1a; border: 1px solid #3a1a1a; color: #c06060; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
-    .btn-gratis { background: #1a1a2a; border: 1px solid #2a2a5a; color: #7a7ae8; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; margin-right: 6px; }
+    .badge-gratis { background: #1a1a2a; color: #e8c87a; }
+    .btn-ver { background: #1a2a1a; border: 1px solid #2a3a2a; color: #7ec47e; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; margin-right: 4px; }
+    .btn-borrar { background: #2a1a1a; border: 1px solid #3a1a1a; color: #c06060; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+    .btn-gratis { background: #1a1a2a; border: 1px solid #2a2a5a; color: #7a7ae8; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; margin-right: 4px; }
     .btn-gratis.activo { background: #2a2a1a; border-color: #e8c87a; color: #e8c87a; }
-    .btn-logout { background: none; border: 1px solid #2a2a3a; color: #6a6070; border-radius: 8px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
-    .ficha { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f0f13; z-index: 100; padding: 30px; overflow-y: auto; display: none; }
-    .ficha-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .ficha-header h2 { color: #e8c87a; }
+    .btn-logout { background: none; border: 1px solid #2a2a3a; color: #6a6070; border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; }
+    .btn-backup { background: #1a2a3a; border: 1px solid #2a4a6a; color: #7ab4e8; border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; }
+    .btn-backup:hover { border-color: #7ab4e8; }
+    .ficha { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f0f13; z-index: 100; padding: 20px; overflow-y: auto; display: none; }
+    .ficha-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .ficha-header h2 { color: #e8c87a; font-size: 18px; }
     .ficha-close { background: none; border: none; color: #6a6070; font-size: 24px; cursor: pointer; }
     .ficha-card { background: #16161e; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    .ficha-card-title { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 12px; }
-    .ficha-row { font-size: 14px; margin-bottom: 8px; }
-    .ficha-row span { color: #6a6070; }
+    .ficha-card-title { font-size: 10px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 12px; }
+    .ficha-row { font-size: 13px; margin-bottom: 8px; color: #9a90b4; }
+    .ficha-row strong { color: #e0d8cc; }
     .ficha-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .ficha-num { background: #16161e; border-radius: 10px; padding: 16px; text-align: center; }
-    .ficha-num-label { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 8px; }
-    .ficha-num-value { font-size: 36px; color: #e8c87a; }
+    .ficha-num-label { font-size: 10px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 8px; }
+    .ficha-num-value { font-size: 32px; color: #e8c87a; }
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      .header { padding: 12px 16px; }
+      .header h1 { font-size: 16px; }
+      td { padding: 10px 10px; font-size: 12px; }
+      th { padding: 8px 10px; }
+    }
   </style>
 </head>
 <body>
@@ -56,37 +68,42 @@
   <div class="panel" id="adminPanel">
     <div class="header">
       <h1>TrimGest Admin</h1>
-      <button class="btn-logout" onclick="logout()">Cerrar sesion</button>
+      <div class="header-btns">
+        <button class="btn-backup" onclick="descargarBackup()">&#8595; Backup</button>
+        <button class="btn-logout" onclick="logout()">Cerrar sesion</button>
+      </div>
     </div>
     <div class="stats" id="stats"></div>
-    <table>
-      <thead>
-        <tr>
-          <th>Empresa</th>
-          <th>Email</th>
-          <th>Registro</th>
-          <th>Facturas</th>
-          <th>Nominas</th>
-          <th>Plan</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tablaUsuarios"></tbody>
-    </table>
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Email</th>
+            <th>Registro</th>
+            <th>Facts</th>
+            <th>Nom</th>
+            <th>Plan</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaUsuarios"></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="ficha" id="fichaPanel">
     <div class="ficha-header">
       <h2 id="fichaNombre"></h2>
-      <button class="ficha-close" onclick="cerrarFicha()">X</button>
+      <button class="ficha-close" onclick="cerrarFicha()">&#10005;</button>
     </div>
     <div class="ficha-card">
       <div class="ficha-card-title">Datos empresa</div>
-      <div class="ficha-row"><span>Email: </span><span id="fichaEmail"></span></div>
-      <div class="ficha-row"><span>NIF: </span><span id="fichaNif"></span></div>
-      <div class="ficha-row"><span>Direccion: </span><span id="fichaDireccion"></span></div>
-      <div class="ficha-row"><span>Registro: </span><span id="fichaFecha"></span></div>
-      <div class="ficha-row"><span>Plan: </span><span id="fichaPlan" class="badge"></span></div>
+      <div class="ficha-row"><strong>Email:</strong> <span id="fichaEmail"></span></div>
+      <div class="ficha-row"><strong>NIF:</strong> <span id="fichaNif"></span></div>
+      <div class="ficha-row"><strong>Direccion:</strong> <span id="fichaDireccion"></span></div>
+      <div class="ficha-row"><strong>Registro:</strong> <span id="fichaFecha"></span></div>
+      <div class="ficha-row"><strong>Plan:</strong> <span id="fichaPlan" class="badge"></span></div>
     </div>
     <div class="ficha-nums">
       <div class="ficha-num">
@@ -110,12 +127,12 @@
       var pass = document.getElementById('adminPass').value;
       var err = document.getElementById('loginError');
       try {
-        var res = await fetch(API + '/admin/login', {
+        var r = await fetch(API + '/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pass })
         });
-        var data = await res.json();
+        var data = await r.json();
         if (data.ok) {
           adminPassword = pass;
           sessionStorage.setItem('admin_pass', pass);
@@ -130,11 +147,11 @@
 
     async function cargarPanel() {
       try {
-        var res = await fetch(API + '/admin/usuarios', {
+        var r = await fetch(API + '/admin/usuarios', {
           headers: { 'x-admin-password': adminPassword }
         });
-        if (!res.ok) { logout(); return; }
-        var data = await res.json();
+        if (!r.ok) { logout(); return; }
+        var data = await r.json();
 
         document.getElementById('loginPanel').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
@@ -144,25 +161,23 @@
 
         document.getElementById('stats').innerHTML =
           '<div class="stat"><div class="stat-label">Usuarios</div><div class="stat-value">' + data.total + '</div></div>' +
-          '<div class="stat"><div class="stat-label">Facturas totales</div><div class="stat-value">' + totalFacturas + '</div></div>' +
-          '<div class="stat"><div class="stat-label">Nominas totales</div><div class="stat-value">' + totalNominas + '</div></div>';
+          '<div class="stat"><div class="stat-label">Facturas</div><div class="stat-value">' + totalFacturas + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Nominas</div><div class="stat-value">' + totalNominas + '</div></div>';
 
         var tbody = document.getElementById('tablaUsuarios');
         tbody.innerHTML = '';
         data.usuarios.forEach(function(u) {
           var fecha = u.fecha_registro ? new Date(u.fecha_registro).toLocaleDateString('es-ES') : '-';
           var tr = document.createElement('tr');
-          tr.dataset.empresaId = u.empresaId;
-          tr.dataset.userId = u.id;
           tr.innerHTML =
             '<td>' + u.nombre_empresa + '</td>' +
-            '<td style="color:#6a6070;">' + u.email + '</td>' +
+            '<td style="color:#6a6070;font-size:11px;">' + u.email + '</td>' +
             '<td style="color:#6a6070;">' + fecha + '</td>' +
             '<td>' + u.facturas + '</td>' +
             '<td>' + u.nominas + '</td>' +
-            '<td><span class="badge">' + u.plan + '</span></td>' +
+            '<td><span class="badge' + (u.plan_gratuito ? ' badge-gratis' : '') + '">' + (u.plan_gratuito ? '★ gratis' : u.plan) + '</span></td>' +
             '<td>' +
-            '<button class="btn-gratis' + (u.plan_gratuito ? ' activo' : '') + '">' + (u.plan_gratuito ? '★ Gratis' : 'Gratis') + '</button>' +
+            '<button class="btn-gratis' + (u.plan_gratuito ? ' activo' : '') + '">' + (u.plan_gratuito ? '★' : 'Gratis') + '</button>' +
             '<button class="btn-ver">Ver</button>' +
             '<button class="btn-borrar">Borrar</button>' +
             '</td>';
@@ -171,7 +186,7 @@
           var btnGratis = tr.querySelector('.btn-gratis');
           btnVer.addEventListener('click', function() { verEmpresa(u.empresaId); });
           btnBorrar.addEventListener('click', function() { borrarUsuario(u.id); });
-          btnGratis.addEventListener('click', function() { toggleGratis(u.empresaId, !u.plan_gratuito, tr); });
+          btnGratis.addEventListener('click', function() { toggleGratis(u.empresaId, !u.plan_gratuito); });
           tbody.appendChild(tr);
         });
       } catch(e) {
@@ -180,18 +195,17 @@
     }
 
     async function verEmpresa(empresaId) {
-      var res = await fetch(API + '/admin/empresa/' + empresaId, {
+      var r = await fetch(API + '/admin/empresa/' + empresaId, {
         headers: { 'x-admin-password': adminPassword }
       });
-      var data = await res.json();
+      var data = await r.json();
       if (!data.ok) return;
       var e = data.empresa;
       var fecha = e.fecha_registro ? new Date(e.fecha_registro).toLocaleDateString('es-ES') : '-';
-
       document.getElementById('fichaNombre').textContent = e.nombre_empresa;
       document.getElementById('fichaEmail').textContent = e.email;
-      document.getElementById('fichaNif').textContent = e.nif;
-      document.getElementById('fichaDireccion').textContent = e.direccion + ' ' + e.cp + ' ' + e.ciudad + ' ' + e.provincia;
+      document.getElementById('fichaNif').textContent = e.nif || '-';
+      document.getElementById('fichaDireccion').textContent = (e.direccion || '') + ' ' + (e.cp || '') + ' ' + (e.ciudad || '') + ' ' + (e.provincia || '');
       document.getElementById('fichaFecha').textContent = fecha;
       document.getElementById('fichaPlan').textContent = e.plan;
       document.getElementById('fichaFacturas').textContent = e.facturas;
@@ -212,8 +226,8 @@
       cargarPanel();
     }
 
-    async function toggleGratis(empresaId, activo, tr) {
-      var label = activo ? 'Dar acceso gratuito a este usuario?' : 'Quitar acceso gratuito a este usuario?';
+    async function toggleGratis(empresaId, activo) {
+      var label = activo ? 'Dar acceso gratuito a este usuario?' : 'Quitar acceso gratuito?';
       if (!confirm(label)) return;
       await fetch(API + '/admin/plan-gratuito', {
         method: 'POST',
@@ -221,6 +235,22 @@
         body: JSON.stringify({ empresaId: empresaId, activo: activo })
       });
       cargarPanel();
+    }
+
+    function descargarBackup() {
+      var fecha = new Date().toISOString().split('T')[0];
+      var a = document.createElement('a');
+      a.href = API + '/admin/backup';
+      a.setAttribute('download', 'trimgest-backup-' + fecha + '.json');
+      var headers = new Headers({ 'x-admin-password': adminPassword });
+      fetch(API + '/admin/backup', { headers: headers })
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+          var url = URL.createObjectURL(blob);
+          a.href = url;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
     }
 
     function logout() {
