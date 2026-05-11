@@ -564,43 +564,34 @@ function renderFila(f) {
 }
 
 async function cargarNominasCliente(empresaId) {
+  var tbody = document.getElementById('tabla-nominas');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">Cargando...</td></tr>';
   try {
     var r = await fetch(API + '/gestoria/cliente/' + empresaId + '/nominas', { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
-    var tbody = document.getElementById('tabla-nominas');
-    var nominas = (d.nominas || []).filter(function(n) { return !n.borrado; });
+    if (!d.ok) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Error: ' + (d.error||'desconocido') + '</td></tr>'; return; }
+    var nominas = d.nominas || [];
     if (!nominas.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin nominas</td></tr>'; return; }
-    // agrupar por trabajador, dentro por fecha
-    var grupos = {};
-    nominas.forEach(function(n) {
-      var key = (n.trabajador || n.empleado || n.nombre || 'Sin nombre').trim();
-      if (!grupos[key]) grupos[key] = [];
-      grupos[key].push(n);
-    });
-    Object.keys(grupos).forEach(function(k) {
-      grupos[k].sort(function(a, b) { return (a.anno || '').toString().localeCompare((b.anno || '').toString()) || (a.mes || '').localeCompare(b.mes || ''); });
-    });
     var filas = '';
-    Object.keys(grupos).sort().forEach(function(trabajador) {
-      filas += '<tr><td colspan="6" style="padding:8px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + key + '</td></tr>';
-      grupos[trabajador].forEach(function(n) {
-        filas += '<tr>' +
-          '<td>' + (n.empleado || n.nombre || '-') + '</td>' +
-          '<td>' + (n.mes || '-') + '</td>' +
-          '<td>' + (n.anno || '-') + '</td>' +
-          '<td>' + (n.salario_bruto ? n.salario_bruto + ' EUR' : '-') + '</td>' +
-          '<td>' + (n.seg_social ? n.seg_social + ' EUR' : '-') + '</td>' +
-          '<td>' + (n.irpf ? n.irpf + ' EUR' : '-') + '</td>' +
-          '<td style="font-weight:600;color:#e8c87a">' + (n.salario_neto ? n.salario_neto + ' EUR' : '-') + '</td>' +
-          '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
-            '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
-            '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
-          '</td>' +
-        '</tr>';
-      });
+    nominas.forEach(function(n) {
+      var trab = n.trabajador || n.empleado || n.nombre || 'Sin nombre';
+      var bruto = n.devengado || n.salario_bruto || 0;
+      var neto = n.neto || n.salario_neto || 0;
+      filas += '<tr>' +
+        '<td>' + trab + '</td>' +
+        '<td>' + (n.mes || '-') + '</td>' +
+        '<td>' + (n.anno || '-') + '</td>' +
+        '<td>' + (bruto ? Number(bruto).toFixed(2) + ' EUR' : '-') + '</td>' +
+        '<td style="font-weight:600;color:#e8c87a">' + (neto ? Number(neto).toFixed(2) + ' EUR' : '-') + '</td>' +
+        '<td style="display:flex;gap:6px;">' +
+          '<button class="btn btn-secondary btn-sm" data-id="' + n.id + '" onclick="abrirEditarNomina(this.dataset.id)">Editar</button>' +
+          '<button class="btn btn-danger btn-sm" data-id="' + n.id + '" onclick="borrarNomina(this.dataset.id)">Borrar</button>' +
+        '</td>' +
+      '</tr>';
     });
     tbody.innerHTML = filas;
-  } catch(e) { console.error(e); }
+  } catch(e) { console.error(e); tbody.innerHTML = '<tr><td colspan="6" class="empty">Error de conexion</td></tr>'; }
 }
 
 function abrirEditarFactura(id) {
