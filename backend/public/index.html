@@ -1011,7 +1011,7 @@
         var data = await res.json();
         if (data.error === 'duplicado') { status.innerHTML = '<div class="duplicado">Esta factura ya esta en el sistema</div>'; }
         else if (data.error === 'limite_alcanzado') { status.innerHTML = '<div class="error">Has alcanzado el limite de ' + data.limite + ' subidas de tu plan. Ve a Ajustes para ver tus opciones.</div>'; }
-        else if (data.factura) { window.trimestreSel = data.factura.trimestre; window.annoSel = String(data.factura.anno); window.tipoSel = null; window.uploadOpen = false; status.innerHTML = '<div class="success">Factura procesada correctamente</div>'; setTimeout(function() { renderApp(); }, 1500); }
+        else if (data.factura) { var f = data.factura; window.trimestreSel = f.trimestre; window.annoSel = String(f.anno); window.tipoSel = null; window.uploadOpen = false; var msg = data.total > 1 ? data.total + ' facturas procesadas correctamente' : 'Factura procesada correctamente'; status.innerHTML = '<div class="success">' + msg + '</div>'; setTimeout(function() { renderApp(); }, 1500); }
         else { status.innerHTML = '<div class="error">Error al procesar la factura</div>'; }
       } catch(e) { status.innerHTML = '<div class="error">Error de conexion</div>'; }
     }
