@@ -937,7 +937,7 @@
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
         '<div class="upload-title">Subir factura</div><div class="upload-sub">Primero indica que tipo es</div>' +
         '<div class="tipo-selector"><div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">Proveedor</div><div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">Cliente</div></div>' +
-        '<div class="upload-btns"><button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">Elegir PDF</button><button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">Escanear</button></div>' +
+        '<div class="upload-btns" style="width:100%"><button class="btn-file" style="width:100%;font-size:16px;padding:16px;"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">+ Subir factura</button></div>' +
         '<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Introducir manual</button>' +
         '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
         '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
@@ -963,7 +963,7 @@
       btns[0].className = 'tipo-btn' + (tipo === 'proveedor' ? ' selected-prov' : '');
       btns[1].className = 'tipo-btn' + (tipo === 'cliente' ? ' selected-cli' : '');
       document.querySelector('.btn-file').disabled = false;
-      document.querySelector('.btn-camara').disabled = false;
+
     }
 
     function toggleUpload() {
