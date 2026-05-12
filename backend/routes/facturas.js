@@ -128,14 +128,15 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
     const ext = path.extname(req.file.originalname).toLowerCase();
     const esImagen = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
 
+    // Extraer datos ANTES de convertir (pdf-parse no funciona con imágenes incrustadas en PDF)
+    const datos = await extraerDatosFactura(rutaArchivo);
+
     if (esImagen) {
       const { uploadsDir } = getEmpresaDirs(req.empresaId);
       const resultado = await convertirImagenAPDF(rutaArchivo, uploadsDir);
       rutaArchivo = resultado.rutaPDF;
       nombreArchivo = resultado.nombrePDF;
     }
-
-    const datos = await extraerDatosFactura(rutaArchivo);
     const facturas = getFacturas(req.empresaId);
 
     const duplicado = facturas.find(function(f) {
