@@ -246,6 +246,7 @@ router.put('/editar/:id', auth, (req, res) => {
 });
 
 router.delete('/borrar/:id', auth, (req, res) => {
+  console.log('[BORRAR] empresaId:', req.empresaId, 'id:', req.params.id);
   const facturas = getFacturas(req.empresaId);
   const idx = facturas.findIndex(f => f.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
@@ -253,7 +254,7 @@ router.delete('/borrar/:id', auth, (req, res) => {
   facturas.splice(idx, 1);
   saveFacturas(facturas, req.empresaId);
   const { uploadsDir } = getEmpresaDirs(req.empresaId);
-  try { fs.unlinkSync(path.join(uploadsDir, archivo)); } catch(e) {}
+  try { const rutaArchivo = path.join(uploadsDir, archivo); console.log('[BORRAR] archivo:', archivo, 'ruta:', rutaArchivo, 'existe:', fs.existsSync(rutaArchivo)); fs.unlinkSync(rutaArchivo); console.log('[BORRAR] eliminado OK'); } catch(e) { console.log('[BORRAR] error:', e.message); }
   res.json({ mensaje: 'Factura borrada' });
 });
 
