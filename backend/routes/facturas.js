@@ -3,8 +3,9 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const PDFDocument = require('pdfkit');
+const Jimp = require('jimp');
 const { extraerDatosFactura } = require('../services/openai');
-
 const auth = require('../middleware/auth');
 const baseDataDir = path.join(__dirname, '../data');
 
@@ -55,11 +56,38 @@ function getAnno(fecha) {
   return parseInt(partes[2]);
 }
 
+async function convertirImagenAPDF(rutaImagen, uploadsDir) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const imagen = await Jimp.read(rutaImagen);
+      const anchoImg = imagen.getWidth();
+      const altoImg = imagen.getHeight();
+
+      const doc = new PDFDocument({ autoFirstPage: false });
+      const nombrePDF = path.basename(rutaImagen, path.extname(rutaImagen)) + '.pdf';
+      const rutaPDF = path.join(uploadsDir, nombrePDF);
+      const stream = fs.createWriteStream(rutaPDF);
+
+      doc.pipe(stream);
+      doc.addPage({ size: [anchoImg, altoImg], margin: 0 });
+      doc.image(rutaImagen, 0, 0, { width: anchoImg, height: altoImg });
+      doc.end();
+
+      stream.on('finish', () => {
+        fs.unlinkSync(rutaImagen);
+        resolve({ rutaPDF, nombrePDF });
+      });
+      stream.on('error', reject);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 router.post('/subir', auth, upload.single('factura'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
 
   try {
-    // Control de limites
     const usuariosPath = path.join(__dirname, '../data/usuarios.json');
     const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
     const usuIdx = usuarios.findIndex(u => u.empresaId === req.empresaId);
@@ -95,8 +123,19 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
       }
     }
 
-    const sinIA = false;
-    const datos = sinIA ? { nombre: null, numero_factura: null, fecha: null, base_imponible: null, iva_porcentaje: null, iva_importe: null, total: null } : await extraerDatosFactura(req.file.path);
+    let rutaArchivo = req.file.path;
+    let nombreArchivo = req.file.filename;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const esImagen = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
+
+    if (esImagen) {
+      const { uploadsDir } = getEmpresaDirs(req.empresaId);
+      const resultado = await convertirImagenAPDF(rutaArchivo, uploadsDir);
+      rutaArchivo = resultado.rutaPDF;
+      nombreArchivo = resultado.nombrePDF;
+    }
+
+    const datos = await extraerDatosFactura(rutaArchivo);
     const facturas = getFacturas(req.empresaId);
 
     const duplicado = facturas.find(function(f) {
@@ -104,7 +143,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
     });
 
     if (duplicado) {
-      fs.unlinkSync(req.file.path);
+      fs.unlinkSync(rutaArchivo);
       return res.status(409).json({ error: 'duplicado', mensaje: 'Esta factura ya existe', factura: duplicado });
     }
 
@@ -113,7 +152,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
 
     const nuevaFactura = {
       id: Date.now(),
-      archivo: req.file.filename,
+      archivo: nombreArchivo,
       tipo: tipoFinal,
       nombre: datos.nombre,
       numero_factura: datos.numero_factura,
@@ -178,6 +217,7 @@ router.delete('/borrar/:id', auth, (req, res) => {
   const archivo = facturas[idx].archivo;
   facturas.splice(idx, 1);
   saveFacturas(facturas, req.empresaId);
+  const { uploadsDir } = getEmpresaDirs(req.empresaId);
   try { fs.unlinkSync(path.join(uploadsDir, archivo)); } catch(e) {}
   res.json({ mensaje: 'Factura borrada' });
 });
