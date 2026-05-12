@@ -102,4 +102,27 @@ async function extraerDatosImagen(rutaImagen) {
   return limpiarDatos(datos);
 }
 
-module.exports = { extraerDatosFactura };
+
+const PROMPT_MULTIPLES = 'Analiza este documento que puede contener UNA O VARIAS facturas de la empresa "' + MI_EMPRESA + '".\n\nREGLAS:\n1. Detecta TODAS las facturas que aparezcan en el texto\n2. Cada factura tiene su propio numero, fecha, proveedor/cliente e importes\n3. Si una factura ocupa varias paginas, es UNA sola factura\n4. Para cada factura: si "' + MI_EMPRESA + '" paga tipo proveedor; si "' + MI_EMPRESA + '" cobra tipo cliente\n5. El nombre NUNCA puede ser "' + MI_EMPRESA + '"\n\nDevuelve SOLO un array JSON sin texto adicional:\n[{"tipo":"proveedor o cliente","nombre":"nombre empresa","numero_factura":"numero","fecha":"DD/MM/YYYY","base_imponible":0,"iva_porcentaje":0,"iva_importe":0,"total":0}]\nSi solo hay una factura devuelve igualmente un array con un elemento.';
+
+async function extraerMultiplesFacturas(rutaPDF) {
+  const dataBuffer = fs.readFileSync(rutaPDF);
+  const pdfData = await pdfParse(dataBuffer);
+  const textoFactura = pdfData.text;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: PROMPT_SISTEMA },
+      { role: 'user', content: PROMPT_MULTIPLES + '\n\nTEXTO:\n' + textoFactura }
+    ],
+    max_tokens: 2000
+  });
+
+  const texto = response.choices[0].message.content;
+  const clean = texto.replace(/```json|```/g, '').trim();
+  const lista = JSON.parse(clean);
+  return lista.map(function(d) { return limpiarDatos(d); });
+}
+
+module.exports = { extraerDatosFactura, extraerMultiplesFacturas };

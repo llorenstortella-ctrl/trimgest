@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const Jimp = require('jimp');
-const { extraerDatosFactura } = require('../services/openai');
+const { extraerDatosFactura, extraerMultiplesFacturas } = require('../services/openai');
 const auth = require('../middleware/auth');
 const baseDataDir = path.join(__dirname, '../data');
 
@@ -161,51 +161,68 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
     const ext = path.extname(req.file.originalname).toLowerCase();
     const esImagen = ['.jpg', '.jpeg', '.png', '.webp'].includes(ext);
 
-    // Extraer datos ANTES de convertir (pdf-parse no funciona con imágenes incrustadas en PDF)
-    const datos = await extraerDatosFactura(rutaArchivo);
-
+    // Extraer datos ANTES de convertir
+    let listaFacturas = [];
     if (esImagen) {
+      const datosUnica = await extraerDatosFactura(rutaArchivo);
+      listaFacturas = [datosUnica];
       const { uploadsDir } = getEmpresaDirs(req.empresaId);
       const resultado = await convertirImagenAPDF(rutaArchivo, uploadsDir);
       rutaArchivo = resultado.rutaPDF;
       nombreArchivo = resultado.nombrePDF;
-    }
-    const facturas = getFacturas(req.empresaId);
-
-    const duplicado = facturas.find(function(f) {
-      return f.numero_factura === datos.numero_factura && f.nombre === datos.nombre;
-    });
-
-    if (duplicado) {
-      fs.unlinkSync(rutaArchivo);
-      return res.status(409).json({ error: 'duplicado', mensaje: 'Esta factura ya existe', factura: duplicado });
+    } else {
+      listaFacturas = await extraerMultiplesFacturas(rutaArchivo);
     }
 
     const tipoFinal = req.query.tipo_manual;
     if (!tipoFinal) return res.status(400).json({ error: 'Debes indicar el tipo de factura' });
 
-    const nuevaFactura = {
-      id: Date.now(),
-      archivo: nombreArchivo,
-      tipo: tipoFinal,
-      nombre: datos.nombre,
-      numero_factura: datos.numero_factura,
-      fecha: datos.fecha,
-      base_imponible: datos.base_imponible,
-      iva_porcentaje: datos.iva_porcentaje,
-      iva_importe: datos.iva_importe,
-      total: datos.total,
-      anomalias: null,
-      trimestre: getTrimestre(datos.fecha),
-      anno: getAnno(datos.fecha),
-      enviado: false,
-      fecha_envio: null,
-      creado: new Date().toISOString()
-    };
+    const facturas = getFacturas(req.empresaId);
+    const nuevasFacturas = [];
+    const duplicadas = [];
 
-    facturas.push(nuevaFactura);
+    for (let i = 0; i < listaFacturas.length; i++) {
+      const datos = listaFacturas[i];
+      const duplicado = facturas.find(function(f) {
+        return f.numero_factura === datos.numero_factura && f.nombre === datos.nombre;
+      });
+      if (duplicado) {
+        duplicadas.push(datos.numero_factura || datos.nombre);
+        continue;
+      }
+      const nuevaFactura = {
+        id: Date.now() + i,
+        archivo: i === 0 ? nombreArchivo : nombreArchivo,
+        tipo: tipoFinal,
+        nombre: datos.nombre,
+        numero_factura: datos.numero_factura,
+        fecha: datos.fecha,
+        base_imponible: datos.base_imponible,
+        iva_porcentaje: datos.iva_porcentaje,
+        iva_importe: datos.iva_importe,
+        total: datos.total,
+        anomalias: null,
+        trimestre: getTrimestre(datos.fecha),
+        anno: getAnno(datos.fecha),
+        enviado: false,
+        fecha_envio: null,
+        creado: new Date().toISOString()
+      };
+      facturas.push(nuevaFactura);
+      nuevasFacturas.push(nuevaFactura);
+    }
+
+    if (nuevasFacturas.length === 0 && duplicadas.length > 0) {
+      return res.status(409).json({ error: 'duplicado', mensaje: 'Todas las facturas ya existen' });
+    }
+
     saveFacturas(facturas, req.empresaId);
-    res.json({ mensaje: 'Factura procesada correctamente', factura: nuevaFactura });
+    res.json({ 
+      mensaje: nuevasFacturas.length + ' factura(s) procesada(s) correctamente' + (duplicadas.length > 0 ? '. ' + duplicadas.length + ' duplicada(s) omitida(s).' : ''),
+      factura: nuevasFacturas[0],
+      facturas: nuevasFacturas,
+      total: nuevasFacturas.length
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al procesar la factura con IA' });
