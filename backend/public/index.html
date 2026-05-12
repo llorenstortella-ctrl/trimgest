@@ -950,7 +950,7 @@
         '<button onclick="enviarManual()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Guardar factura</button>' +
         '</div>' +
         '<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
-        '<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+        
         '<div id="uploadStatus"></div></div></div>' +
         '<div class="tabs"><div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div><div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div></div>' +
         '<div class="section-title">Facturas del periodo</div>' +
