@@ -60,21 +60,54 @@ async function convertirImagenAPDF(rutaImagen, uploadsDir) {
   return new Promise(async (resolve, reject) => {
     try {
       const imagen = await Jimp.read(rutaImagen);
-      const anchoImg = imagen.getWidth();
-      const altoImg = imagen.getHeight();
+      
+      // Mejorar imagen: aumentar contraste y brillo para que parezca escaneado
+      imagen
+        .greyscale()
+        .normalize()
+        .contrast(0.3)
+        .brightness(0.1);
 
-      const doc = new PDFDocument({ autoFirstPage: false });
+      // Tamaño A4 en puntos (595 x 842)
+      const A4_ANCHO = 595;
+      const A4_ALTO = 842;
+      const MARGEN = 30;
+      const ANCHO_UTIL = A4_ANCHO - (MARGEN * 2);
+      const ALTO_UTIL = A4_ALTO - (MARGEN * 2);
+
+      // Escalar imagen para que quepa en A4 manteniendo proporcion
+      const anchoOriginal = imagen.getWidth();
+      const altoOriginal = imagen.getHeight();
+      const ratio = Math.min(ANCHO_UTIL / anchoOriginal, ALTO_UTIL / altoOriginal);
+      const anchoFinal = Math.floor(anchoOriginal * ratio);
+      const altoFinal = Math.floor(altoOriginal * ratio);
+
+      imagen.resize(anchoFinal, altoFinal);
+
+      // Guardar imagen procesada temporalmente
+      const rutaTemp = rutaImagen + '_proc.jpg';
+      await imagen.quality(90).writeAsync(rutaTemp);
+
+      const doc = new PDFDocument({ autoFirstPage: false, size: 'A4', margin: 0 });
       const nombrePDF = path.basename(rutaImagen, path.extname(rutaImagen)) + '.pdf';
       const rutaPDF = path.join(uploadsDir, nombrePDF);
       const stream = fs.createWriteStream(rutaPDF);
 
       doc.pipe(stream);
-      doc.addPage({ size: [anchoImg, altoImg], margin: 0 });
-      doc.image(rutaImagen, 0, 0, { width: anchoImg, height: altoImg });
+      doc.addPage({ size: 'A4', margin: 0 });
+      
+      // Fondo blanco
+      doc.rect(0, 0, A4_ANCHO, A4_ALTO).fill('white');
+      
+      // Centrar imagen en la página
+      const x = (A4_ANCHO - anchoFinal) / 2;
+      const y = (A4_ALTO - altoFinal) / 2;
+      doc.image(rutaTemp, x, y, { width: anchoFinal, height: altoFinal });
       doc.end();
 
       stream.on('finish', () => {
-        fs.unlinkSync(rutaImagen);
+        try { fs.unlinkSync(rutaImagen); } catch(e) {}
+        try { fs.unlinkSync(rutaTemp); } catch(e) {}
         resolve({ rutaPDF, nombrePDF });
       });
       stream.on('error', reject);
