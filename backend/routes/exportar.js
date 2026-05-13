@@ -20,6 +20,7 @@ router.get('/:tipo/:trimestre/:anno', authMiddleware, (req, res) => {
     const datos = lista.map(function(f) {
       return {
         'Nombre': f.nombre,
+        'CIF': f.cif || '',
         'N° Factura': f.numero_factura,
         'Fecha': f.fecha,
         'Base Imponible': Number(f.base_imponible),
@@ -36,9 +37,10 @@ router.get('/:tipo/:trimestre/:anno', authMiddleware, (req, res) => {
     const ws = XLSX.utils.json_to_sheet(datos);
 
     ws['!cols'] = [
-      { wch: 30 }, { wch: 15 }, { wch: 12 },
-      { wch: 15 }, { wch: 8 }, { wch: 15 },
-      { wch: 15 }, { wch: 10 }, { wch: 8 }, { wch: 12 }
+      { wch: 30 }, { wch: 15 }, { wch: 15 },
+      { wch: 12 }, { wch: 15 }, { wch: 8 },
+      { wch: 15 }, { wch: 15 }, { wch: 10 },
+      { wch: 8 }, { wch: 12 }
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, tipo === 'proveedor' ? 'Proveedores' : 'Clientes');
