@@ -525,7 +525,7 @@
       try {
         var res = await fetch(API + '/facturas/manual', {
           method: 'POST', headers: getHeaders(),
-          var cifManual = document.getElementById('manualCif'); JSON.stringify({ tipo, nombre, cif: cifManual ? cifManual.value || null : null, numero_factura: numero, fecha, base_imponible: baseTotal.toFixed(2), iva_porcentaje: ivaPorcentajeResumen, iva_importe: ivaImporteTotal.toFixed(2), total, trimestre: window.trimestreSel, anno: window.annoSel })
+          body: JSON.stringify({ tipo, nombre, cif: (document.getElementById('manualCif') ? document.getElementById('manualCif').value || null : null), numero_factura: numero, fecha, base_imponible: baseTotal.toFixed(2), iva_porcentaje: ivaPorcentajeResumen, iva_importe: ivaImporteTotal.toFixed(2), total, trimestre: window.trimestreSel, anno: window.annoSel })
         });
         var data = await res.json();
         if (data.factura) { window.uploadOpen = false; setTimeout(function() { renderApp(); }, 1000); }
