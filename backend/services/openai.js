@@ -24,6 +24,7 @@ const PROMPT_USUARIO = `Analiza esta factura y devuelve SOLO este JSON sin texto
 {
   "tipo": "proveedor" o "cliente",
   "nombre": "nombre de la empresa que NO es ${MI_EMPRESA}",
+  "cif": "CIF o NIF del proveedor o cliente (solo si tipo es proveedor, si no null)",
   "numero_factura": "número",
   "fecha": "DD/MM/YYYY",
   "base_imponible": número,

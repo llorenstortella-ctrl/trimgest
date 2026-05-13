@@ -190,6 +190,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
       archivo: nombreArchivo,
       tipo: tipoFinal,
       nombre: datos.nombre,
+      cif: datos.cif || null,
       numero_factura: datos.numero_factura,
       fecha: datos.fecha,
       base_imponible: datos.base_imponible,
@@ -241,6 +242,7 @@ router.put('/editar/:id', auth, (req, res) => {
   if (iva_porcentaje) facturas[idx].iva_porcentaje = parseFloat(iva_porcentaje);
   if (iva_importe) facturas[idx].iva_importe = parseFloat(iva_importe);
   if (total) facturas[idx].total = parseFloat(total);
+  if (req.body.cif !== undefined) facturas[idx].cif = req.body.cif || null;
   saveFacturas(facturas, req.empresaId);
   res.json({ mensaje: 'Actualizada', factura: facturas[idx] });
 });
@@ -281,8 +283,8 @@ router.put('/marcar-enviado', auth, (req, res) => {
 
 router.post('/manual', auth, (req, res) => {
   const facturas = getFacturas(req.empresaId);
-  const { tipo, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno } = req.body;
-  const nueva = { id: Date.now(), tipo, nombre, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno, archivo: null, enviado: false, fecha_subida: new Date().toISOString() };
+  const { tipo, nombre, cif, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno } = req.body;
+  const nueva = { id: Date.now(), tipo, nombre, cif: cif || null, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno, archivo: null, enviado: false, fecha_subida: new Date().toISOString() };
   facturas.push(nueva);
   saveFacturas(facturas, req.empresaId);
   res.json({ factura: nueva });

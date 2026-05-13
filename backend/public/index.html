@@ -525,7 +525,7 @@
       try {
         var res = await fetch(API + '/facturas/manual', {
           method: 'POST', headers: getHeaders(),
-          body: JSON.stringify({ tipo, nombre, numero_factura: numero, fecha, base_imponible: baseTotal.toFixed(2), iva_porcentaje: ivaPorcentajeResumen, iva_importe: ivaImporteTotal.toFixed(2), total, trimestre: window.trimestreSel, anno: window.annoSel })
+          var cifManual = document.getElementById('manualCif'); body: JSON.stringify({ tipo, nombre, cif: cifManual ? cifManual.value || null : null, numero_factura: numero, fecha, base_imponible: baseTotal.toFixed(2), iva_porcentaje: ivaPorcentajeResumen, iva_importe: ivaImporteTotal.toFixed(2), total, trimestre: window.trimestreSel, anno: window.annoSel })
         });
         var data = await res.json();
         if (data.factura) { window.uploadOpen = false; setTimeout(function() { renderApp(); }, 1000); }
@@ -894,6 +894,7 @@
           if (f.enviado) listaHTML += '<span class="factura-badge badge-enviada">enviada</span>';
           listaHTML += '</div></div>';
           listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
+          if (f.cif) listaHTML += '<div style="font-size:11px;color:#6a6070;margin-top:2px;">CIF: ' + f.cif + '</div>';
           listaHTML += '<div class="factura-desglose">Base ' + formatEur(f.base_imponible) + ' IVA ' + f.iva_porcentaje + '% ' + formatEur(f.iva_importe) + '</div>';
           var contBadge = f.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
           var btnPDF = f.archivo ? '<a href="/facturas/archivo/' + f.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
@@ -903,6 +904,7 @@
           listaHTML += '<select id="trim-' + f.id + '"><option value="T1"' + (f.trimestre==='T1'?' selected':'') + '>T1</option><option value="T2"' + (f.trimestre==='T2'?' selected':'') + '>T2</option><option value="T3"' + (f.trimestre==='T3'?' selected':'') + '>T3</option><option value="T4"' + (f.trimestre==='T4'?' selected':'') + '>T4</option></select>';
           listaHTML += '<select id="anno-' + f.id + '">' + optsAnnoEdit + '</select></div>';
           listaHTML += '<input class="edit-input" id="nombre-' + f.id + '" value="' + f.nombre + '" placeholder="Nombre">';
+          listaHTML += '<input class="edit-input" id="cif-' + f.id + '" value="' + (f.cif || '') + '" placeholder="CIF proveedor">';
           listaHTML += '<input class="edit-input" id="nfactura-' + f.id + '" value="' + f.numero_factura + '" placeholder="N factura">';
           listaHTML += '<input class="edit-input" id="fecha-' + f.id + '" value="' + f.fecha + '" placeholder="DD/MM/YYYY">';
           listaHTML += '<div class="edit-row"><input class="edit-input" id="base-edit-' + f.id + '" value="' + f.base_imponible + '" placeholder="Base" type="number" style="flex:1"><input class="edit-input" id="iva-edit-' + f.id + '" value="' + f.iva_porcentaje + '" placeholder="IVA%" type="number" style="flex:0.5"><input class="edit-input" id="total-edit-' + f.id + '" value="' + f.total + '" placeholder="Total" type="number" style="flex:1"></div>';
@@ -952,6 +954,7 @@
         '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
         '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
         '<input id="manualNombre" class="manual-input" placeholder="Nombre proveedor/cliente">' +
+        '<input id="manualCif" class="manual-input" placeholder="CIF proveedor (opcional)">' +
         '<input id="manualNumero" class="manual-input" placeholder="N factura">' +
         '<input id="manualFecha" class="manual-input" placeholder="DD/MM/AAAA">' +
         '<div id="lineasIva" style="display:flex;flex-direction:column;gap:6px;"></div>' +
@@ -988,7 +991,7 @@
     }
 
     async function guardarEdicion(id) {
-      var body = { tipo: document.getElementById('tipo-' + id).value, trimestre: document.getElementById('trim-' + id).value, anno: document.getElementById('anno-' + id).value, nombre: document.getElementById('nombre-' + id).value, numero_factura: document.getElementById('nfactura-' + id).value, fecha: document.getElementById('fecha-' + id).value, base_imponible: document.getElementById('base-edit-' + id).value, iva_porcentaje: document.getElementById('iva-edit-' + id).value, total: document.getElementById('total-edit-' + id).value };
+      var cifEl = document.getElementById('cif-' + id); var body = { tipo: document.getElementById('tipo-' + id).value, trimestre: document.getElementById('trim-' + id).value, anno: document.getElementById('anno-' + id).value, nombre: document.getElementById('nombre-' + id).value, cif: cifEl ? cifEl.value : null, numero_factura: document.getElementById('nfactura-' + id).value, fecha: document.getElementById('fecha-' + id).value, base_imponible: document.getElementById('base-edit-' + id).value, iva_porcentaje: document.getElementById('iva-edit-' + id).value, total: document.getElementById('total-edit-' + id).value };
       await fetch(API + '/facturas/editar/' + id, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(body) });
       renderApp();
     }
