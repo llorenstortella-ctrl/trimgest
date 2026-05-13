@@ -676,10 +676,27 @@
         '</div>' +
         '<button onclick="cerrarAjustes();mostrarPlanes()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px;">Ver planes y precios</button>' +
         '<button onclick="cerrarSesion()" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cerrar sesion</button>' +
+        '<div style="margin-top:40px;padding-top:24px;border-top:1px solid #22223a;text-align:center;"><button onclick="solicitarBaja()" style="background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;">Solicitar baja</button></div>' +
         '</div></div>' +
         '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">Volver</button>';
       document.body.appendChild(div);
       cargarGestoriasAjustes();
+    }
+
+    async function solicitarBaja() {
+      if (!confirm('¿Seguro que quieres solicitar la baja? Perderás todos tus datos. Esta acción no se puede deshacer.')) return;
+      try {
+        var res = await fetch(API + '/stripe/cancelar', { method: 'POST', headers: getHeaders() });
+        var data = await res.json();
+        if (data.ok) {
+          alert('Solicitud de baja recibida. Nos pondremos en contacto contigo.');
+          cerrarSesion();
+        } else {
+          alert('Error al procesar la solicitud. Contacta con soporte@trimgest.es');
+        }
+      } catch(e) {
+        alert('Error de conexion');
+      }
     }
 
     async function guardarPerfil() {
@@ -788,6 +805,25 @@
 
     async function renderApp() {
       var facturas = await cargarFacturas();
+      var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
+      var perfil = await perfilRes.json();
+      var bannerHTML = '';
+      if (!perfil.plan_gratuito) {
+        var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
+        var usadas = perfil.facturas_mes || 0;
+        var pct = Math.round(usadas / limite * 100);
+        if (perfil.plan === 'free') {
+          bannerHTML = '<div style="background:#1a1a2a;border:1px solid #2a2a5a;border-radius:10px;padding:12px 16px;margin:8px 16px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<span style="font-size:13px;color:#9a90b4;">Plan gratuito &mdash; <b style=\'color:#e8c87a;\'>' + usadas + ' de 10</b> subidas usadas</span>' +
+            '<button onclick="cerrarAjustes&&cerrarAjustes();mostrarPlanes()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Actualizar plan</button>' +
+            '</div>';
+        } else if (pct >= 80) {
+          bannerHTML = '<div style="background:#1a2a1a;border:1px solid #2a4a2a;border-radius:10px;padding:12px 16px;margin:8px 16px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<span style="font-size:13px;color:#9a90b4;">Has usado <b style=\'color:#e8c87a;\'>' + usadas + ' de ' + limite + '</b> subidas este trimestre</span>' +
+            '<button onclick="cerrarAjustes&&cerrarAjustes();mostrarPlanes()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Actualizar plan</button>' +
+            '</div>';
+        }
+      }
       var anno = new Date().getFullYear();
       if (!window.trimestreSel) window.trimestreSel = getTrimestre();
       if (!window.annoSel) window.annoSel = String(anno);
@@ -896,11 +932,12 @@
         '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' pendientes</div></div>' +
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +
         '</div></div>' +
+        bannerHTML +
         '<div class="content">' +
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
         '<div class="upload-title">Subir factura</div><div class="upload-sub">Primero indica que tipo es</div>' +
         '<div class="tipo-selector"><div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">Proveedor</div><div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">Cliente</div></div>' +
-        '<div class="upload-btns"><button class="btn-file"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">Elegir PDF</button><button class="btn-camara"' + btnDisabled + ' onclick="document.getElementById(\'camaraInput\').click()">Escanear</button></div>' +
+        '<div class="upload-btns" style="width:100%"><button class="btn-file" style="width:100%;font-size:16px;padding:16px;"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">+ Subir factura</button></div>' +
         '<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Introducir manual</button>' +
         '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
         '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
@@ -913,7 +950,7 @@
         '<button onclick="enviarManual()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Guardar factura</button>' +
         '</div>' +
         '<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
-        '<input type="file" id="camaraInput" accept="image/*" capture="environment" onchange="procesarArchivo(this.files[0])" style="display:none">' +
+        
         '<div id="uploadStatus"></div></div></div>' +
         '<div class="tabs"><div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div><div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div></div>' +
         '<div class="section-title">Facturas del periodo</div>' +
@@ -926,7 +963,7 @@
       btns[0].className = 'tipo-btn' + (tipo === 'proveedor' ? ' selected-prov' : '');
       btns[1].className = 'tipo-btn' + (tipo === 'cliente' ? ' selected-cli' : '');
       document.querySelector('.btn-file').disabled = false;
-      document.querySelector('.btn-camara').disabled = false;
+
     }
 
     function toggleUpload() {
@@ -974,7 +1011,7 @@
         var data = await res.json();
         if (data.error === 'duplicado') { status.innerHTML = '<div class="duplicado">Esta factura ya esta en el sistema</div>'; }
         else if (data.error === 'limite_alcanzado') { status.innerHTML = '<div class="error">Has alcanzado el limite de ' + data.limite + ' subidas de tu plan. Ve a Ajustes para ver tus opciones.</div>'; }
-        else if (data.factura) { window.trimestreSel = data.factura.trimestre; window.annoSel = String(data.factura.anno); window.tipoSel = null; window.uploadOpen = false; status.innerHTML = '<div class="success">Factura procesada correctamente</div>'; setTimeout(function() { renderApp(); }, 1500); }
+        else if (data.factura) { var f = data.factura; window.trimestreSel = f.trimestre; window.annoSel = String(f.anno); window.tipoSel = null; window.uploadOpen = false; var msg = data.total > 1 ? data.total + ' facturas procesadas correctamente' : 'Factura procesada correctamente'; status.innerHTML = '<div class="success">' + msg + '</div>'; setTimeout(function() { renderApp(); }, 1500); }
         else { status.innerHTML = '<div class="error">Error al procesar la factura</div>'; }
       } catch(e) { status.innerHTML = '<div class="error">Error de conexion</div>'; }
     }

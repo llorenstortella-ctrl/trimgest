@@ -257,6 +257,15 @@ router.delete('/borrar/:id', auth, (req, res) => {
   res.json({ mensaje: 'Factura borrada' });
 });
 
+
+router.get('/archivo/:filename', auth, (req, res) => {
+  const { uploadsDir } = getEmpresaDirs(req.empresaId);
+  const filePath = path.join(uploadsDir, req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.sendFile(filePath);
+});
+
 router.put('/marcar-enviado', auth, (req, res) => {
   const { ids } = req.body;
   if (!ids || !ids.length) return res.status(400).json({ error: 'Sin ids' });
