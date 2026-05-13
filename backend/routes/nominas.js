@@ -144,3 +144,12 @@ router.delete('/borrar/:id', auth, (req, res) => {
 });
 
 module.exports = router;
+
+router.get('/archivo/:filename', auth, (req, res) => {
+  const { uploadsDir } = getEmpresaDirs(req.empresaId);
+  const filePath = require('path').join(uploadsDir, req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.sendFile(filePath);
+});
+

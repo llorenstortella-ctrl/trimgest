@@ -340,6 +340,7 @@
             listaHTML += '<span class="factura-total">' + formatEur(n.coste_empresa) + '</span></div>';
             listaHTML += '<div class="factura-datos"><span>Neto: ' + formatEur(n.neto) + '</span><span>IRPF: ' + formatEur(n.irpf_importe) + '</span><span>SS emp: ' + formatEur(n.ss_empresa) + '</span></div>';
             listaHTML += '<div class="factura-acciones">' +
+              (n.archivo ? '<a href="/nominas/archivo/' + n.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '') +
               '<button class="btn-accion" onclick="editarNomina(' + n.id + ')">Editar</button>' +
               '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button>' +
               '</div>' +
