@@ -70,6 +70,7 @@ async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir, to
 
     var nombre = f.nombre.length > 22 ? f.nombre.substring(0, 22) + '...' : f.nombre;
     resumen.drawText(nombre, { x: cols[0], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
+    if (f.cif) resumen.drawText(f.cif, { x: cols[0], y: y - 8, size: 6, font: helvetica, color: rgb(0.5, 0.5, 0.6) });
     resumen.drawText(String(f.numero_factura), { x: cols[1], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
     resumen.drawText(f.fecha, { x: cols[2], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
     resumen.drawText(formatEur(f.base_imponible), { x: cols[3], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
