@@ -967,7 +967,7 @@
         '<div id="uploadStatus"></div></div></div>' +
         '<div class="tabs"><div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div><div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div></div>' +
         '<div class="section-title">Facturas del periodo</div>' +
-        listaHTML + botonesEnvio + '</div>';
+        botonesEnvio + listaHTML + botonesEnvio + '</div>';
     }
 
     function seleccionarTipo(tipo) {
