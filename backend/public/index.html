@@ -918,6 +918,7 @@
         botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button><button class="btn-marcar" onclick="marcarEnviadas()">Marcar todas como enviadas</button>';
       }
       botonesEnvio += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button></div>';
+      botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">🔗 Compartir trimestre con gestoría</button>';
 
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
       var optsTrim = ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
@@ -1048,6 +1049,16 @@ async function exportarExcel(tipo) {
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
         setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
       } catch(e) { alert('Error al exportar'); }
+    }
+
+    async function compartirTrimestre() {
+      var pass = prompt('Contraseña para proteger el enlace (opcional, deja vacío para sin contraseña):');
+      if (pass === null) return;
+      var r = await fetch(API + '/api/compartir/generar', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ trimestre: window.trimestreSel, anno: window.annoSel, password: pass || null }) });
+      var d = await r.json();
+      if (d.url) {
+        prompt('Enlace generado. Cópialo y envíaselo a tu gestoría:', d.url);
+      }
     }
 
     function generarPDFs() {

@@ -18,6 +18,7 @@ const { router: usuariosRouter } = require('./routes/usuarios');
 const adminRouter = require('./routes/admin');
 const stripeRouter = require('./routes/stripe');
 const gestoriaRouter = require('./routes/gestoria');
+const compartirRouter = require('./routes/compartir');
 app.use(cors());
 app.use(express.json());
 
@@ -32,6 +33,7 @@ app.use('/usuarios', usuariosRouter);
 app.use('/admin', adminRouter);
 app.use('/stripe', stripeRouter);
 app.use('/gestoria', gestoriaRouter);
+app.use('/api/compartir', compartirRouter);
 
 
 app.get('/', (req, res) => {
@@ -51,6 +53,10 @@ app.get('/verificar', (req, res) => {
   if (!token) return res.redirect('/app');
   const usuariosRouter = require('./routes/usuarios');
   res.redirect('https://trimgest.es/usuarios/verificar?token=' + token);
+});
+
+app.get('/compartir/:token', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/compartir.html'));
 });
 
 app.get('/privacidad', (req, res) => {
