@@ -43,6 +43,7 @@
 const token = location.pathname.split('/compartir/')[1];
 var passwordUsada = '';
 var datosGlobales = null;
+var contabilizadosLocal = [];
 
 async function cargar(pass) {
   const url = '/api/compartir/' + token + (pass ? '?password=' + encodeURIComponent(pass) : '');
@@ -52,6 +53,7 @@ async function cargar(pass) {
   if (r.status === 404) { document.getElementById('root').innerHTML = '<div style="text-align:center;padding:60px;"><h2>Enlace no encontrado</h2></div>'; return; }
   datosGlobales = d;
   passwordUsada = pass || '';
+  contabilizadosLocal = d.contabilizados || [];
   renderApp(d);
 }
 
@@ -74,6 +76,7 @@ async function entrarConPassword() {
   if (r.status === 401) { document.getElementById('passError').textContent = 'Contraseña incorrecta'; return; }
   const d = await r.json();
   datosGlobales = d; passwordUsada = pass;
+  contabilizadosLocal = d.contabilizados || [];
   renderApp(d);
 }
 
@@ -116,8 +119,11 @@ function renderApp(d) {
       html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span><span>IVA ' + f.iva_porcentaje + '%: ' + formatEur(f.iva_importe) + '</span>';
       if (f.contabilizado) html += '<span class="badge">✓ Contabilizado</span>';
       html += '</div>';
-      if (f.archivo) html += '<div style="margin-top:8px;"><a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a></div>';
-      html += '</div>';
+      var esCont = contabilizadosLocal.indexOf(String(f.id)) !== -1;
+      html += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center;">';
+      if (f.archivo) html += '<a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a>';
+      html += '<button onclick="toggleContabilizado(\'' + f.id + '\')" style="background:' + (esCont ? '#0d2b1a' : '#1e1e28') + ';border:1px solid ' + (esCont ? '#1a4a2a' : '#2a2a3a') + ';color:' + (esCont ? '#4caf7d' : '#9a90b4') + ';border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">' + (esCont ? '✓ Contabilizado' : 'Marcar contabilizado') + '</button>';
+      html += '</div></div>';
     });
   }
 
@@ -137,6 +143,16 @@ function renderApp(d) {
   html += '<div class="banner"><p>¿Quieres que todos tus clientes te envíen las facturas así de organizadas?</p><a href="https://trimgest.es" target="_blank">Descubre TrimGest para gestorías — gratis →</a></div>';
   html += '</div>';
   document.getElementById('root').innerHTML = html;
+}
+
+async function toggleContabilizado(facturaId) {
+  var r = await fetch('/api/compartir/' + token + '/contabilizar/' + facturaId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: passwordUsada })
+  });
+  var d = await r.json();
+  if (d.ok) { contabilizadosLocal = d.contabilizados; renderApp(datosGlobales); }
 }
 
 cargar('');

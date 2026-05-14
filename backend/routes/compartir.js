@@ -62,7 +62,8 @@ router.get('/:token', (req, res) => {
     empresa: empresaEncontrada.nombre_empresa,
     trimestre: enlaceEncontrado.trimestre,
     anno: enlaceEncontrado.anno,
-    facturas: lista
+    facturas: lista,
+    contabilizados: enlaceEncontrado.contabilizados || []
   });
 });
 
@@ -86,6 +87,32 @@ router.get('/:token/archivo/:filename', (req, res) => {
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
   res.setHeader('Content-Type', 'application/pdf');
   res.sendFile(filePath);
+});
+
+
+// Contabilizar factura desde enlace compartido
+router.post('/:token/contabilizar/:facturaId', (req, res) => {
+  const { token, facturaId } = req.params;
+  const { password } = req.body;
+  const usuarios = getUsuarios();
+  var usuIdx = -1;
+  var enlaceIdx = -1;
+  usuarios.forEach(function(u, i) {
+    if (u.enlaces_compartidos) {
+      u.enlaces_compartidos.forEach(function(e, j) {
+        if (e.token === token) { usuIdx = i; enlaceIdx = j; }
+      });
+    }
+  });
+  if (usuIdx === -1) return res.status(404).json({ error: 'No encontrado' });
+  var enlace = usuarios[usuIdx].enlaces_compartidos[enlaceIdx];
+  if (enlace.password && enlace.password !== password) return res.status(401).json({ error: 'No autorizado' });
+  if (!enlace.contabilizados) enlace.contabilizados = [];
+  var idx = enlace.contabilizados.indexOf(facturaId);
+  if (idx === -1) enlace.contabilizados.push(facturaId);
+  else enlace.contabilizados.splice(idx, 1);
+  fs.writeFileSync(usuariosPath, JSON.stringify(usuarios, null, 2));
+  res.json({ ok: true, contabilizados: enlace.contabilizados });
 });
 
 module.exports = router;
