@@ -63,6 +63,7 @@ router.post('/registro', async (req, res) => {
     saveUsuarios(usuarios);
     initEmpresa(empresaId);
     try { await enviarVerificacion(email, nombre_empresa, verToken); } catch(e) { console.error('Error email verificacion:', e); }
+    try { const { Resend } = require('resend'); const resend = new Resend(process.env.RESEND_API_KEY); await resend.emails.send({ from: 'TrimGest <no-reply@trimgest.es>', to: 'info@trimgest.es', subject: 'Nuevo registro en TrimGest', html: '<h2>Nuevo registro</h2><p><b>Empresa:</b> ' + nombre_empresa + '</p><p><b>Email:</b> ' + email + '</p><p><b>Tipo:</b> ' + (nuevo.tipo || 'empresa') + '</p><p><b>Fecha:</b> ' + new Date().toLocaleString('es-ES') + '</p>' }); } catch(e) { console.error('Error email aviso registro:', e); }
     const token = jwt.sign({ id: nuevo.id, empresaId }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ ok: true, token, nombre_empresa, empresaId, verificacion_pendiente: true });
   } catch(e) {
