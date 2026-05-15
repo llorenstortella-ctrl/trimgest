@@ -147,8 +147,13 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
         }
         const subidas = usuarios[usuIdx].subidas_mes || 0;
         if (subidas >= limite) {
-          fs.unlinkSync(req.file.path);
-          return res.status(403).json({ error: 'limite_alcanzado', limite: limite, subidas: subidas, plan_activo: usu.plan_activo || false });
+          const extras = usuarios[usuIdx].subidas_extra || 0;
+          if (extras > 0) {
+            usuarios[usuIdx].subidas_extra = extras - 1;
+          } else {
+            fs.unlinkSync(req.file.path);
+            return res.status(403).json({ error: 'limite_alcanzado', limite: limite, subidas: subidas, plan: usu.plan || 'free', plan_activo: usu.plan_activo || false, subidas_extra: 0 });
+          }
         }
         usuarios[usuIdx].subidas_mes = subidas + 1;
         usuarios[usuIdx].trimestre_fiscal = trimestreActual;

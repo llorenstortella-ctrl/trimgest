@@ -1024,7 +1024,7 @@
         });
         var data = await res.json();
         if (data.error === 'duplicado') { status.innerHTML = '<div class="duplicado">Esta factura ya esta en el sistema</div>'; }
-        else if (data.error === 'limite_alcanzado') { status.innerHTML = '<div class="error">Has alcanzado el limite de ' + data.limite + ' subidas de tu plan. Ve a Ajustes para ver tus opciones.</div>'; }
+        else if (data.error === 'limite_alcanzado') { mostrarPopupLimite(data.plan || 'free', data.plan_activo || false); status.innerHTML = ''; }
         else if (data.factura) { var f = data.factura; window.trimestreSel = f.trimestre; window.annoSel = String(f.anno); window.tipoSel = null; window.uploadOpen = false; var msg = data.total > 1 ? data.total + ' facturas procesadas correctamente' : 'Factura procesada correctamente'; status.innerHTML = '<div class="success">' + msg + '</div>'; setTimeout(function() { renderApp(); }, 1500); }
         else { status.innerHTML = '<div class="error">Error al procesar la factura</div>'; }
       } catch(e) { status.innerHTML = '<div class="error">Error de conexion</div>'; }
@@ -1091,6 +1091,57 @@ async function exportarExcel(tipo) {
         setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
         status.style.color = '#7ec47e'; status.textContent = 'PDF descargado';
       } catch(e) { status.style.color = '#c06060'; status.textContent = 'Error al generar el PDF'; }
+    }
+
+    function mostrarPopupLimite(plan, planActivo) {
+      var existing = document.getElementById('popup-limite');
+      if (existing) existing.remove();
+
+      var contenido = '';
+      if (plan === 'free') {
+        contenido = '<h3 style="margin:0 0 12px;color:#e8c87a;">Limite alcanzado</h3>' +
+          '<p style="color:#aaa;font-size:14px;margin:0 0 20px;">Has llegado al limite de 10 facturas del plan gratuito. Pasa al Plan Basico para subir hasta 100 facturas por trimestre.</p>' +
+          '<button onclick="contratarPlan(\'basico\')" style="width:100%;padding:12px;background:#e8c87a;color:#0f0f13;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">Plan Basico — 10€/mes</button>';
+      } else if (plan === 'basico') {
+        contenido = '<h3 style="margin:0 0 12px;color:#e8c87a;">Limite alcanzado</h3>' +
+          '<p style="color:#aaa;font-size:14px;margin:0 0 16px;">Has llegado al limite de 100 facturas del Plan Basico.</p>' +
+          '<button onclick="contratarPlan(\'estandar\')" style="width:100%;padding:12px;background:#e8c87a;color:#0f0f13;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">Plan Estandar — 20€/mes (200 facturas)</button>' +
+          '<button onclick="comprarSubidas(\'p10\')" style="width:100%;padding:10px;background:#2a2a35;color:#e8e8e8;border:1px solid #3a3a45;border-radius:8px;font-size:14px;cursor:pointer;">10 subidas extra — 2€</button>';
+      } else if (plan === 'estandar') {
+        contenido = '<h3 style="margin:0 0 12px;color:#e8c87a;">Limite alcanzado</h3>' +
+          '<p style="color:#aaa;font-size:14px;margin:0 0 16px;">Has llegado al limite de 200 facturas. Compra subidas extra:</p>' +
+          '<div style="display:flex;flex-direction:column;gap:8px;">' +
+          '<button onclick="comprarSubidas(\'p10\')" style="width:100%;padding:10px;background:#2a2a35;color:#e8e8e8;border:1px solid #3a3a45;border-radius:8px;font-size:14px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;"><span>10 subidas</span><span style="color:#e8c87a;">2€ (0,20€/u)</span></button>' +
+          '<button onclick="comprarSubidas(\'p50\')" style="width:100%;padding:10px;background:#2a2a35;color:#e8e8e8;border:1px solid #3a3a45;border-radius:8px;font-size:14px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;"><span>50 subidas</span><span style="color:#e8c87a;">7,50€ (0,15€/u)</span></button>' +
+          '<button onclick="comprarSubidas(\'p100\')" style="width:100%;padding:10px;background:#2a2a35;color:#e8e8e8;border:1px solid #3a3a45;border-radius:8px;font-size:14px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;"><span>100 subidas</span><span style="color:#e8c87a;">10€ (0,10€/u)</span></button>' +
+          '<button onclick="comprarSubidas(\'p200\')" style="width:100%;padding:10px;background:#2a2a35;color:#e8e8e8;border:1px solid #3a3a45;border-radius:8px;font-size:14px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;"><span>200 subidas</span><span style="color:#e8c87a;">16€ (0,08€/u)</span></button>' +
+          '</div>';
+      }
+
+      var popup = document.createElement('div');
+      popup.id = 'popup-limite';
+      popup.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      popup.innerHTML = '<div style="background:#1a1a20;border:1px solid #2a2a35;border-radius:16px;padding:28px;max-width:400px;width:90%;position:relative;">' +
+        '<button onclick="document.getElementById(\'popup-limite\').remove()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;">×</button>' +
+        contenido +
+        '</div>';
+      document.body.appendChild(popup);
+    }
+
+    async function contratarPlan(plan) {
+      try {
+        var r = await fetch(API + '/stripe/checkout', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ plan: plan }) });
+        var d = await r.json();
+        if (d.url) window.location.href = d.url;
+      } catch(e) { alert('Error al conectar con el sistema de pago'); }
+    }
+
+    async function comprarSubidas(paquete) {
+      try {
+        var r = await fetch(API + '/stripe/comprar-subidas', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ paquete: paquete }) });
+        var d = await r.json();
+        if (d.url) window.location.href = d.url;
+      } catch(e) { alert('Error al conectar con el sistema de pago'); }
     }
   </script>
 </body>
