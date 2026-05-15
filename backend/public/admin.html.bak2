@@ -57,18 +57,14 @@
       .stat { padding: 10px; }
       .stat-value { font-size: 20px; }
       .tabla-wrap { border-radius: 10px; }
-      .mobile-card { background: #16161e; border-radius: 10px; margin-bottom: 10px; padding: 14px; border: 1px solid #22223a; }
-      .mobile-card-nombre { font-size: 15px; font-weight: 600; color: #e0d8cc; margin-bottom: 4px; }
-      .mobile-card-email { font-size: 11px; color: #6a6070; margin-bottom: 10px; }
-      .mobile-card-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
-      .mobile-card-row span:first-child { color: #6a6070; }
-      .mobile-card-row span:last-child { color: #e0d8cc; font-weight: 500; }
-      .mobile-card-btns { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
-      .mobile-card-btns button { flex: 1; min-width: 60px; }
-      table { display: none; }
-      .mobile-lista { display: block; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead { display: none; }
+      tr { background: #16161e; border-radius: 10px; margin-bottom: 10px; padding: 12px; border: 1px solid #22223a; }
+      td { padding: 4px 0; font-size: 12px; border: none; display: flex; justify-content: space-between; align-items: center; }
+      td:before { content: attr(data-label); font-size: 10px; color: #6a6070; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; margin-right: 8px; }
+      td:last-child { margin-top: 8px; justify-content: flex-end; gap: 6px; }
+      td:last-child:before { display: none; }
     }
-    .mobile-lista { display: none; }
   </style>
 </head>
 <body>
@@ -108,7 +104,6 @@
         <tbody id="tablaUsuarios"></tbody>
       </table>
     </div>
-    <div class="mobile-lista" id="mobileLista"></div>
   </div>
 
   <div class="ficha" id="fichaPanel">
@@ -207,27 +202,6 @@
           btnBorrar.addEventListener('click', function() { borrarUsuario(u.id); });
           btnGratis.addEventListener('click', function() { toggleGratis(u.empresaId, !u.plan_gratuito); });
           tbody.appendChild(tr);
-
-          // Tarjeta movil
-          var card = document.createElement('div');
-          card.className = 'mobile-card';
-          var planLabel = u.tipo === 'gestoria' ? '⚖ Gestoría' : u.plan_gratuito ? '★ gratis' : (u.plan || 'free');
-          card.innerHTML =
-            '<div class="mobile-card-nombre">' + u.nombre_empresa + '</div>' +
-            '<div class="mobile-card-email">' + u.email + '</div>' +
-            '<div class="mobile-card-row"><span>Registro</span><span>' + fecha + '</span></div>' +
-            '<div class="mobile-card-row"><span>Facturas</span><span>' + u.facturas + '</span></div>' +
-            '<div class="mobile-card-row"><span>Nóminas</span><span>' + u.nominas + '</span></div>' +
-            '<div class="mobile-card-row"><span>Plan</span><span>' + planLabel + '</span></div>' +
-            '<div class="mobile-card-btns">' +
-            '<button class="btn-gratis' + (u.plan_gratuito ? ' activo' : '') + '" data-card-gratis>' + (u.plan_gratuito ? '★ Gratis ON' : 'Dar gratis') + '</button>' +
-            '<button class="btn-ver" data-card-ver>Ver</button>' +
-            '<button class="btn-borrar" data-card-borrar>Borrar</button>' +
-            '</div>';
-          card.querySelector('[data-card-ver]').addEventListener('click', function() { verEmpresa(u.empresaId); });
-          card.querySelector('[data-card-borrar]').addEventListener('click', function() { borrarUsuario(u.id); });
-          card.querySelector('[data-card-gratis]').addEventListener('click', function() { toggleGratis(u.empresaId, !u.plan_gratuito); });
-          document.getElementById('mobileLista').appendChild(card);
         });
       } catch(e) {
         logout();
