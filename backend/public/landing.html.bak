@@ -1,9 +1,44 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LRLKFDTN1E"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LRLKFDTN1E');
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TrimGest — Gestiona tus facturas con IA</title>
+  <title>TrimGest — Gestiona tus facturas trimestrales con IA | Software para autónomos y pymes</title>
+  <meta name="description" content="TrimGest te ayuda a gestionar tus facturas trimestrales con inteligencia artificial. Extrae datos automáticamente, genera informes para tu gestoría y controla tu IVA. Prueba gratis.">
+  <meta name="keywords" content="gestión facturas autónomos, software facturas pymes, gestión trimestral IVA, facturas inteligencia artificial, gestoría online España, control facturas trimestre">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="TrimGest">
+  <link rel="canonical" href="https://trimgest.es">
+  <meta property="og:title" content="TrimGest — Gestiona tus facturas con IA">
+  <meta property="og:description" content="Extrae datos de facturas automáticamente, genera informes para tu gestoría y controla tu IVA trimestral. Empieza gratis.">
+  <meta property="og:url" content="https://trimgest.es">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TrimGest",
+    "description": "Software de gestión de facturas trimestrales con inteligencia artificial para autónomos y pymes españolas",
+    "url": "https://trimgest.es",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": [
+      { "@type": "Offer", "name": "Plan Free", "price": "0", "priceCurrency": "EUR" },
+      { "@type": "Offer", "name": "Plan Básico", "price": "10", "priceCurrency": "EUR" },
+      { "@type": "Offer", "name": "Plan Estándar", "price": "20", "priceCurrency": "EUR" }
+    ],
+    "inLanguage": "es"
+  }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -69,7 +104,7 @@
   <nav class="nav">
     <div class="nav-logo">TrimGest</div>
     <div style="display:flex;gap:12px;align-items:center;">
-      <a href="/panel-gestoria" style="font-size:13px;color:#6a6070;text-decoration:none;">Soy gestoría</a>
+      <a href="/panel-gestoria" class="nav-btn">Soy gestoría</a>
       <a href="/app" class="nav-btn">Entrar</a>
     </div>
   </nav>
@@ -189,7 +224,7 @@
 
   <footer class="footer">
     <p>TrimGest &copy; 2026 — Gestion trimestral inteligente para empresas espanolas</p>
-    <p style="margin-top:8px;"><a href="/app" style="color:#e8c87a;text-decoration:none;">Acceder a la app</a> &nbsp;·&nbsp; <a href="/privacidad" style="color:#6a6070;text-decoration:none;">Privacidad y terminos</a></p>
+    <p style="margin-top:8px;"><a href="/app" style="color:#e8c87a;text-decoration:none;">Acceder a la app</a> &nbsp;·&nbsp; <a href="/privacidad" style="color:#6a6070;text-decoration:none;">Privacidad y terminos</a> &nbsp;·&nbsp; <a href="mailto:info@trimgest.es" style="color:#6a6070;text-decoration:none;">info@trimgest.es</a></p>
     <p style="margin-top:16px;"><a href="/panel-admin" style="color:#1a1520;font-size:10px;text-decoration:none;">·</a></p>
   </footer>
 

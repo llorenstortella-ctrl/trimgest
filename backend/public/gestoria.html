@@ -983,6 +983,7 @@ async function responderInvitacion(empresaId, accion) {
   } catch(e) { alert('Error de conexion'); }
 }
 
+if (window.location.hash === '#registro') switchAuthTab('registro');
 if (token) {
   fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(r) { return r.json(); })
