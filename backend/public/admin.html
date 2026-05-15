@@ -185,6 +185,7 @@
 
         var tbody = document.getElementById('tablaUsuarios');
         tbody.innerHTML = '';
+        document.getElementById('mobileLista').innerHTML = '';
         data.usuarios.forEach(function(u) {
           var fecha = u.fecha_registro ? new Date(u.fecha_registro).toLocaleDateString('es-ES') : '-';
           var tr = document.createElement('tr');
