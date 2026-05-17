@@ -656,6 +656,9 @@
         '<input id="ajCiudad" class="manual-input" value="' + (perfil.ciudad || '') + '" placeholder="Ciudad" style="flex:1;">' +
         '</div>' +
         '<input id="ajProvincia" class="manual-input" value="' + (perfil.provincia || '') + '" placeholder="Provincia">' +
+        '<div style="font-size:12px;color:#6a6070;">Teléfono WhatsApp</div>' +
+        '<input id="ajTelefono" class="manual-input" value="' + (perfil.telefono || '') + '" placeholder="Ej: 612345678 (sin +34)">' +
+        '<div style="font-size:11px;color:#6a6070;margin-top:-8px;">Tu gestoría podrá contactarte directamente por WhatsApp</div>' +
         '<button onclick="guardarPerfil()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:4px;">Guardar datos</button>' +
         '<div id="ajMsg" style="font-size:13px;text-align:center;"></div>' +
         '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
@@ -717,9 +720,10 @@
         var cp = document.getElementById('ajCp').value;
       var ciudad = document.getElementById('ajCiudad').value;
       var provincia = document.getElementById('ajProvincia').value;
+      var telefono = document.getElementById('ajTelefono') ? document.getElementById('ajTelefono').value : '';
       var res = await fetch(API + '/usuarios/perfil', {
           method: 'PUT', headers: getHeaders(),
-          body: JSON.stringify({ nombre_empresa: nombre, nif, direccion, cp, ciudad, provincia })
+          body: JSON.stringify({ nombre_empresa: nombre, nif, direccion, cp, ciudad, provincia, telefono })
         });
         var data = await res.json();
         if (data.ok) {
