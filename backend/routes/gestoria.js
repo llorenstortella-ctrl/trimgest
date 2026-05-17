@@ -897,20 +897,24 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
 
 
 // GET perfil gestoria
-router.get('/perfil', auth, (req, res) => {
+router.get('/perfil', (req, res) => {
   try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria) return res.status(401).json({ error: 'No autorizado' });
     const usuarios = getUsuarios();
-    const usuario = usuarios.find(u => u.gestoId === req.gestoId);
+    const usuario = usuarios.find(u => u.id === gestoria.id);
     if (!usuario) return res.status(404).json({ error: 'Gestoria no encontrada' });
     res.json({ ok: true, nombre: usuario.nombre_empresa || usuario.nombre || '', email: usuario.email, telefono: usuario.telefono || '' });
   } catch(e) { res.status(500).json({ error: 'Error' }); }
 });
 
 // PUT perfil gestoria
-router.put('/perfil', auth, (req, res) => {
+router.put('/perfil', (req, res) => {
   try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria) return res.status(401).json({ error: 'No autorizado' });
     const usuarios = getUsuarios();
-    const idx = usuarios.findIndex(u => u.gestoId === req.gestoId);
+    const idx = usuarios.findIndex(u => u.id === gestoria.id);
     if (idx === -1) return res.status(404).json({ error: 'Gestoria no encontrada' });
     const { telefono, nombre } = req.body;
     if (telefono !== undefined) usuarios[idx].telefono = telefono;
