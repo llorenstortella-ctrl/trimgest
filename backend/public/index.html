@@ -1012,7 +1012,11 @@
       renderApp();
     }
 
-    async function borrarFactura(id) {
+    async function borrarFactura(id, contabilizado) {
+      if (contabilizado) {
+        alert('Esta factura ha sido contabilizada por tu gestoría y no se puede borrar. Contacta con tu gestoría si necesitas eliminarla.');
+        return;
+      }
       if (!confirm('Seguro que quieres borrar esta factura?')) return;
       await fetch(API + '/facturas/borrar/' + id, { method: 'DELETE', headers: getHeaders() });
       renderApp();
