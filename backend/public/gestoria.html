@@ -98,7 +98,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   .filtros-bar select { width: 100%; }
   .modal { padding: 20px 16px; }
   .modal-btns { flex-direction: column; }
+  .tabla-wrap table { display: none; }
+  .mobile-facturas { display: block; }
+  .mobile-factura-card { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .mobile-factura-nombre { font-size: 14px; font-weight: 600; color: #e0d8cc; margin-bottom: 2px; }
+  .mobile-factura-numero { font-size: 11px; color: #6a6070; margin-bottom: 8px; }
+  .mobile-factura-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .mobile-factura-row span:first-child { color: #6a6070; }
+  .mobile-factura-row span:last-child { color: #e0d8cc; }
+  .mobile-factura-total { font-size: 16px; font-weight: 700; color: #e8c87a; margin: 8px 0; }
+  .mobile-factura-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .mobile-factura-btns button, .mobile-factura-btns a { flex: 1; min-width: 70px; text-align: center; }
 }
+.mobile-facturas { display: none; }
 </style>
 </head>
 <body>
@@ -182,6 +194,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                   <tbody id="tabla-proveedores"></tbody>
                 </table>
               </div>
+              <div class="mobile-facturas" id="mobile-proveedores"></div>
             </div>
           </div>
 
@@ -213,6 +226,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                   <tbody id="tabla-clientes"></tbody>
                 </table>
               </div>
+              <div class="mobile-facturas" id="mobile-clientes"></div>
             </div>
           </div>
 
@@ -510,26 +524,42 @@ function filtrarFacturas() {
 
 function renderTablaProveedores(lista) {
   var tbody = document.getElementById('tabla-proveedores');
+  var mobile = document.getElementById('mobile-proveedores');
   if (!tbody) return;
-  if (!lista.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin facturas de proveedores</td></tr>'; return; }
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin facturas de proveedores</td></tr>';
+    if (mobile) mobile.innerHTML = '<div style="text-align:center;color:#6a6070;padding:20px;">Sin facturas de proveedores</div>';
+    return;
+  }
   var filas = '';
+  var tarjetas = '';
   var provActual = null;
   lista.forEach(function(f) {
     var prov = (f.nombre || f.proveedor || f.emisor || 'Sin proveedor').trim();
     if (prov !== provActual) {
-      var cifProv = f.cif ? ' <span style="font-size:11px;font-weight:400;color:#6a6070;">· ' + f.cif + '</span>' : ''; filas += '<tr><td colspan="8" style="padding:6px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + prov + cifProv + '</td></tr>';
+      var cifProv = f.cif ? ' <span style="font-size:11px;font-weight:400;color:#6a6070;">· ' + f.cif + '</span>' : '';
+      filas += '<tr><td colspan="8" style="padding:6px 12px;font-size:12px;font-weight:600;color:#9a90b4;background:#13131a;">' + prov + cifProv + '</td></tr>';
+      tarjetas += '<div style="font-size:12px;font-weight:600;color:#9a90b4;padding:8px 0 4px;">' + prov + (f.cif ? ' · ' + f.cif : '') + '</div>';
       provActual = prov;
     }
     filas += renderFila(f);
+    tarjetas += renderTarjetaMobil(f);
   });
   tbody.innerHTML = filas;
+  if (mobile) mobile.innerHTML = tarjetas;
 }
 
 function renderTablaClientes(lista) {
   var tbody = document.getElementById('tabla-clientes');
+  var mobile = document.getElementById('mobile-clientes');
   if (!tbody) return;
-  if (!lista.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin facturas de clientes</td></tr>'; return; }
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin facturas de clientes</td></tr>';
+    if (mobile) mobile.innerHTML = '<div style="text-align:center;color:#6a6070;padding:20px;">Sin facturas de clientes</div>';
+    return;
+  }
   tbody.innerHTML = lista.map(function(f) { return renderFila(f); }).join('');
+  if (mobile) mobile.innerHTML = lista.map(function(f) { return renderTarjetaMobil(f); }).join('');
 }
 
 function ordenarFacturas(lista) {
@@ -574,6 +604,36 @@ function renderTablaFacturas(lista) {
     ordenado.clientes.forEach(function(f) { filas += renderFila(f); });
   }
   tbody.innerHTML = filas;
+}
+
+
+function renderTarjetaMobil(f) {
+  var numero = f.numero_factura || f.numero || '-';
+  var fecha = f.fecha || '-';
+  var nombreProv = f.nombre || f.proveedor || f.emisor || f.cliente || '-';
+  var concepto = f.concepto || f.descripcion || '-';
+  var base = f.base_imponible ? Number(f.base_imponible).toFixed(2) + ' EUR' : '-';
+  var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
+  var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
+  return '<div class="mobile-factura-card">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+    '<div>' +
+    '<div class="mobile-factura-nombre">' + nombreProv + '</div>' +
+    '<div class="mobile-factura-numero">Nº ' + numero + ' · ' + fecha + '</div>' +
+    '</div>' +
+    '<input type="checkbox" class="fact-check" data-id="' + f.id + '" data-tipo="' + (f.tipo||'') + '">' +
+    '</div>' +
+    '<div class="mobile-factura-row"><span>Concepto</span><span>' + concepto + '</span></div>' +
+    '<div class="mobile-factura-row"><span>Base</span><span>' + base + '</span></div>' +
+    '<div class="mobile-factura-row"><span>IVA</span><span>' + iva + '</span></div>' +
+    '<div class="mobile-factura-total">' + total + '</div>' +
+    '<div class="mobile-factura-btns">' +
+    (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo||'') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
+    '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
+    '<button class="btn btn-danger btn-sm" data-id="' + f.id + '" onclick="borrarFactura(this.dataset.id)">Borrar</button>' +
+    '<button data-id="' + f.id + '" onclick="toggleContabilizadoGestoria(this.dataset.id)" style="background:' + (f.contabilizado?'#0d2b1a':'#1e1e28') + ';border:1px solid ' + (f.contabilizado?'#1a4a2a':'#2a2a3a') + ';color:' + (f.contabilizado?'#4caf7d':'#6a6070') + ';border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">' + (f.contabilizado?'✓ Cont.':'Contabilizar') + '</button>' +
+    '</div>' +
+    '</div>';
 }
 
 function renderFila(f) {
