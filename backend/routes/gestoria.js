@@ -191,7 +191,11 @@ router.get('/solicitudes', (req, res) => {
     }
     const usuarios = getUsuarios();
     const emp = usuarios.find(u => u.id === empresa.id);
-    res.json({ ok: true, solicitudes: emp.solicitudesGestoria || [], aprobadas: emp.gestoriasAprobadas || [] });
+    const aprobadasEnriquecidas = (emp.gestoriasAprobadas || []).map(function(g) {
+      const gestoria = usuarios.find(u => u.empresaId === g.gestoriaId || u.gestoId === g.gestoriaId);
+      return Object.assign({}, g, { telefono: gestoria ? (gestoria.telefono || '') : '' });
+    });
+    res.json({ ok: true, solicitudes: emp.solicitudesGestoria || [], aprobadas: aprobadasEnriquecidas });
   } catch(e) {
     res.status(500).json({ error: 'Error' });
   }
