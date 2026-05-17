@@ -518,6 +518,9 @@ function filtrarFacturas() {
   Object.keys(gruposP).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(gruposP[k]); });
   // ordenar clientes por fecha
   clientes.sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+  var esMobil = window.innerWidth <= 768;
+  document.querySelectorAll('.tabla-wrap').forEach(function(t) { t.style.display = esMobil ? 'none' : 'block'; });
+  document.querySelectorAll('.mobile-facturas').forEach(function(m) { m.style.display = esMobil ? 'block' : 'none'; });
   renderTablaProveedores(provOrdenados);
   renderTablaClientes(clientes);
 }
