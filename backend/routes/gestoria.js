@@ -327,7 +327,11 @@ router.get('/clientes', (req, res) => {
     }
     const usuarios = getUsuarios();
     const ges = usuarios.find(u => u.id === gestoria.id);
-    res.json({ ok: true, clientes: ges.clientesGestoria || [], invitaciones: ges.invitacionesRecibidas || [] });
+    const clientesEnriquecidos = (ges.clientesGestoria || []).map(function(c) {
+      const empresa = usuarios.find(u => u.empresaId === c.empresaId);
+      return Object.assign({}, c, { telefono: empresa ? (empresa.telefono || '') : '' });
+    });
+    res.json({ ok: true, clientes: clientesEnriquecidos, invitaciones: ges.invitacionesRecibidas || [] });
   } catch(e) {
     res.status(500).json({ error: 'Error' });
   }
@@ -889,6 +893,31 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
     res.setHeader('Content-Disposition', 'attachment; filename=facturas-seleccionadas.pdf');
     res.send(Buffer.from(pdfBytes));
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
+});
+
+
+// GET perfil gestoria
+router.get('/perfil', auth, (req, res) => {
+  try {
+    const usuarios = getUsuarios();
+    const usuario = usuarios.find(u => u.gestoId === req.gestoId);
+    if (!usuario) return res.status(404).json({ error: 'Gestoria no encontrada' });
+    res.json({ ok: true, nombre: usuario.nombre_empresa || usuario.nombre || '', email: usuario.email, telefono: usuario.telefono || '' });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// PUT perfil gestoria
+router.put('/perfil', auth, (req, res) => {
+  try {
+    const usuarios = getUsuarios();
+    const idx = usuarios.findIndex(u => u.gestoId === req.gestoId);
+    if (idx === -1) return res.status(404).json({ error: 'Gestoria no encontrada' });
+    const { telefono, nombre } = req.body;
+    if (telefono !== undefined) usuarios[idx].telefono = telefono;
+    if (nombre !== undefined) usuarios[idx].nombre_empresa = nombre;
+    fs.writeFileSync(path.join(__dirname, '../data/usuarios.json'), JSON.stringify(usuarios, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
 });
 
 module.exports = router;

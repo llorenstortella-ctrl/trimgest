@@ -1,5 +1,6 @@
 const express = require('express');
-const { enviarInvitacionGestoria } = require('../utils/email');
+const { enviarInvitacionGestoria, enviarVerificacion } = require('../utils/email');
+const crypto = require('crypto');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
@@ -42,6 +43,7 @@ router.post('/registro', async (req, res) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const gestoriaId = 'ges_' + Date.now();
+    const verToken = crypto.randomBytes(32).toString('hex');
     const nuevo = {
       id: Date.now(),
       email,
@@ -52,12 +54,15 @@ router.post('/registro', async (req, res) => {
       clientesGestoria: [],
       solicitudesEnviadas: [],
       plan: 'basico',
-      fecha_registro: new Date().toISOString()
+      fecha_registro: new Date().toISOString(),
+      verificado: false,
+      ver_token: verToken
     };
     usuarios.push(nuevo);
     saveUsuarios(usuarios);
+    try { await enviarVerificacion(email, nombre_empresa, verToken); } catch(e) { console.error('Error email verificacion gestoria:', e); }
     const token = jwt.sign({ id: nuevo.id, empresaId: gestoriaId, tipo: 'gestoria' }, JWT_SECRET, { expiresIn: '30d' });
-    res.json({ ok: true, token, nombre_empresa, empresaId: gestoriaId, tipo: 'gestoria' });
+    res.json({ ok: true, token, nombre_empresa, empresaId: gestoriaId, tipo: 'gestoria', verificacion_pendiente: true });
   } catch(e) {
     console.error(e);
     res.status(500).json({ error: 'Error en registro' });
@@ -415,6 +420,475 @@ router.post('/revocar', (req, res) => {
     console.error(e);
     res.status(500).json({ error: 'Error al revocar' });
   }
+});
+
+
+// PUT /gestoria/cliente/:empresaId/facturas/:id — editar factura
+router.put('/cliente/:empresaId/facturas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const facturasPath = path.join(dir, 'facturas.json');
+    const facturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
+    const idx = facturas.findIndex(f => String(f.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Factura no encontrada' });
+    if (req.body._toggleContabilizado) {
+      facturas[idx].contabilizado = !facturas[idx].contabilizado;
+    } else {
+      facturas[idx] = Object.assign(facturas[idx], req.body);
+    }
+    fs.writeFileSync(facturasPath, JSON.stringify(facturas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// DELETE /gestoria/cliente/:empresaId/facturas/:id — borrar factura
+router.delete('/cliente/:empresaId/facturas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const facturasPath = path.join(dir, 'facturas.json');
+    let facturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
+    facturas = facturas.filter(f => String(f.id) !== String(id));
+    fs.writeFileSync(facturasPath, JSON.stringify(facturas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// PUT /gestoria/cliente/:empresaId/nominas/:id — editar nomina
+router.put('/cliente/:empresaId/nominas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const nominasPath = path.join(dir, 'nominas.json');
+    const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const idx = nominas.findIndex(n => String(n.id) === String(id));
+    if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
+    if (req.body._toggleContabilizado) {
+      nominas[idx].contabilizado = !nominas[idx].contabilizado;
+    } else {
+      nominas[idx] = Object.assign(nominas[idx], req.body);
+    }
+    fs.writeFileSync(nominasPath, JSON.stringify(nominas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// DELETE /gestoria/cliente/:empresaId/nominas/:id — borrar nomina
+router.delete('/cliente/:empresaId/nominas/:id', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, id } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const dir = getEmpresaDir(empresaId);
+    const nominasPath = path.join(dir, 'nominas.json');
+    let nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    nominas = nominas.filter(n => String(n.id) !== String(id));
+    fs.writeFileSync(nominasPath, JSON.stringify(nominas, null, 2));
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+
+
+// GET /gestoria/cliente/:empresaId/archivo/:filename — ver archivo escaneado
+router.get('/cliente/:empresaId/archivo/:filename', (req, res) => {
+  try {
+    const tokenQuery = req.query.token;
+    if (tokenQuery) req.headers['authorization'] = 'Bearer ' + tokenQuery;
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, filename } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const filePath = path.join(dataDir, 'empresas', empresaId, 'uploads', filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    res.sendFile(filePath);
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/exportar/:tipo/:trimestre/:anno — exportar Excel
+router.get('/cliente/:empresaId/exportar/:tipo/:trimestre/:anno', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, tipo, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const XLSX = require('xlsx');
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
+    const facturas = JSON.parse(fs.readFileSync(dbPath));
+    const lista = facturas.filter(f => f.tipo === tipo && f.trimestre === trimestre && String(f.anno) === String(anno));
+    const datos = lista.map(f => ({
+      'Nombre': f.nombre || '',
+      'N Factura': f.numero_factura || '',
+      'Fecha': f.fecha || '',
+      'Base Imponible': Number(f.base_imponible) || 0,
+      'IVA %': f.iva_porcentaje || 0,
+      'IVA Importe': Number(f.iva_importe) || 0,
+      'Total': Number(f.total) || 0,
+      'Trimestre': f.trimestre || '',
+      'Anno': f.anno || ''
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
+    ws['!cols'] = [{ wch: 30 },{ wch: 15 },{ wch: 12 },{ wch: 15 },{ wch: 8 },{ wch: 15 },{ wch: 15 },{ wch: 10 },{ wch: 8 }];
+    XLSX.utils.book_append_sheet(wb, ws, tipo === 'proveedor' ? 'Proveedores' : 'Clientes');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-' + tipo + '-' + trimestre + '-' + anno + '.xlsx');
+    res.send(buffer);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/exportar/nominas/:anno — exportar Excel nominas
+router.get('/cliente/:empresaId/exportar/nominas/:anno', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const XLSX = require('xlsx');
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
+    const nominas = JSON.parse(fs.readFileSync(dbPath));
+    const lista = nominas;
+    const datos = lista.map(n => ({
+      'Trabajador': n.trabajador || n.empleado || n.nombre || '',
+      'Mes': n.mes || '',
+      'Anno': n.anno || '',
+      'Devengado': Number(n.devengado || n.salario_bruto) || 0,
+      'Neto': Number(n.neto || n.salario_neto) || 0
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
+    XLSX.utils.book_append_sheet(wb, ws, 'Nominas');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-nominas-' + anno + '.xlsx');
+    res.send(buffer);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar nominas' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/pdf/:tipo/:trimestre/:anno — generar PDF
+router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, tipo, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    const uploadsDir = path.join(dataDir, 'empresas', empresaId, 'uploads');
+    const { generarPDFGestoria } = require('./generar');
+    const pdfBytes = await generarPDFGestoria(tipo, trimestre, anno, nombreEmpresa, dbPath, uploadsDir, true);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-' + tipo + '-' + trimestre + '-' + anno + '.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/pdf/nominas/:anno — PDF nominas
+router.get('/cliente/:empresaId/pdf/nominas/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const nominasPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const lista = nominas.filter(n => String(n.anno) === String(anno));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const page = pdfDoc.addPage([595, 842]);
+    const { width, height } = page.getSize();
+
+    page.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: rgb(0.06, 0.06, 0.1) });
+    page.drawText('TrimGest', { x: 40, y: height - 40, size: 24, font: bold, color: rgb(0.91, 0.78, 0.48) });
+    page.drawText(nombreEmpresa, { x: 40, y: height - 65, size: 11, font: regular, color: rgb(0.8, 0.8, 0.8) });
+    page.drawText('NOMINAS ' + anno, { x: 40, y: height - 85, size: 10, font: regular, color: rgb(0.6, 0.6, 0.7) });
+
+    let y = height - 130;
+    page.drawText('Trabajador', { x: 40, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    page.drawText('Mes', { x: 220, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    page.drawText('Coste empresa', { x: 300, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    page.drawText('Neto', { x: 420, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    y -= 15;
+    page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.3, 0.3, 0.4) });
+    y -= 15;
+
+    lista.forEach(function(n) {
+      if (y < 60) return;
+      var trab = (n.trabajador || n.empleado || n.nombre || '-').substring(0, 28);
+      var mes = (n.mes || '-').substring(0, 10);
+      var bruto = n.coste_empresa || n.devengado || 0;
+      var neto = n.neto || n.salario_neto || 0;
+      page.drawText(trab, { x: 40, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      page.drawText(mes, { x: 220, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      page.drawText(Number(bruto).toFixed(2) + ' EUR', { x: 300, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      page.drawText(Number(neto).toFixed(2) + ' EUR', { x: 420, y, size: 9, font: bold, color: rgb(0.2, 0.5, 0.3) });
+      y -= 20;
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=nominas-' + anno + '.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF nominas' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/archivo-nomina/:filename — ver PDF nomina original
+router.get('/cliente/:empresaId/archivo-nomina/:filename', (req, res) => {
+  try {
+    const tokenQuery = req.query.token;
+    if (tokenQuery) req.headers['authorization'] = 'Bearer ' + tokenQuery;
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, filename } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const filePath = path.join(dataDir, 'empresas', empresaId, 'uploads', filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    res.sendFile(filePath);
+  } catch(e) { res.status(500).json({ error: 'Error' }); }
+});
+
+// GET /gestoria/cliente/:empresaId/pdf/nominas/:anno — PDF dossier nominas
+router.get('/cliente/:empresaId/pdf/nominas/:anno', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const nominasPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const lista = anno === 'todas' ? nominas : nominas.filter(n => String(n.anno) === String(anno));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Portada resumen
+    const portada = pdfDoc.addPage([595, 842]);
+    const { width, height } = portada.getSize();
+    portada.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: rgb(0.06, 0.06, 0.1) });
+    portada.drawText('TrimGest', { x: 40, y: height - 40, size: 24, font: bold, color: rgb(0.91, 0.78, 0.48) });
+    portada.drawText(nombreEmpresa, { x: 40, y: height - 65, size: 11, font: regular, color: rgb(0.8, 0.8, 0.8) });
+    portada.drawText('NOMINAS ' + anno, { x: 40, y: height - 85, size: 10, font: regular, color: rgb(0.6, 0.6, 0.7) });
+
+    let y = height - 130;
+    portada.drawText('Trabajador', { x: 40, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    portada.drawText('Mes', { x: 220, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    portada.drawText('Coste empresa', { x: 300, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    portada.drawText('Neto', { x: 430, y, size: 9, font: bold, color: rgb(0.5, 0.5, 0.6) });
+    y -= 15;
+    portada.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.3, 0.3, 0.4) });
+    y -= 15;
+    lista.forEach(function(n) {
+      if (y < 60) return;
+      var trab = (n.trabajador || n.empleado || n.nombre || '-').substring(0, 28);
+      var bruto = n.coste_empresa || n.devengado || 0;
+      var neto = n.neto || n.salario_neto || 0;
+      portada.drawText(trab, { x: 40, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      portada.drawText((n.mes || '-'), { x: 220, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      portada.drawText(Number(bruto).toFixed(2) + ' EUR', { x: 300, y, size: 9, font: regular, color: rgb(0.1, 0.1, 0.15) });
+      portada.drawText(Number(neto).toFixed(2) + ' EUR', { x: 430, y, size: 9, font: bold, color: rgb(0.2, 0.5, 0.3) });
+      y -= 18;
+    });
+
+    // Adjuntar PDFs originales de cada nomina
+    for (const n of lista) {
+      if (!n.archivo) continue;
+      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', n.archivo);
+      if (!fs.existsSync(archivoPath)) continue;
+      try {
+        const pdfBytes = fs.readFileSync(archivoPath);
+        const nominaPdf = await PDFDocument.load(pdfBytes);
+        const pages = await pdfDoc.copyPages(nominaPdf, nominaPdf.getPageIndices());
+        pages.forEach(p => pdfDoc.addPage(p));
+      } catch(e) { console.error('Error adjuntando nomina:', n.archivo, e.message); }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=nominas-' + anno + '.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF nominas' }); }
+});
+
+// POST /gestoria/cliente/:empresaId/pdf/nominas-seleccionadas
+router.post('/cliente/:empresaId/pdf/nominas-seleccionadas', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId } = req.params;
+    const { ids } = req.body;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const nominasPath = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
+    const todasNominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
+    const lista = todasNominas.filter(n => ids.includes(String(n.id)));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+
+    // Portada resumen
+    const portada = pdfDoc.addPage([595, 842]);
+    const { width, height } = portada.getSize();
+    portada.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: rgb(0.06, 0.06, 0.1) });
+    portada.drawText('TrimGest', { x: 40, y: height - 40, size: 24, font: bold, color: rgb(0.91, 0.78, 0.48) });
+    portada.drawText(nombreEmpresa, { x: 40, y: height - 65, size: 11, font: regular, color: rgb(0.8, 0.8, 0.8) });
+    portada.drawText('NOMINAS SELECCIONADAS', { x: 40, y: height - 85, size: 10, font: regular, color: rgb(0.6, 0.6, 0.7) });
+
+    let y = height - 130;
+    portada.drawText('Trabajador', { x: 40, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Mes', { x: 220, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Coste empresa', { x: 300, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Neto', { x: 430, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    y -= 15;
+    portada.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
+    y -= 15;
+
+    lista.forEach(function(n) {
+      if (y < 60) return;
+      var trab = (n.trabajador || n.empleado || n.nombre || '-').substring(0, 28);
+      var bruto = n.coste_empresa || n.devengado || 0;
+      var neto = n.neto || n.salario_neto || 0;
+      portada.drawText(trab, { x: 40, y, size: 9, font: regular, color: rgb(0.1,0.1,0.15) });
+      portada.drawText((n.mes||'-'), { x: 220, y, size: 9, font: regular, color: rgb(0.1,0.1,0.15) });
+      portada.drawText(Number(bruto).toFixed(2)+' EUR', { x: 300, y, size: 9, font: regular, color: rgb(0.1,0.1,0.15) });
+      portada.drawText(Number(neto).toFixed(2)+' EUR', { x: 430, y, size: 9, font: bold, color: rgb(0.2,0.5,0.3) });
+      y -= 18;
+    });
+
+    // Adjuntar PDFs originales
+    for (const n of lista) {
+      if (!n.archivo) continue;
+      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', n.archivo);
+      if (!fs.existsSync(archivoPath)) continue;
+      try {
+        const pdfBytes = fs.readFileSync(archivoPath);
+        const nominaPdf = await PDFDocument.load(pdfBytes);
+        const pages = await pdfDoc.copyPages(nominaPdf, nominaPdf.getPageIndices());
+        pages.forEach(p => pdfDoc.addPage(p));
+      } catch(e) { console.error('Error adjuntando nomina:', e.message); }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=nominas-seleccionadas.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
+});
+
+// POST /gestoria/cliente/:empresaId/pdf/facturas-seleccionadas
+router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId } = req.params;
+    const { ids, tipo } = req.body;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const usuarios = getUsuarios();
+    const empresa = usuarios.find(u => u.empresaId === empresaId);
+    const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
+    const facturasPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    const todasFacturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
+    const lista = todasFacturas.filter(f => ids.includes(String(f.id)));
+
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    // Portada resumen
+    const portada = pdfDoc.addPage([595, 842]);
+    const { width, height } = portada.getSize();
+    portada.drawRectangle({ x: 0, y: height-100, width, height: 100, color: rgb(0.06,0.06,0.1) });
+    portada.drawText('TrimGest', { x: 40, y: height-40, size: 24, font: bold, color: rgb(0.91,0.78,0.48) });
+    portada.drawText(nombreEmpresa, { x: 40, y: height-65, size: 11, font: regular, color: rgb(0.8,0.8,0.8) });
+    portada.drawText('FACTURAS ' + (tipo==='proveedor'?'PROVEEDORES':'CLIENTES') + ' SELECCIONADAS', { x: 40, y: height-85, size: 10, font: regular, color: rgb(0.6,0.6,0.7) });
+
+    let y = height-130;
+    portada.drawText('Nombre', { x: 40, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Fecha', { x: 200, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('N Factura', { x: 280, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Base', { x: 370, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Total', { x: 460, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    y -= 15;
+    portada.drawLine({ start: { x:40, y }, end: { x:555, y }, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
+    y -= 15;
+
+    lista.forEach(function(f) {
+      if (y < 60) return;
+      var nombre = (f.nombre||f.proveedor||f.emisor||f.cliente||'-').substring(0,22);
+      var fecha = (f.fecha||'-').substring(0,12);
+      var num = (f.numero_factura||'-').substring(0,12);
+      var base = Number(f.base_imponible||0).toFixed(2);
+      var total = Number(f.total||0).toFixed(2);
+      portada.drawText(nombre, { x:40, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(fecha, { x:200, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(num, { x:280, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(base+' EUR', { x:370, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(total+' EUR', { x:460, y, size:9, font:bold, color:rgb(0.2,0.5,0.3) });
+      y -= 18;
+    });
+
+    // Adjuntar PDFs originales
+    for (const f of lista) {
+      if (!f.archivo) continue;
+      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', f.archivo);
+      if (!fs.existsSync(archivoPath)) continue;
+      try {
+        const pdfBytes = fs.readFileSync(archivoPath);
+        const facturaPdf = await PDFDocument.load(pdfBytes);
+        const pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
+        pages.forEach(p => pdfDoc.addPage(p));
+      } catch(e) { console.error('Error adjuntando factura:', e.message); }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=facturas-seleccionadas.pdf');
+    res.send(Buffer.from(pdfBytes));
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
 });
 
 module.exports = router;

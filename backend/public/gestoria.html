@@ -139,6 +139,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="nav-item active" id="nav-clientes" onclick="showPage('clientes', this)">&#127962; Mis clientes</div>
       <div class="nav-item" id="nav-solicitar" onclick="showPage('solicitar', this)">&#43; Solicitar acceso</div>
       <div class="nav-item" id="nav-invitaciones" onclick="showPage('invitaciones', this)">&#128232; Invitaciones</div>
+      <div class="nav-item" id="nav-ajustes" onclick="showPage('ajustes', this)">&#9881; Ajustes</div>
     </div>
     <div class="main">
 
@@ -256,6 +257,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <div id="solicitar-msg"></div>
           <div class="input-row"><label>Email de la empresa</label><input type="email" id="email-empresa" placeholder="empresa@email.com"></div>
           <button class="btn btn-primary" onclick="solicitarAcceso()">Enviar solicitud</button>
+        </div>
+      </div>
+
+      <div class="page" id="page-ajustes">
+        <div class="page-title">Ajustes</div>
+        <div class="card" style="max-width:500px;margin-top:16px;">
+          <div class="card-title">Datos de contacto</div>
+          <div class="input-row" style="margin-bottom:12px;">
+            <label>Nombre gestoría</label>
+            <input type="text" id="ajuste-nombre" placeholder="Nombre de tu gestoría">
+          </div>
+          <div class="input-row" style="margin-bottom:16px;">
+            <label>Teléfono WhatsApp</label>
+            <input type="tel" id="ajuste-telefono" placeholder="Ej: 612345678 (sin +34)">
+            <div style="font-size:11px;color:#6a6070;margin-top:4px;">Tus clientes podrán contactarte directamente por WhatsApp</div>
+          </div>
+          <button class="btn btn-primary" onclick="guardarAjustesGestoria()">Guardar</button>
+          <div id="ajustes-msg" style="margin-top:10px;font-size:13px;"></div>
         </div>
       </div>
 
@@ -394,6 +413,7 @@ function showPage(id, el) {
   document.getElementById('page-' + id).classList.add('active');
   if (el) el.classList.add('active');
   if (id === 'invitaciones') cargarInvitaciones();
+  if (id === 'ajustes') cargarAjustesGestoria();
 }
 
 async function cargarClientes() {
@@ -408,7 +428,10 @@ async function cargarClientes() {
     lista.innerHTML = d.clientes.map(function(c) {
       return '<div class="cliente-card" data-id="' + c.empresaId + '" data-nombre="' + c.empresaNombre.replace(/"/g, '&quot;') + '">' +
         '<div class="cliente-info"><h3>' + c.empresaNombre + '</h3><p>' + c.empresaEmail + '</p></div>' +
-        '<div><button class="btn btn-secondary btn-sm">Ver datos &rarr;</button></div>' +
+        '<div style="display:flex;gap:8px;align-items:center;">' +
+        (c.telefono ? '<a href="https://wa.me/34' + c.telefono.replace(/\D/g,'') + '" target="_blank" onclick="event.stopPropagation()" style="background:#25d366;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;text-decoration:none;">WhatsApp</a>' : '') +
+        '<button class="btn btn-secondary btn-sm">Ver datos &rarr;</button>' +
+        '</div>' +
         '</div>';
     }).join('');
     lista.querySelectorAll('.cliente-card').forEach(function(card) {
@@ -981,6 +1004,34 @@ async function responderInvitacion(empresaId, accion) {
     cargarInvitaciones();
     if (accion === 'aceptar') cargarClientes();
   } catch(e) { alert('Error de conexion'); }
+}
+
+
+async function cargarAjustesGestoria() {
+  try {
+    var r = await fetch(API + '/gestoria/perfil', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    if (d.ok) {
+      document.getElementById('ajuste-nombre').value = d.nombre || '';
+      document.getElementById('ajuste-telefono').value = d.telefono || '';
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function guardarAjustesGestoria() {
+  var nombre = document.getElementById('ajuste-nombre').value.trim();
+  var telefono = document.getElementById('ajuste-telefono').value.trim();
+  var msg = document.getElementById('ajustes-msg');
+  try {
+    var r = await fetch(API + '/gestoria/perfil', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ nombre: nombre, telefono: telefono })
+    });
+    var d = await r.json();
+    if (d.ok) { msg.style.color = '#7ec47e'; msg.textContent = 'Guardado correctamente'; }
+    else { msg.style.color = '#c06060'; msg.textContent = d.error || 'Error al guardar'; }
+  } catch(e) { msg.style.color = '#c06060'; msg.textContent = 'Error de conexion'; }
 }
 
 if (window.location.hash === '#registro') switchAuthTab('registro');

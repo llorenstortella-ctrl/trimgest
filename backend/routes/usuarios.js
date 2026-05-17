@@ -113,7 +113,7 @@ router.get('/perfil', (req, res) => {
     const usuarios = getUsuarios();
     const usuario = usuarios.find(u => u.id === decoded.id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', cp: usuario.cp || '', ciudad: usuario.ciudad || '', provincia: usuario.provincia || '', email: usuario.email, plan: usuario.plan || 'basico', facturas_mes: usuario.subidas_mes || usuario.facturas_mes || 0, plan_gratuito: usuario.plan_gratuito || false });
+    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', cp: usuario.cp || '', ciudad: usuario.ciudad || '', provincia: usuario.provincia || '', email: usuario.email, plan: usuario.plan || 'basico', facturas_mes: usuario.subidas_mes || usuario.facturas_mes || 0, plan_gratuito: usuario.plan_gratuito || false, telefono: usuario.telefono || '' });
   } catch(e) {
     res.status(401).json({ error: 'No autorizado' });
   }
@@ -128,13 +128,14 @@ router.put('/perfil', (req, res) => {
     const usuarios = getUsuarios();
     const idx = usuarios.findIndex(u => u.id === decoded.id);
     if (idx === -1) return res.status(404).json({ error: 'Usuario no encontrado' });
-    const { nombre_empresa, nif, direccion, cp, ciudad, provincia } = req.body;
+    const { nombre_empresa, nif, direccion, cp, ciudad, provincia, telefono } = req.body;
     if (nombre_empresa) usuarios[idx].nombre_empresa = nombre_empresa;
     if (nif !== undefined) usuarios[idx].nif = nif;
     if (direccion !== undefined) usuarios[idx].direccion = direccion;
     if (cp !== undefined) usuarios[idx].cp = cp;
     if (ciudad !== undefined) usuarios[idx].ciudad = ciudad;
     if (provincia !== undefined) usuarios[idx].provincia = provincia;
+    if (telefono !== undefined) usuarios[idx].telefono = telefono;
     saveUsuarios(usuarios);
     res.json({ ok: true });
   } catch(e) {

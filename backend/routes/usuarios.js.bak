@@ -63,6 +63,7 @@ router.post('/registro', async (req, res) => {
     saveUsuarios(usuarios);
     initEmpresa(empresaId);
     try { await enviarVerificacion(email, nombre_empresa, verToken); } catch(e) { console.error('Error email verificacion:', e); }
+    try { const { Resend } = require('resend'); const resend = new Resend(process.env.RESEND_API_KEY); await resend.emails.send({ from: 'TrimGest <no-reply@trimgest.es>', to: 'info@trimgest.es', subject: 'Nuevo registro en TrimGest', html: '<h2>Nuevo registro</h2><p><b>Empresa:</b> ' + nombre_empresa + '</p><p><b>Email:</b> ' + email + '</p><p><b>Tipo:</b> ' + (nuevo.tipo || 'empresa') + '</p><p><b>Fecha:</b> ' + new Date().toLocaleString('es-ES') + '</p>' }); } catch(e) { console.error('Error email aviso registro:', e); }
     const token = jwt.sign({ id: nuevo.id, empresaId }, JWT_SECRET, { expiresIn: '30d' });
     res.json({ ok: true, token, nombre_empresa, empresaId, verificacion_pendiente: true });
   } catch(e) {
@@ -153,7 +154,8 @@ router.get('/verificar', (req, res) => {
     usuarios[idx].verificado = true;
     usuarios[idx].ver_token = null;
     saveUsuarios(usuarios);
-    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TrimGest</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f5;}div{text-align:center;padding:40px;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.1);}</style></head><body><div><h2>✅ Email verificado</h2><p>Tu cuenta está activa. Ya puedes entrar a TrimGest.</p><br><a href="https://trimgest.es/app" style="background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;">Entrar a la app</a></div></body></html>`);
+    const enlace = usuarios[idx].tipo === 'gestoria' ? 'https://trimgest.es/panel-gestoria' : 'https://trimgest.es/app';
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>TrimGest</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f5;}div{text-align:center;padding:40px;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.1);}</style></head><body><div><h2>✅ Email verificado</h2><p>Tu cuenta está activa. Ya puedes entrar a TrimGest.</p><br><a href="${enlace}" style="background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;">Entrar a la app</a></div></body></html>`);
   } catch(e) {
     res.status(500).send('<h2>Error al verificar</h2>');
   }
