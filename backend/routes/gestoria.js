@@ -825,6 +825,45 @@ router.post('/cliente/:empresaId/pdf/nominas-seleccionadas', async (req, res) =>
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al generar PDF' }); }
 });
 
+
+// POST /gestoria/cliente/:empresaId/excel/facturas-seleccionadas
+router.post('/cliente/:empresaId/excel/facturas-seleccionadas', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId } = req.params;
+    const { ids, tipo } = req.body;
+    if (!ids || !ids.length) return res.status(400).json({ error: 'Sin facturas seleccionadas' });
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const XLSX = require('xlsx');
+    const dbPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
+    if (!fs.existsSync(dbPath)) return res.status(404).json({ error: 'Sin datos' });
+    const facturas = JSON.parse(fs.readFileSync(dbPath));
+    const lista = facturas.filter(f => ids.includes(String(f.id)));
+    const datos = lista.map(f => ({
+      'Nombre': f.nombre || '',
+      'N Factura': f.numero_factura || '',
+      'Fecha': f.fecha || '',
+      'Base Imponible': Number(f.base_imponible) || 0,
+      'IVA %': f.iva_porcentaje || 0,
+      'IVA Importe': Number(f.iva_importe) || 0,
+      'Total': Number(f.total) || 0,
+      'Trimestre': f.trimestre || '',
+      'Anno': f.anno || '',
+      'Contabilizado': f.contabilizado ? 'Si' : 'No'
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
+    ws['!cols'] = [{ wch: 30 },{ wch: 15 },{ wch: 12 },{ wch: 15 },{ wch: 8 },{ wch: 15 },{ wch: 15 },{ wch: 10 },{ wch: 8 },{ wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, ws, tipo === 'proveedor' ? 'Proveedores' : 'Clientes');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=facturas-seleccionadas.xlsx');
+    res.send(buffer);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar' }); }
+});
+
 // POST /gestoria/cliente/:empresaId/pdf/facturas-seleccionadas
 router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) => {
   try {
