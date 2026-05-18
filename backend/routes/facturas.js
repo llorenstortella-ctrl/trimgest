@@ -207,6 +207,7 @@ router.post('/subir', auth, upload.single('factura'), async (req, res) => {
       anno: getAnno(datos.fecha),
       enviado: false,
       fecha_envio: null,
+      estado_pago: null,
       creado: new Date().toISOString()
     };
 
@@ -248,6 +249,7 @@ router.put('/editar/:id', auth, (req, res) => {
   if (iva_importe) facturas[idx].iva_importe = parseFloat(iva_importe);
   if (total) facturas[idx].total = parseFloat(total);
   if (req.body.cif !== undefined) facturas[idx].cif = req.body.cif || null;
+  if (req.body.estado_pago !== undefined) facturas[idx].estado_pago = req.body.estado_pago;
   saveFacturas(facturas, req.empresaId);
   res.json({ mensaje: 'Actualizada', factura: facturas[idx] });
 });
@@ -293,6 +295,22 @@ router.post('/manual', auth, (req, res) => {
   facturas.push(nueva);
   saveFacturas(facturas, req.empresaId);
   res.json({ factura: nueva });
+});
+
+
+// Migrar facturas existentes a transferencia
+router.post('/migrar-estado-pago', auth, (req, res) => {
+  const { estado_pago, ids } = req.body;
+  const facturas = getFacturas(req.empresaId);
+  facturas.forEach((f, idx) => {
+    if (ids) {
+      if (ids.includes(f.id)) facturas[idx].estado_pago = estado_pago;
+    } else {
+      if (!facturas[idx].estado_pago) facturas[idx].estado_pago = estado_pago;
+    }
+  });
+  saveFacturas(facturas, req.empresaId);
+  res.json({ ok: true, total: facturas.length });
 });
 
 module.exports = router;
