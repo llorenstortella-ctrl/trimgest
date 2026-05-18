@@ -828,7 +828,9 @@
     async function cargarFacturas() {
       var res = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var data = await res.json();
-      return data.facturas || [];
+      var facturas = data.facturas || [];
+      window.todasFacturas = facturas;
+      return facturas;
     }
 
     async function renderApp() {
