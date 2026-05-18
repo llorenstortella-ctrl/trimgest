@@ -71,9 +71,6 @@
     .badge-proveedor { background: #2a1a1a; color: #c06060; }
     .badge-cliente { background: #1a2a1a; color: #7ec47e; }
     .badge-enviada { background: #1a1a2a; color: #6a80c0; }
-    .badge-sinpagar { background: #2a1500; color: #e08030; border: 1px solid #6a3a10; }
-    .badge-transferencia { background: #0d1a2a; color: #5090d0; border: 1px solid #1a3a5a; }
-    .badge-efectivo { background: #1a2a0d; color: #70b040; border: 1px solid #3a5a1a; }
     .factura-datos { display: flex; gap: 12px; font-size: 12px; color: #6a6070; margin-bottom: 6px; flex-wrap: wrap; }
     .factura-total { color: #e8c87a; font-weight: 600; }
     .factura-desglose { font-size: 11px; color: #4a4055; margin-bottom: 8px; }
@@ -375,7 +372,6 @@
       for (var y = new Date().getFullYear() - 2; y <= new Date().getFullYear() + 1; y++) anos.push(String(y));
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (annoActual === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
 
-      if (window.todasFacturas) checkPopupEstadoPago(window.todasFacturas);
       document.getElementById('app').innerHTML =
         '<div class="header">' +
         '<div class="header-top"><div><div class="label">TrimGest</div><h1>Nominas ' + annoActual + '</h1></div>' +
@@ -911,9 +907,6 @@
           listaHTML += '<div class="factura-header"><span class="factura-nombre">' + f.nombre + '</span>';
           listaHTML += '<div class="factura-badges"><span class="factura-badge badge-' + f.tipo + '">' + f.tipo + '</span>';
           if (f.enviado) listaHTML += '<span class="factura-badge badge-enviada">enviada</span>';
-          var estadoLabel = f.estado_pago === 'transferencia' ? '💳 Transferencia' : f.estado_pago === 'efectivo' ? '💵 Efectivo' : '⚠️ Sin clasificar';
-          var estadoClass = f.estado_pago === 'transferencia' ? 'transferencia' : f.estado_pago === 'efectivo' ? 'efectivo' : 'sinpagar';
-          listaHTML += '<span class="factura-badge badge-' + estadoClass + '" style="cursor:pointer" onclick="cambiarEstadoPago(' + f.id + ',\'' + (f.estado_pago || '') + '\')">' + estadoLabel + '</span>';
           listaHTML += '</div></div>';
           listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
           if (f.cif) listaHTML += '<div style="font-size:11px;color:#6a6070;margin-top:2px;">CIF: ' + f.cif + '</div>';
@@ -1017,35 +1010,6 @@
       var cifEl = document.getElementById('cif-' + id); var body = { tipo: document.getElementById('tipo-' + id).value, trimestre: document.getElementById('trim-' + id).value, anno: document.getElementById('anno-' + id).value, nombre: document.getElementById('nombre-' + id).value, cif: cifEl ? cifEl.value : null, numero_factura: document.getElementById('nfactura-' + id).value, fecha: document.getElementById('fecha-' + id).value, base_imponible: document.getElementById('base-edit-' + id).value, iva_porcentaje: document.getElementById('iva-edit-' + id).value, total: document.getElementById('total-edit-' + id).value };
       await fetch(API + '/facturas/editar/' + id, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(body) });
       renderApp();
-    }
-
-    
-    async function cambiarEstadoPago(id, estadoActual) {
-      var opciones = ['transferencia', 'efectivo', null];
-      var etiquetas = ['💳 Transferencia', '💵 Efectivo', '⚠️ Sin clasificar'];
-      var idx = opciones.indexOf(estadoActual === '' ? null : estadoActual);
-      var siguiente = opciones[(idx + 1) % opciones.length];
-      try {
-        var r = await fetch('/facturas/editar/' + id, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + window.token },
-          body: JSON.stringify({ estado_pago: siguiente })
-        });
-        if (r.ok) renderApp();
-      } catch(e) { console.error(e); }
-    }
-
-    function checkPopupEstadoPago(facturas) {
-      var sinClasificar = facturas.filter(function(f) { return !f.estado_pago; });
-      if (sinClasificar.length === 0) return;
-      if (document.getElementById('popup-estado-pago')) return;
-      var popup = document.createElement('div');
-      popup.id = 'popup-estado-pago';
-      popup.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e1e28;border:1px solid #e8c87a;border-radius:16px;padding:20px;z-index:9999;max-width:340px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
-      popup.innerHTML = '<div style="font-size:14px;font-weight:600;color:#e8c87a;margin-bottom:8px;">⚠️ ' + sinClasificar.length + ' factura' + (sinClasificar.length > 1 ? 's' : '') + ' sin clasificar</div>' +
-        '<div style="font-size:12px;color:#9a90b4;margin-bottom:14px;">Toca el badge de cada factura para indicar cómo está pagada. Necesario para la conciliación bancaria.</div>' +
-        '<button onclick="document.getElementById('popup-estado-pago').remove()" style="width:100%;background:#2a2a3a;border:none;color:#fff;border-radius:10px;padding:10px;cursor:pointer;font-size:13px;">Entendido</button>';
-      document.body.appendChild(popup);
     }
 
     async function borrarFactura(id, contabilizado) {
