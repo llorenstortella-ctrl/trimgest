@@ -67,6 +67,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .badge-green { background: #0d2b1a; color: #4caf7d; }
 .badge-red { background: #2b0d0d; color: #e05555; }
 .badge-gray { background: #2a2a35; color: #888; }
+.badge-transferencia { background: #0d1a2a; color: #5090d0; border: 1px solid #1a3a5a; }
+.badge-efectivo { background: #1a2a0d; color: #70b040; border: 1px solid #3a5a1a; }
+.badge-tarjeta { background: #1a0d2a; color: #a070d0; border: 1px solid #4a1a6a; }
+.badge-domiciliacion { background: #0d2a2a; color: #50c0c0; border: 1px solid #1a5a5a; }
+.badge-bizum { background: #2a1a0d; color: #d09050; border: 1px solid #6a4a1a; }
+.badge-sinpagar { background: #2a1500; color: #e08030; border: 1px solid #6a3a10; }
 .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 16px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
 .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #e8c87a; }
@@ -631,7 +637,7 @@ function renderTarjetaMobil(f) {
     '<div class="mobile-factura-row"><span>Concepto</span><span>' + concepto + '</span></div>' +
     '<div class="mobile-factura-row"><span>Base</span><span>' + base + '</span></div>' +
     '<div class="mobile-factura-row"><span>IVA</span><span>' + iva + '</span></div>' +
-    '<div class="mobile-factura-total">' + total + '</div>' +
+    '<div class="mobile-factura-total">' + total + '</div>' + getEstadoPagoBadge(f) +
     '<div class="mobile-factura-btns">' +
     (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo||'') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
     '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
