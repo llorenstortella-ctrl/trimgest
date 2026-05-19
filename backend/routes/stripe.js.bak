@@ -14,7 +14,14 @@ const PLANES = {
   estandar: { precio: 2000, nombre: 'Plan Estandar', limite: 200 }
 };
 
-// Crear sesion de pago
+const PAQUETES_SUBIDAS = {
+  p10:  { subidas: 10,  precio: 200,  nombre: '10 subidas extra' },
+  p50:  { subidas: 50,  precio: 750,  nombre: '50 subidas extra' },
+  p100: { subidas: 100, precio: 1000, nombre: '100 subidas extra' },
+  p200: { subidas: 200, precio: 1600, nombre: '200 subidas extra' }
+};
+
+// Crear sesion de pago suscripcion
 router.post('/checkout', auth, async (req, res) => {
   try {
     const { plan } = req.body;
@@ -44,6 +51,36 @@ router.post('/checkout', auth, async (req, res) => {
   }
 });
 
+// Crear sesion de pago subidas extra (pago unico)
+router.post('/comprar-subidas', auth, async (req, res) => {
+  try {
+    const { paquete } = req.body;
+    if (!PAQUETES_SUBIDAS[paquete]) return res.status(400).json({ error: 'Paquete no valido' });
+    const p = PAQUETES_SUBIDAS[paquete];
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'eur',
+          product_data: { name: p.nombre },
+          unit_amount: p.precio
+        },
+        quantity: 1
+      }],
+      success_url: 'https://trimgest.es/app?subidas=ok&paquete=' + paquete,
+      cancel_url: 'https://trimgest.es/app?subidas=cancelado',
+      metadata: { empresaId: req.empresaId, tipo: 'subidas_extra', paquete: paquete, subidas: p.subidas }
+    });
+
+    res.json({ url: session.url });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error creando sesion de pago' });
+  }
+});
+
 // Webhook de Stripe
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
@@ -56,14 +93,18 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    const { empresaId, plan } = session.metadata;
+    const { empresaId, plan, tipo, paquete, subidas } = session.metadata;
     const usuarios = getUsuarios();
     const idx = usuarios.findIndex(u => u.empresaId === empresaId);
     if (idx !== -1) {
-      usuarios[idx].plan = plan;
-      usuarios[idx].plan_activo = true;
-      usuarios[idx].stripe_customer = session.customer;
-      usuarios[idx].stripe_subscription = session.subscription;
+      if (tipo === 'subidas_extra') {
+        usuarios[idx].subidas_extra = (usuarios[idx].subidas_extra || 0) + parseInt(subidas);
+      } else {
+        usuarios[idx].plan = plan;
+        usuarios[idx].plan_activo = true;
+        usuarios[idx].stripe_customer = session.customer;
+        usuarios[idx].stripe_subscription = session.subscription;
+      }
       saveUsuarios(usuarios);
     }
   }
@@ -77,32 +118,14 @@ router.get('/plan', auth, (req, res) => {
   const usuario = usuarios.find(u => u.empresaId === req.empresaId);
   if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
   res.json({
-    plan: usuario.plan || 'basico',
+    plan: usuario.plan || 'free',
     plan_activo: usuario.plan_activo || false,
-    limite: PLANES[usuario.plan || 'basico'].limite
+    limite: PLANES[usuario.plan] ? PLANES[usuario.plan].limite : 10,
+    subidas_extra: usuario.subidas_extra || 0
   });
 });
 
-// POST /stripe/cancelar — cancelar suscripcion
-router.post('/cancelar', auth, async (req, res) => {
-  try {
-    const usuarios = getUsuarios();
-    const usuario = usuarios.find(u => u.empresaId === req.empresaId);
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!usuario.stripe_subscription) return res.json({ ok: true, mensaje: 'Sin suscripcion activa' });
-    await stripe.subscriptions.update(usuario.stripe_subscription, { cancel_at_period_end: true });
-    const idx = usuarios.findIndex(u => u.empresaId === req.empresaId);
-    usuarios[idx].baja_solicitada = true;
-    usuarios[idx].baja_fecha = new Date().toISOString();
-    saveUsuarios(usuarios);
-    res.json({ ok: true });
-  } catch(e) {
-    console.error(e);
-    res.status(500).json({ error: 'Error al cancelar: ' + e.message });
-  }
-});
-
-// POST /stripe/cancelar — cancelar suscripcion
+// POST /stripe/cancelar
 router.post('/cancelar', auth, async (req, res) => {
   try {
     const usuarios = getUsuarios();
