@@ -74,6 +74,7 @@
     .badge-sinpagar { background: #2a1500; color: #e08030; border: 1px solid #6a3a10; }
     .badge-transferencia { background: #0d1a2a; color: #5090d0; border: 1px solid #1a3a5a; }
     .badge-efectivo { background: #1a2a0d; color: #70b040; border: 1px solid #3a5a1a; }
+    .badge-mixto { background: #2b1a2b; color: #c47fd4; border: 1px solid #5a3a5a; }
     .badge-tarjeta { background: #1a0d2a; color: #a070d0; border: 1px solid #4a1a6a; }
     .badge-domiciliacion { background: #0d2a2a; color: #50c0c0; border: 1px solid #1a5a5a; }
     .badge-bizum { background: #2a1a0d; color: #d09050; border: 1px solid #6a4a1a; }
@@ -916,7 +917,7 @@
           listaHTML += '<div class="factura-header"><span class="factura-nombre">' + f.nombre + '</span>';
           listaHTML += '<div class="factura-badges"><span class="factura-badge badge-' + f.tipo + '">' + f.tipo + '</span>';
           if (f.enviado) listaHTML += '<span class="factura-badge badge-enviada">enviada</span>';
-          var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum' };
+          var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum', mixto: '🔀 Mixto' };
           var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : '⚠️ Sin clasificar';
           var epClass = f.estado_pago || 'sinpagar';
           listaHTML += '<span class="factura-badge badge-' + epClass + '" style="cursor:pointer" onclick="cambiarEstadoPago(' + f.id + ')">'+epLabel+'</span>';
@@ -1042,7 +1043,7 @@
       var facturas = window.todasFacturas || [];
       var f = facturas.find(function(x) { return x.id === id; });
       if (!f) return;
-      var estados = ['transferencia', 'tarjeta', 'domiciliacion', 'bizum', 'efectivo', null];
+      var estados = ['transferencia', 'tarjeta', 'domiciliacion', 'bizum', 'efectivo', 'mixto', null];
       var idx = estados.indexOf(f.estado_pago || null);
       var siguiente = estados[(idx + 1) % estados.length];
       try {
