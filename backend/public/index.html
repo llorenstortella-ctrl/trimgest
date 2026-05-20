@@ -406,22 +406,18 @@
       var resF = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var dataF = await resF.json();
       var todasFacturas = dataF.facturas || [];
-
       var resN = await fetch(API + '/nominas/listar', { headers: getHeaders() });
       var dataN = await resN.json();
       var todasNominas = dataN.nominas || [];
-
       var annoActual = window.annoSel || String(new Date().getFullYear());
       var anos = [];
       for (var y = new Date().getFullYear() - 2; y <= new Date().getFullYear() + 1; y++) anos.push(String(y));
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (annoActual === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
-
+      var mesesTrim = { T1: ['01','02','03'], T2: ['04','05','06'], T3: ['07','08','09'], T4: ['10','11','12'] };
       function calcTrim(t) {
         var provs = todasFacturas.filter(function(f) { return f.tipo !== 'cliente' && f.trimestre === t && String(f.anno) === annoActual; });
         var clis = todasFacturas.filter(function(f) { return f.tipo === 'cliente' && f.trimestre === t && String(f.anno) === annoActual; });
-        var noms = todasNominas.filter(function(n) { return String(n.anno) === annoActual; });
-        var meses = { T1: ['01','02','03'], T2: ['04','05','06'], T3: ['07','08','09'], T4: ['10','11','12'] };
-        var nomsT = noms.filter(function(n) { return meses[t] && meses[t].indexOf(String(n.mes).padStart(2,'0')) !== -1; });
+        var nomsT = todasNominas.filter(function(n) { return String(n.anno) === annoActual && mesesTrim[t] && mesesTrim[t].indexOf(String(n.mes).padStart(2,'0')) !== -1; });
         return {
           baseProvs: provs.reduce(function(s,f) { return s+Number(f.base_imponible||0); }, 0),
           ivaProv: provs.reduce(function(s,f) { return s+Number(f.iva_importe||0); }, 0),
@@ -435,82 +431,58 @@
           numNoms: nomsT.length
         };
       }
-
       var trims = ['T1','T2','T3','T4'];
       var datos = {};
       trims.forEach(function(t) { datos[t] = calcTrim(t); });
-
       var totalBaseProvAnual = trims.reduce(function(s,t) { return s+datos[t].baseProvs; }, 0);
       var totalIvaProvAnual = trims.reduce(function(s,t) { return s+datos[t].ivaProv; }, 0);
       var totalBaseCliAnual = trims.reduce(function(s,t) { return s+datos[t].baseClis; }, 0);
       var totalIvaCliAnual = trims.reduce(function(s,t) { return s+datos[t].ivaCli; }, 0);
       var totalNomAnual = trims.reduce(function(s,t) { return s+datos[t].costeNom; }, 0);
       var ivaLiquidar = totalIvaCliAnual - totalIvaProvAnual;
-
       function tarjeta(t) {
         var d = datos[t];
         var ivaRes = d.ivaCli - d.ivaProv;
         var ivaColor = ivaRes >= 0 ? '#4caf7d' : '#e05555';
-        return '<div style="background:#16161e;border:1px solid #22223a;border-radius:14px;padding:18px;cursor:pointer;" onclick="window.trimestreSel='' + t + '';cambiarSeccion('facturas')">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
-          '<div style="font-size:18px;font-weight:600;color:#e8c87a;">' + t + '</div>' +
-          '<div style="font-size:11px;color:#6a6070;">' + annoActual + '</div>' +
-          '</div>' +
-          '<div style="display:flex;flex-direction:column;gap:8px;">' +
-          '<div style="display:flex;justify-content:space-between;font-size:12px;">' +
-          '<span style="color:#6a6070;">Proveedores (' + d.numProvs + ')</span>' +
-          '<span style="color:#e05555;">-' + formatEur(d.totalProv) + '</span>' +
-          '</div>' +
-          '<div style="display:flex;justify-content:space-between;font-size:12px;">' +
-          '<span style="color:#6a6070;">Clientes (' + d.numClis + ')</span>' +
-          '<span style="color:#4caf7d;">+' + formatEur(d.totalCli) + '</span>' +
-          '</div>' +
-          '<div style="display:flex;justify-content:space-between;font-size:12px;">' +
-          '<span style="color:#6a6070;">Nominas (' + d.numNoms + ')</span>' +
-          '<span style="color:#e05555;">-' + formatEur(d.costeNom) + '</span>' +
-          '</div>' +
-          '<div style="border-top:1px solid #22223a;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-size:12px;">' +
-          '<span style="color:#6a6070;">IVA a liquidar</span>' +
-          '<span style="color:' + ivaColor + ';font-weight:600;">' + formatEur(ivaRes) + '</span>' +
-          '</div>' +
-          '</div>' +
-          '</div>';
+        var html = '<div style="background:#16161e;border:1px solid #22223a;border-radius:14px;padding:18px;cursor:pointer;" onclick="window.trimestreSel=' + "'" + t + "'" + ';cambiarSeccion(' + "'facturas'" + ')">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">';
+        html += '<div style="font-size:18px;font-weight:600;color:#e8c87a;">' + t + '</div>';
+        html += '<div style="font-size:11px;color:#6a6070;">' + annoActual + '</div></div>';
+        html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:#6a6070;">Proveedores (' + d.numProvs + ')</span><span style="color:#e05555;">-' + formatEur(d.totalProv) + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:#6a6070;">Clientes (' + d.numClis + ')</span><span style="color:#4caf7d;">+' + formatEur(d.totalCli) + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:#6a6070;">Nominas (' + d.numNoms + ')</span><span style="color:#e05555;">-' + formatEur(d.costeNom) + '</span></div>';
+        html += '<div style="border-top:1px solid #22223a;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-size:12px;">';
+        html += '<span style="color:#6a6070;">IVA a liquidar</span><span style="color:' + ivaColor + ';font-weight:600;">' + formatEur(ivaRes) + '</span></div>';
+        html += '</div></div>';
+        return html;
       }
-
-      var html =
-        '<div class="header">' +
-        '<div class="header-top"><div><div class="label">TrimGest</div><h1>Resumen ' + annoActual + '</h1></div>' +
-        '<div style="display:flex;gap:4px;align-items:center;">' +
-        '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
-        '</div></div>' +
-        '<div class="selectores"><select onchange="window.annoSel=this.value;renderResumen()">' + optsAno + '</select></div>' +
-        '<div class="stats">' +
-        '<div class="stat"><div class="stat-label">Ingresos</div><div class="stat-value verde">' + formatEur(totalBaseCliAnual) + '</div></div>' +
-        '<div class="stat"><div class="stat-label">Gastos</div><div class="stat-value">' + formatEur(totalBaseProvAnual) + '</div></div>' +
-        '<div class="stat"><div class="stat-label">IVA neto</div><div class="stat-value" style="color:' + (ivaLiquidar>=0?'#4caf7d':'#e05555') + ';">' + formatEur(ivaLiquidar) + '</div></div>' +
-        '</div></div>' +
-        '<div class="content">' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">' +
-        tarjeta('T1') + tarjeta('T2') + tarjeta('T3') + tarjeta('T4') +
-        '</div>' +
-        '<div style="background:#16161e;border:1px solid #22223a;border-radius:14px;padding:18px;">' +
-        '<div style="font-size:13px;font-weight:600;color:#f0ede8;margin-bottom:14px;">Resumen anual</div>' +
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;">' +
-        '<span style="color:#6a6070;">Base imponible proveedores</span><span style="color:#e05555;">-' + formatEur(totalBaseProvAnual) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;">' +
-        '<span style="color:#6a6070;">IVA soportado</span><span style="color:#e05555;">-' + formatEur(totalIvaProvAnual) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;">' +
-        '<span style="color:#6a6070;">Base imponible clientes</span><span style="color:#4caf7d;">+' + formatEur(totalBaseCliAnual) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;">' +
-        '<span style="color:#6a6070;">IVA repercutido</span><span style="color:#4caf7d;">+' + formatEur(totalIvaCliAnual) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;">' +
-        '<span style="color:#6a6070;">Coste nominas</span><span style="color:#e05555;">-' + formatEur(totalNomAnual) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;padding:10px 0;font-size:14px;font-weight:600;">' +
-        '<span style="color:#f0ede8;">IVA neto a liquidar</span><span style="color:' + (ivaLiquidar>=0?'#4caf7d':'#e05555') + ';">' + formatEur(ivaLiquidar) + '</span></div>' +
-        '</div>' +
-        '</div>';
-
+      var ivaColor = ivaLiquidar >= 0 ? '#4caf7d' : '#e05555';
+      var html = '<div class="header">';
+      html += '<div class="header-top"><div><div class="label">TrimGest</div><h1>Resumen ' + annoActual + '</h1></div>';
+      html += '<div style="display:flex;gap:4px;align-items:center;">';
+      html += '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>';
+      html += '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>';
+      html += '</div></div>';
+      html += '<div class="selectores"><select onchange="window.annoSel=this.value;renderResumen()">' + optsAno + '</select></div>';
+      html += '<div class="stats">';
+      html += '<div class="stat"><div class="stat-label">Ingresos</div><div class="stat-value verde">' + formatEur(totalBaseCliAnual) + '</div></div>';
+      html += '<div class="stat"><div class="stat-label">Gastos</div><div class="stat-value">' + formatEur(totalBaseProvAnual) + '</div></div>';
+      html += '<div class="stat"><div class="stat-label">IVA neto</div><div class="stat-value" style="color:' + ivaColor + ';">' + formatEur(ivaLiquidar) + '</div></div>';
+      html += '</div></div>';
+      html += '<div class="content">';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+      html += tarjeta('T1') + tarjeta('T2') + tarjeta('T3') + tarjeta('T4');
+      html += '</div>';
+      html += '<div style="background:#16161e;border:1px solid #22223a;border-radius:14px;padding:18px;">';
+      html += '<div style="font-size:13px;font-weight:600;color:#f0ede8;margin-bottom:14px;">Resumen anual</div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">Base imponible proveedores</span><span style="color:#e05555;">-' + formatEur(totalBaseProvAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">IVA soportado</span><span style="color:#e05555;">-' + formatEur(totalIvaProvAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">Base imponible clientes</span><span style="color:#4caf7d;">+' + formatEur(totalBaseCliAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">IVA repercutido</span><span style="color:#4caf7d;">+' + formatEur(totalIvaCliAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">Coste nominas</span><span style="color:#e05555;">-' + formatEur(totalNomAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:10px 0;font-size:14px;font-weight:600;"><span style="color:#f0ede8;">IVA neto a liquidar</span><span style="color:' + ivaColor + ';">' + formatEur(ivaLiquidar) + '</span></div>';
+      html += '</div></div>';
       document.getElementById('app').innerHTML = html;
     }
 
@@ -820,13 +792,13 @@
         '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Facturas de proveedor</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
         '<div id="emailFacturasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">facturas+' + perfil.empresaId + '@pelinul.resend.app</div>' +
-        '<button onclick="copiarEmail(\'facturas\')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
+        '<button onclick="copiarEmail(' + "'facturas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
         '</div></div>' +
         '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
-        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nóminas</div>' +
+        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nominas</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
         '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@pelinul.resend.app</div>' +
-        '<button onclick="copiarEmail(\'nominas\')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
+        '<button onclick="copiarEmail(' + "'nominas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
         '</div></div>' +
         '<div style="font-size:11px;color:#6a6070;">Recibirás un email de confirmación cuando se procesen.</div>' +
         '</div>' +
