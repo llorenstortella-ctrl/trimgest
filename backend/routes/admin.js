@@ -226,4 +226,152 @@ router.post('/verificar-usuario', (req, res) => {
   res.json({ ok: true, mensaje: 'Usuario verificado: ' + email });
 });
 
+
+// Endpoint temporal — cargar datos demo
+router.post('/cargar-demo', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
+
+  try {
+    const bcrypt = require('bcryptjs');
+    const empresaId = 'emp_demo_construcciones';
+    const gestoId = 'gest_demo_001';
+    const passwordHash = await bcrypt.hash('Demo1234!', 10);
+
+    // Usuarios
+    const empresa = {
+      id: 9000000001, email: 'demo@construccionesbalear.es', password: passwordHash,
+      nombre_empresa: 'CONSTRUCCIONES BALEAR S.L.', nif: 'B57123456',
+      direccion: 'Carrer Major 12, Palma de Mallorca', empresaId,
+      plan: 'estandar', facturas_mes: 0, mes_actual: new Date().getMonth(),
+      fecha_registro: '2024-01-15T09:00:00.000Z', verificado: true, ver_token: null,
+      telefono: '634567890', gestoriasAprobadas: [gestoId], solicitudesGestoria: []
+    };
+    const gestoria = {
+      id: 9000000002, email: 'demo@gestoria-mallorca.es', password: passwordHash,
+      nombre_empresa: 'GESTORIA MALLORCA ASSESSORS S.L.', nif: 'B57987654',
+      direccion: 'Avda. Jaume III 5, Palma de Mallorca', empresaId: gestoId, gestoId,
+      plan: 'free', tipo: 'gestoria', facturas_mes: 0, mes_actual: new Date().getMonth(),
+      fecha_registro: '2024-01-10T09:00:00.000Z', verificado: true, ver_token: null,
+      telefono: '971234567', nombre_gestoria: 'Gestoria Mallorca Assessors', whatsapp: '34971234567'
+    };
+
+    let usuarios = getUsuarios();
+    usuarios = usuarios.filter(function(u) { return u.empresaId !== empresaId && u.gestoId !== gestoId; });
+    usuarios.push(empresa);
+    usuarios.push(gestoria);
+    saveUsuarios(usuarios);
+
+    // Directorios
+    const empDir = path.join(baseDataDir, 'empresas', empresaId);
+    if (!fs.existsSync(empDir)) fs.mkdirSync(empDir, { recursive: true });
+    const uploadsDir = path.join(empDir, 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    // Facturas
+    const proveedores = [
+      { nombre: 'REPSOL BUTANO S.A.', cif: 'A28001133' },
+      { nombre: 'ENDESA ENERGIA S.A.', cif: 'A81948077' },
+      { nombre: 'FERRETERIA SON SERVERA', cif: 'B57234567' },
+      { nombre: 'CIMENT MALLORCA S.L.', cif: 'B57345678' },
+      { nombre: 'LEROY MERLIN ESPANA S.L.', cif: 'B81840917' },
+      { nombre: 'TELEFONICA DE ESPANA S.A.', cif: 'A28015865' },
+      { nombre: 'GESTORIA MALLORCA ASSESSORS', cif: 'B57987654' },
+      { nombre: 'GRUES I MAQUINARIA BALEAR S.L.', cif: 'B57456789' },
+      { nombre: 'FUSTERIA CAN PERE S.L.', cif: 'B57567890' },
+      { nombre: 'TRANSPORT MALLORCA EXPRESS S.L.', cif: 'B57678901' }
+    ];
+    const clientes = [
+      { nombre: 'HOTEL MARINA CALA MILLOR S.L.', cif: 'B57111222' },
+      { nombre: 'PROMOTORA LLEVANT S.A.', cif: 'A57222333' },
+      { nombre: 'RESTAURANTE ES PORT S.L.', cif: 'B57333444' },
+      { nombre: 'COMUNITAT DE PROPIETARIS PALMA NOVA', cif: 'H57444555' },
+      { nombre: 'REFORMA INTEGRAL MANACOR S.L.', cif: 'B57555666' }
+    ];
+    const estadosPago = ['transferencia', 'tarjeta', 'domiciliacion', 'bizum', 'efectivo', 'mixto'];
+    const trimestres = [
+      { t: 'T1', a: 2025, meses: ['01','02','03'] },
+      { t: 'T2', a: 2025, meses: ['04','05','06'] },
+      { t: 'T3', a: 2025, meses: ['07','08','09'] },
+      { t: 'T4', a: 2025, meses: ['10','11','12'] }
+    ];
+    function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function fmt(d, m, a) { return String(d).padStart(2,'0') + '/' + m + '/' + a; }
+    function getTrim(f) { var m = parseInt(f.split('/')[1]); return m<=3?'T1':m<=6?'T2':m<=9?'T3':'T4'; }
+    function getAnno(f) { return parseInt(f.split('/')[2]); }
+
+    var facturas = [];
+    var idC = 9000100001;
+    trimestres.forEach(function(trim) {
+      proveedores.forEach(function(prov) {
+        var n = rand(1,2);
+        for (var i=0;i<n;i++) {
+          var base = rand(150,4500);
+          var ivaPct = randItem([10,21]);
+          var ivaImp = Math.round(base*ivaPct)/100;
+          var total = Math.round((base+ivaImp)*100)/100;
+          var mes = randItem(trim.meses);
+          var fecha = fmt(rand(1,28), mes, trim.a);
+          facturas.push({
+            id: idC++, archivo: null, tipo: 'proveedor',
+            nombre: prov.nombre, cif: prov.cif,
+            numero_factura: 'F'+trim.a+'-'+String(idC).slice(-4),
+            fecha, base_imponible: base, iva_porcentaje: ivaPct,
+            iva_importe: ivaImp, total, trimestre: getTrim(fecha), anno: getAnno(fecha),
+            enviado: false, contabilizado: Math.random()>0.3,
+            estado_pago: randItem(estadosPago), fecha_subida: new Date().toISOString()
+          });
+        }
+      });
+      clientes.forEach(function(cli) {
+        var base = rand(2000,25000);
+        var ivaImp = Math.round(base*21)/100;
+        var total = Math.round((base+ivaImp)*100)/100;
+        var fecha = fmt(rand(1,28), randItem(trim.meses), trim.a);
+        facturas.push({
+          id: idC++, archivo: null, tipo: 'cliente',
+          nombre: cli.nombre, cif: cli.cif,
+          numero_factura: 'FC'+trim.a+'-'+String(idC).slice(-4),
+          fecha, base_imponible: base, iva_porcentaje: 21,
+          iva_importe: ivaImp, total, trimestre: getTrim(fecha), anno: getAnno(fecha),
+          enviado: Math.random()>0.5, contabilizado: Math.random()>0.4,
+          estado_pago: 'transferencia', fecha_subida: new Date().toISOString()
+        });
+      });
+    });
+    fs.writeFileSync(path.join(empDir, 'facturas.json'), JSON.stringify(facturas, null, 2));
+
+    // Nominas
+    var trabajadores = ['JOAN TOUS FUSTER','MIQUEL SERVERA LLULL','PERE ANTONI RIERA GALMES','BARTOMEU OLIVER NADAL'];
+    var meses = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+    var nominas = [];
+    var nomId = 9000200001;
+    trabajadores.forEach(function(trab) {
+      var bruto = rand(1800,3200);
+      meses.forEach(function(mes) {
+        var irpfPct = rand(12,20);
+        var ssTrab = Math.round(bruto*0.0635*100)/100;
+        var irpfImp = Math.round(bruto*irpfPct/100*100)/100;
+        var neto = Math.round((bruto-ssTrab-irpfImp)*100)/100;
+        var ssEmp = Math.round(bruto*0.236*100)/100;
+        nominas.push({
+          id: nomId++, trabajador: trab, mes, anno: 2025,
+          devengado: bruto, neto, deducciones: Math.round((ssTrab+irpfImp)*100)/100,
+          irpf_porcentaje: irpfPct, irpf_importe: irpfImp,
+          ss_trabajador: ssTrab, ss_empresa: ssEmp,
+          coste_empresa: Math.round((bruto+ssEmp)*100)/100,
+          archivo: null, contabilizado: mes<'05', fecha_subida: new Date().toISOString()
+        });
+      });
+    });
+    fs.writeFileSync(path.join(empDir, 'nominas.json'), JSON.stringify(nominas, null, 2));
+
+    res.json({ ok: true, mensaje: 'Demo cargada', facturas: facturas.length, nominas: nominas.length });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;

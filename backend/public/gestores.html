@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LRLKFDTN1E"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LRLKFDTN1E');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrimGest para Gestorías — Gratis para ti, valor para tus clientes</title>
+<meta name="description" content="Ofrece a tus clientes gestión de facturas con IA. Tu cuenta de gestoría es siempre gratis. Sin límites, sin coste.">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  .nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 1px solid #22223a; }
+  .nav-logo { font-size: 20px; color: #e8c87a; font-weight: 500; text-decoration: none; }
+  .nav-btn { background: #e8c87a; color: #1a1500; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+  .hero { text-align: center; padding: 80px 20px 60px; }
+  .hero-label { font-size: 12px; letter-spacing: 4px; color: #6a6070; text-transform: uppercase; margin-bottom: 16px; }
+  .hero-title { font-size: 48px; font-weight: 400; line-height: 1.2; margin-bottom: 20px; }
+  .hero-title span { color: #e8c87a; }
+  .hero-sub { font-size: 18px; color: #6a6070; max-width: 540px; margin: 0 auto 16px; line-height: 1.6; }
+  .hero-gratis { display: inline-block; background: #0d2b1a; color: #4caf7d; border: 1px solid #1a4a2a; border-radius: 20px; padding: 6px 20px; font-size: 14px; font-weight: 600; margin-bottom: 36px; }
+  .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 16px 32px; font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn-secondary { background: transparent; color: #e0d8cc; border: 1px solid #2a2a3a; border-radius: 10px; padding: 16px 32px; font-size: 16px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .section { padding: 80px 20px; max-width: 900px; margin: 0 auto; }
+  .section-title { text-align: center; font-size: 32px; font-weight: 400; margin-bottom: 12px; }
+  .section-sub { text-align: center; color: #6a6070; margin-bottom: 48px; font-size: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+  .card { background: #16161e; border: 1px solid #22223a; border-radius: 14px; padding: 24px; }
+  .card-icon { font-size: 28px; margin-bottom: 14px; }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #e8c87a; }
+  .card-text { font-size: 14px; color: #6a6070; line-height: 1.6; }
+  .steps { display: flex; flex-direction: column; gap: 20px; max-width: 600px; margin: 0 auto; }
+  .step { display: flex; gap: 20px; align-items: flex-start; }
+  .step-num { background: #e8c87a; color: #1a1500; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  .step-content { padding-top: 4px; }
+  .step-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .step-text { font-size: 14px; color: #6a6070; line-height: 1.6; }
+  .modelo { background: #16161e; border: 1px solid #22223a; border-radius: 16px; padding: 40px; max-width: 700px; margin: 0 auto; }
+  .modelo-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #22223a; }
+  .modelo-row:last-child { border-bottom: none; }
+  .modelo-label { font-size: 15px; color: #a09898; }
+  .modelo-valor { font-size: 15px; font-weight: 600; }
+  .modelo-valor.gratis { color: #4caf7d; }
+  .modelo-valor.pago { color: #e8c87a; }
+  .cta { text-align: center; padding: 80px 20px; background: #16161e; border-top: 1px solid #22223a; }
+  .cta-title { font-size: 36px; font-weight: 400; margin-bottom: 16px; }
+  .cta-title span { color: #e8c87a; }
+  .cta-sub { color: #6a6070; font-size: 16px; margin-bottom: 12px; }
+  .cta-gratis { color: #4caf7d; font-size: 14px; margin-bottom: 36px; }
+  .footer { text-align: center; padding: 30px; color: #3a3a4a; font-size: 13px; border-top: 1px solid #22223a; }
+  @media (max-width: 600px) {
+    .nav { padding: 16px 20px; }
+    .hero-title { font-size: 32px; }
+    .section-title { font-size: 26px; }
+    .cta-title { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="/">TrimGest</a>
+  <a class="nav-btn" href="/panel-gestoria">Crear cuenta gratis</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-label">Para gestorías</div>
+  <h1 class="hero-title">Tu cliente organizado.<br><span>Gratis para ti, siempre.</span></h1>
+  <p class="hero-sub">Ofrece a tus clientes gestión de facturas con inteligencia artificial. Ellos suben sus facturas, tú las ves organizadas al instante.</p>
+  <div class="hero-gratis">✓ Tu cuenta de gestoría es gratis siempre — sin límites</div>
+  <div class="hero-btns">
+    <a class="btn-primary" href="/panel-gestoria">Crear cuenta gratis</a>
+    <a class="btn-secondary" href="/">Ver demo</a>
+  </div>
+</section>
+
+<section class="section">
+  <h2 class="section-title">¿Qué ganas tú?</h2>
+  <p class="section-sub">Menos trabajo, clientes más organizados y un servicio diferencial que otras gestorías no ofrecen.</p>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-icon">📂</div>
+      <div class="card-title">Facturas organizadas</div>
+      <div class="card-text">Tus clientes suben sus facturas y tú las ves ordenadas por trimestre, tipo y proveedor. Sin emails, sin carpetas desordenadas.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <div class="card-title">IA extrae los datos</div>
+      <div class="card-text">La inteligencia artificial lee cada PDF y extrae nombre, CIF, base, IVA y total automáticamente. Sin teclear nada.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-title">PDF y Excel al instante</div>
+      <div class="card-text">Descarga el resumen trimestral de cada cliente en PDF o Excel con un clic. Listo para tu gestión contable.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">💳</div>
+      <div class="card-title">Estado de pago</div>
+      <div class="card-text">Cada factura indica cómo se pagó — transferencia, tarjeta, bizum, efectivo o mixto. Todo controlado.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📱</div>
+      <div class="card-title">WhatsApp directo</div>
+      <div class="card-text">Contacta con tus clientes por WhatsApp directamente desde el panel. Un toque y abres la conversación.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🏆</div>
+      <div class="card-title">Te diferencias</div>
+      <div class="card-text">Ofreces una herramienta moderna que otras gestorías no tienen. Tus clientes lo valoran y no se van.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <h2 class="section-title">Cómo funciona</h2>
+  <p class="section-sub">En tres pasos, tú y tus clientes estáis conectados.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Creas tu cuenta de gestoría gratis</div>
+        <div class="step-text">Registro en 2 minutos. Sin tarjeta, sin coste. Tu cuenta es gratis para siempre.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Invitas a tus clientes empresa</div>
+        <div class="step-text">Ellos se registran y te solicitan acceso. Tú apruebas con un clic y ya ves sus facturas.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Tus clientes suben sus facturas</div>
+        <div class="step-text">La IA extrae los datos automáticamente. Tú contabilizas, descargas PDF o Excel y listo.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <h2 class="section-title">El modelo es simple</h2>
+  <p class="section-sub">Transparente y sin sorpresas.</p>
+  <div class="modelo">
+    <div class="modelo-row">
+      <span class="modelo-label">Tu cuenta de gestoría</span>
+      <span class="modelo-valor gratis">Gratis siempre</span>
+    </div>
+    <div class="modelo-row">
+      <span class="modelo-label">Clientes que puedes gestionar</span>
+      <span class="modelo-valor gratis">Sin límite</span>
+    </div>
+    <div class="modelo-row">
+      <span class="modelo-label">Facturas que puedes ver</span>
+      <span class="modelo-valor gratis">Sin límite</span>
+    </div>
+    <div class="modelo-row">
+      <span class="modelo-label">Plan de tu cliente empresa</span>
+      <span class="modelo-valor pago">Desde 10€/mes</span>
+    </div>
+    <div class="modelo-row">
+      <span class="modelo-label">Primer mes de tu cliente</span>
+      <span class="modelo-valor gratis">Gratis con código PRIMERALTA</span>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2 class="cta-title">Empieza hoy.<br><span>Es gratis.</span></h2>
+  <p class="cta-sub">Crea tu cuenta de gestoría en 2 minutos y ofrece este servicio a tus clientes.</p>
+  <p class="cta-gratis">✓ Sin tarjeta · Sin coste · Sin límites</p>
+  <a class="btn-primary" href="/panel-gestoria">Crear cuenta gratis</a>
+</section>
+
+<footer class="footer">
+  © 2025 TrimGest · <a href="/privacidad.html" style="color:#3a3a4a;">Privacidad</a> · info@trimgest.es
+</footer>
+
+</body>
+</html>

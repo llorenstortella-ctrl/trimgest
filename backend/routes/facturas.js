@@ -250,6 +250,7 @@ router.put('/editar/:id', auth, (req, res) => {
   if (total) facturas[idx].total = parseFloat(total);
   if (req.body.cif !== undefined) facturas[idx].cif = req.body.cif || null;
   if (req.body.estado_pago !== undefined) facturas[idx].estado_pago = req.body.estado_pago;
+  if (req.body.nota !== undefined) facturas[idx].nota = req.body.nota || null;
   saveFacturas(facturas, req.empresaId);
   res.json({ mensaje: 'Actualizada', factura: facturas[idx] });
 });
