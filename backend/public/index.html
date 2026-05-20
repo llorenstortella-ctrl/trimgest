@@ -983,7 +983,7 @@
       for (var i = 0; i < facturas.length; i++) { if (facturas[i].anno) anosSet[String(facturas[i].anno)] = true; }
       var anos = Object.keys(anosSet).sort();
 
-      var facturasT = facturas.filter(function(f) { return f.trimestre === window.trimestreSel && String(f.anno) === window.annoSel; });
+      var facturasT = facturas.filter(function(f) { return (window.trimestreSel === 'TODOS' || f.trimestre === window.trimestreSel) && String(f.anno) === window.annoSel; });
       var pendientes = facturasT.filter(function(f) { return !f.enviado; });
       var enviadas = facturasT.filter(function(f) { return f.enviado; });
       var lista = window.tabSel === 'pendientes' ? pendientes : enviadas;
@@ -1068,7 +1068,7 @@
       botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">🔗 Compartir trimestre con gestoría</button>';
 
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
-      var optsTrim = ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+      var optsTrim = '<option value="TODOS"' + (window.trimestreSel === 'TODOS' ? ' selected' : '') + '>Todos</option>' + ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
       var provClass = window.tipoSel === 'proveedor' ? ' selected-prov' : '';
       var cliClass = window.tipoSel === 'cliente' ? ' selected-cli' : '';
       var btnDisabled = !window.tipoSel ? ' disabled' : '';
@@ -1076,7 +1076,7 @@
 
       document.getElementById('app').innerHTML =
         '<div class="header">' +
-        '<div class="header-top"><div><div class="label">' + (window.nombreEmpresa || 'TrimGest') + '</div><h1>' + window.trimestreSel + ' ' + window.annoSel + '</h1></div>' +
+        '<div class="header-top"><div><div class="label">' + (window.nombreEmpresa || 'TrimGest') + '</div><h1>' + (window.trimestreSel === 'TODOS' ? 'Año ' : window.trimestreSel + ' ') + window.annoSel + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
         '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
