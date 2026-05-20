@@ -45,8 +45,8 @@ async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir, to
   resumen.drawText('RESUMEN', { x: 40, y: height - 60, size: 16, font: helveticaBold, color: rgb(0.1, 0.1, 0.15) });
 
   // Cabecera tabla
-  const cols = [40, 160, 250, 310, 370, 430, 490];
-  const headers = ['Proveedor/Cliente', 'N° Factura', 'Fecha', 'Base', 'IVA', 'Total', 'Pago'];
+  const cols = [40, 180, 280, 350, 420, 490];
+  const headers = ['Proveedor/Cliente', 'N° Factura', 'Fecha', 'Base', 'IVA', 'Total'];
   let y = height - 100;
 
   resumen.drawRectangle({ x: 35, y: y - 5, width: width - 70, height: 20, color: rgb(0.06, 0.06, 0.1) });
@@ -76,8 +76,6 @@ async function generarPDF(tipo, trimestre, anno, empresa, dbPath, uploadsDir, to
     resumen.drawText(formatEur(f.base_imponible), { x: cols[3], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
     resumen.drawText(formatEur(f.iva_importe), { x: cols[4], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
     resumen.drawText(formatEur(f.total), { x: cols[5], y, size: 7, font: helveticaBold, color: rgb(0.1, 0.1, 0.15) });
-    var pagoText = f.estado_pago ? f.estado_pago.charAt(0).toUpperCase() + f.estado_pago.slice(1) : '-';
-    resumen.drawText(pagoText, { x: cols[6], y, size: 7, font: helvetica, color: rgb(0.1, 0.1, 0.15) });
 
     totalBase += Number(f.base_imponible);
     totalIVA += Number(f.iva_importe);
