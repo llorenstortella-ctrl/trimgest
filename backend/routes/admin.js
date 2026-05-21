@@ -245,7 +245,7 @@ router.post('/cargar-demo', async (req, res) => {
       direccion: 'Carrer Major 12, Palma de Mallorca', empresaId,
       plan: 'estandar', facturas_mes: 0, mes_actual: new Date().getMonth(),
       fecha_registro: '2024-01-15T09:00:00.000Z', verificado: true, ver_token: null,
-      telefono: '634567890', gestoriasAprobadas: [gestoId], solicitudesGestoria: []
+      telefono: '634567890', gestoriasAprobadas: [{ gestoriaId: gestoId, gestoriaNombre: 'Gestoria Mallorca Assessors', gestoriaEmail: 'demo@gestoria-mallorca.es' }], solicitudesGestoria: []
     };
     const gestoria = {
       id: 9000000002, email: 'demo@gestoria-mallorca.es', password: passwordHash,
