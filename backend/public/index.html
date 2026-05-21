@@ -992,8 +992,8 @@
       if (window.filtroTipo) lista = lista.filter(function(f) { return f.tipo === window.filtroTipo; });
       var provPend = pendientes.filter(function(f) { return f.tipo === 'proveedor'; });
       var cliPend = pendientes.filter(function(f) { return f.tipo === 'cliente'; });
-      var totalProv = provPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
-      var totalCli = cliPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
+      var totalProv = facturasT.filter(function(f) { return f.tipo === 'proveedor'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
+      var totalCli = facturasT.filter(function(f) { return f.tipo === 'cliente'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
 
       var listaHTML = '';
       // ordenar: proveedores agrupados por nombre y fecha, clientes solo por fecha
