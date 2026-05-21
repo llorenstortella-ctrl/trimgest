@@ -1067,7 +1067,8 @@
         botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button><button class="btn-marcar" onclick="marcarEnviadas()">Marcar todas como enviadas</button>';
       }
       botonesEnvio += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button></div>';
-      botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">🔗 Compartir trimestre con gestoría</button>';
+      var btnCompartirLabel = window.trimestreSel === 'TODOS' ? '🔗 Compartir año ' + window.annoSel + ' con gestoría' : '🔗 Compartir ' + window.trimestreSel + ' ' + window.annoSel + ' con gestoría';
+      botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">' + btnCompartirLabel + '</button>';
 
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
       var optsTrim = '<option value="TODOS"' + (window.trimestreSel === 'TODOS' ? ' selected' : '') + '>Todos</option>' + ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
@@ -1240,20 +1241,21 @@ async function exportarExcel(tipo) {
       var div = document.createElement('div');
       div.id = 'compartirPanel';
       div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
-      var trimLabel = trim === 'TODOS' ? 'Trimestre actual' : trim;
+      var botonesOpciones = '';
+      if (trim !== 'TODOS') {
+        botonesOpciones += '<button id="btnTrim" style="background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;text-align:left;">📅 Solo ' + trim + ' ' + anno + '</button>';
+      }
+      botonesOpciones += '<button id="btnTodos" style="background:#1e1e28;border:1px solid ' + (trim === 'TODOS' ? '#e8c87a' : '#2a2a3a') + ';color:' + (trim === 'TODOS' ? '#e8c87a' : '#9a90b4') + ';border-radius:10px;padding:12px;font-size:14px;cursor:pointer;text-align:left;">📆 Todo el año ' + anno + '</button>';
       div.innerHTML =
         '<div style="background:#16161e;border:1px solid #2a2a3a;border-radius:16px;padding:28px;width:100%;max-width:380px;">' +
         '<div style="font-size:17px;font-weight:700;color:#f0ede8;margin-bottom:6px;">🔗 Compartir con gestoría</div>' +
         '<div style="font-size:13px;color:#6a6070;margin-bottom:20px;">Elige qué periodo quieres compartir</div>' +
-        '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">' +
-        '<button id="btnTrim" style="background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;text-align:left;">📅 ' + trimLabel + ' ' + anno + '</button>' +
-        '<button id="btnTodos" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;text-align:left;">📆 Todo el año ' + anno + '</button>' +
-        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">' + botonesOpciones + '</div>' +
         '<input id="compartirPass" placeholder="Contraseña (opcional)" style="width:100%;background:#1e1e28;border:1px solid #2a2a3a;color:#f0ede8;border-radius:8px;padding:10px;font-size:13px;margin-bottom:12px;">' +
         '<button id="btnCancelarCompartir" style="width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;">Cancelar</button>' +
         '</div>';
       document.body.appendChild(div);
-      document.getElementById('btnTrim').onclick = function() { ejecutarCompartir(trim, anno); };
+      if (trim !== 'TODOS') document.getElementById('btnTrim').onclick = function() { ejecutarCompartir(trim, anno); };
       document.getElementById('btnTodos').onclick = function() { ejecutarCompartir('TODOS', anno); };
       document.getElementById('btnCancelarCompartir').onclick = function() { document.getElementById('compartirPanel').remove(); };
     }
