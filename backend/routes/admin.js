@@ -367,6 +367,73 @@ router.post('/cargar-demo', async (req, res) => {
     });
     fs.writeFileSync(path.join(empDir, 'nominas.json'), JSON.stringify(nominas, null, 2));
 
+
+    // Generar PDFs de prueba para las facturas
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    var uploadsDir = path.join(empDir, 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+    for (var fi = 0; fi < facturas.length; fi++) {
+      var f = facturas[fi];
+      try {
+        var pdfDoc = await PDFDocument.create();
+        var bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        var regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        var page = pdfDoc.addPage([595, 842]);
+        var w = page.getWidth();
+        var h = page.getHeight();
+
+        // Cabecera
+        page.drawRectangle({ x: 0, y: h-80, width: w, height: 80, color: rgb(0.06,0.06,0.1) });
+        page.drawText(f.nombre || 'Proveedor', { x: 40, y: h-35, size: 16, font: bold, color: rgb(0.91,0.78,0.48) });
+        page.drawText(f.cif || '', { x: 40, y: h-55, size: 10, font: regular, color: rgb(0.6,0.6,0.7) });
+        page.drawText('FACTURA', { x: 400, y: h-35, size: 14, font: bold, color: rgb(0.8,0.8,0.8) });
+        page.drawText('N: ' + (f.numero_factura || '-'), { x: 400, y: h-55, size: 10, font: regular, color: rgb(0.6,0.6,0.7) });
+
+        // Datos
+        var y2 = h - 130;
+        page.drawText('Fecha:', { x: 40, y: y2, size: 10, font: bold, color: rgb(0.3,0.3,0.4) });
+        page.drawText(f.fecha || '-', { x: 120, y: y2, size: 10, font: regular, color: rgb(0.1,0.1,0.15) });
+        y2 -= 25;
+        page.drawText('Destinatario:', { x: 40, y: y2, size: 10, font: bold, color: rgb(0.3,0.3,0.4) });
+        page.drawText('CONSTRUCCIONES BALEAR S.L.', { x: 140, y: y2, size: 10, font: regular, color: rgb(0.1,0.1,0.15) });
+        y2 -= 25;
+        page.drawText('NIF:', { x: 40, y: y2, size: 10, font: bold, color: rgb(0.3,0.3,0.4) });
+        page.drawText('B57123456', { x: 120, y: y2, size: 10, font: regular, color: rgb(0.1,0.1,0.15) });
+
+        // Linea separadora
+        y2 -= 30;
+        page.drawLine({ start: { x:40, y:y2 }, end: { x:555, y:y2 }, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
+        y2 -= 25;
+
+        // Tabla
+        page.drawText('Concepto', { x:40, y:y2, size:9, font:bold, color:rgb(0.5,0.5,0.6) });
+        page.drawText('Base', { x:350, y:y2, size:9, font:bold, color:rgb(0.5,0.5,0.6) });
+        page.drawText('IVA', { x:430, y:y2, size:9, font:bold, color:rgb(0.5,0.5,0.6) });
+        page.drawText('Total', { x:490, y:y2, size:9, font:bold, color:rgb(0.5,0.5,0.6) });
+        y2 -= 20;
+        page.drawText('Servicios profesionales', { x:40, y:y2, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+        page.drawText(Number(f.base_imponible).toFixed(2) + ' EUR', { x:330, y:y2, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+        page.drawText(f.iva_porcentaje + '%', { x:430, y:y2, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
+        page.drawText(Number(f.total).toFixed(2) + ' EUR', { x:475, y:y2, size:9, font:bold, color:rgb(0.1,0.3,0.1) });
+
+        // Total final
+        y2 -= 40;
+        page.drawLine({ start: { x:40, y:y2 }, end: { x:555, y:y2 }, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
+        y2 -= 20;
+        page.drawText('TOTAL', { x:40, y:y2, size:12, font:bold, color:rgb(0.1,0.1,0.15) });
+        page.drawText(Number(f.total).toFixed(2) + ' EUR', { x:460, y:y2, size:12, font:bold, color:rgb(0.1,0.4,0.1) });
+
+        var nombreArchivo = f.id + '-factura-demo.pdf';
+        var pdfBytes = await pdfDoc.save();
+        fs.writeFileSync(path.join(uploadsDir, nombreArchivo), pdfBytes);
+        facturas[fi].archivo = nombreArchivo;
+      } catch(pdfErr) {
+        console.error('Error PDF factura:', pdfErr.message);
+      }
+    }
+    fs.writeFileSync(path.join(empDir, 'facturas.json'), JSON.stringify(facturas, null, 2));
+
     res.json({ ok: true, mensaje: 'Demo cargada', facturas: facturas.length, nominas: nominas.length });
   } catch(e) {
     console.error(e);
