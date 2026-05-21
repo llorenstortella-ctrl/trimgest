@@ -266,7 +266,7 @@ router.post('/cargar-demo', async (req, res) => {
     const empDir = path.join(baseDataDir, 'empresas', empresaId);
     if (!fs.existsSync(empDir)) fs.mkdirSync(empDir, { recursive: true });
     const uploadsDir = path.join(empDir, 'uploads');
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    if (!fs.existsSync(pdfUploadsDir)) fs.mkdirSync(pdfUploadsDir, { recursive: true });
 
     // Facturas
     const proveedores = [
@@ -370,7 +370,7 @@ router.post('/cargar-demo', async (req, res) => {
 
     // Generar PDFs de prueba para las facturas
     const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-    var uploadsDir = path.join(empDir, 'uploads');
+    var pdfUploadsDir = path.join(empDir, 'uploads');
     if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
     for (var fi = 0; fi < facturas.length; fi++) {
@@ -426,7 +426,7 @@ router.post('/cargar-demo', async (req, res) => {
 
         var nombreArchivo = f.id + '-factura-demo.pdf';
         var pdfBytes = await pdfDoc.save();
-        fs.writeFileSync(path.join(uploadsDir, nombreArchivo), pdfBytes);
+        fs.writeFileSync(path.join(pdfUploadsDir, nombreArchivo), pdfBytes);
         facturas[fi].archivo = nombreArchivo;
       } catch(pdfErr) {
         console.error('Error PDF factura:', pdfErr.message);
