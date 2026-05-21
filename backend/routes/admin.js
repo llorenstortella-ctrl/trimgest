@@ -266,7 +266,6 @@ router.post('/cargar-demo', async (req, res) => {
     const empDir = path.join(baseDataDir, 'empresas', empresaId);
     if (!fs.existsSync(empDir)) fs.mkdirSync(empDir, { recursive: true });
     const uploadsDir = path.join(empDir, 'uploads');
-    if (!fs.existsSync(pdfUploadsDir)) fs.mkdirSync(pdfUploadsDir, { recursive: true });
 
     // Facturas
     const proveedores = [
