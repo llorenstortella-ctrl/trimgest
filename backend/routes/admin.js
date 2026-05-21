@@ -307,7 +307,7 @@ router.post('/cargar-demo', async (req, res) => {
       proveedores.forEach(function(prov) {
         var n = rand(1,2);
         for (var i=0;i<n;i++) {
-          var base = rand(150,4500);
+          var base = rand(150,1500);
           var ivaPct = randItem([10,21]);
           var ivaImp = Math.round(base*ivaPct)/100;
           var total = Math.round((base+ivaImp)*100)/100;
@@ -325,7 +325,7 @@ router.post('/cargar-demo', async (req, res) => {
         }
       });
       clientes.forEach(function(cli) {
-        var base = rand(2000,25000);
+        var base = rand(8000,45000);
         var ivaImp = Math.round(base*21)/100;
         var total = Math.round((base+ivaImp)*100)/100;
         var fecha = fmt(rand(1,28), randItem(trim.meses), trim.a);
