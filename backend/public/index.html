@@ -1000,9 +1000,15 @@
       function ordenarListaEmpresa(arr) {
         var orden = window.ordenSel || 'proveedor';
         if (orden === 'fecha_asc') {
-          return arr.slice().sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+          return arr.slice().sort(function(a, b) {
+            var pa=(a.fecha||'').split('/'),pb=(b.fecha||'').split('/');
+            return new Date(pa[2],pa[1]-1,pa[0]) - new Date(pb[2],pb[1]-1,pb[0]);
+          });
         } else if (orden === 'fecha_desc') {
-          return arr.slice().sort(function(a, b) { return (b.fecha||'').localeCompare(a.fecha||''); });
+          return arr.slice().sort(function(a, b) {
+            var pa=(a.fecha||'').split('/'),pb=(b.fecha||'').split('/');
+            return new Date(pb[2],pb[1]-1,pb[0]) - new Date(pa[2],pa[1]-1,pa[0]);
+          });
         } else if (orden === 'importe_asc') {
           return arr.slice().sort(function(a, b) { return Number(a.total) - Number(b.total); });
         } else if (orden === 'importe_desc') {
