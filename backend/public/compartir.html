@@ -124,7 +124,8 @@ function renderApp(d) {
 
   var html = '<div class="header"><div class="logo">TrimGest</div><div class="empresa">' + d.empresa + '</div></div>';
   html += '<div class="content">';
-  html += '<div class="titulo">' + d.trimestre + ' ' + d.anno + '</div>';
+  var tituloLabel = d.trimestre === 'TODOS' ? 'Año ' + d.anno : d.trimestre + ' ' + d.anno;
+  html += '<div class="titulo">' + tituloLabel + '</div>';
   html += '<div class="subtitulo">Facturas compartidas por ' + d.empresa + '</div>';
   html += '<div class="stats">';
   html += '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div></div>';

@@ -68,11 +68,13 @@ router.get('/:token', (req, res) => {
     return res.status(401).json({ error: 'contrasena_requerida' });
   }
   const facturas = getFacturas(empresaEncontrada.empresaId);
+  const esTodos = enlaceEncontrado.trimestre === 'TODOS';
   const lista = facturas.filter(function(f) {
+    if (esTodos) return String(f.anno) === String(enlaceEncontrado.anno);
     return f.trimestre === enlaceEncontrado.trimestre && String(f.anno) === String(enlaceEncontrado.anno);
   });
   const todasNominas = getNominas(empresaEncontrada.empresaId);
-  const meses = mesesDeTrimestre(enlaceEncontrado.trimestre);
+  const meses = esTodos ? ['01','02','03','04','05','06','07','08','09','10','11','12'] : mesesDeTrimestre(enlaceEncontrado.trimestre);
   const listaNominas = todasNominas.filter(function(n) {
     return String(n.anno) === String(enlaceEncontrado.anno) && meses.indexOf(String(n.mes).padStart(2,'0')) !== -1;
   });
