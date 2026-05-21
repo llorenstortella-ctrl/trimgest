@@ -371,7 +371,7 @@ router.post('/cargar-demo', async (req, res) => {
     // Generar PDFs de prueba para las facturas
     const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
     var pdfUploadsDir = path.join(empDir, 'uploads');
-    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+    if (!fs.existsSync(pdfUploadsDir)) fs.mkdirSync(pdfUploadsDir, { recursive: true });
 
     for (var fi = 0; fi < facturas.length; fi++) {
       var f = facturas[fi];
