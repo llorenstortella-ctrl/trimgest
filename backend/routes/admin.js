@@ -257,7 +257,7 @@ router.post('/cargar-demo', async (req, res) => {
     };
 
     let usuarios = getUsuarios();
-    usuarios = usuarios.filter(function(u) { return u.empresaId !== empresaId && u.gestoId !== gestoId; });
+    usuarios = usuarios.filter(function(u) { return u.empresaId !== empresaId && u.gestoId !== gestoId && u.email !== 'demo@construccionesbalear.es' && u.email !== 'demo@gestoria-mallorca.es'; });
     usuarios.push(empresa);
     usuarios.push(gestoria);
     saveUsuarios(usuarios);
