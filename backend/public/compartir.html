@@ -113,11 +113,12 @@ function exportarExcelCompartido() {
 }
 
 function renderApp(d) {
-  var totalProv = 0; var totalCli = 0;
+  var totalProv = 0; var totalCli = 0; var totalNom = 0;
   d.facturas.forEach(function(f) {
     if (f.tipo === 'proveedor') totalProv += Number(f.total);
     else totalCli += Number(f.total);
   });
+  if (d.nominas) d.nominas.forEach(function(n) { totalNom += Number(n.coste_empresa); });
 
   var proveedores = d.facturas.filter(function(f) { return f.tipo === 'proveedor'; });
   var clientes = d.facturas.filter(function(f) { return f.tipo === 'cliente'; });
@@ -129,7 +130,8 @@ function renderApp(d) {
   html += '<div class="subtitulo">Facturas compartidas por ' + d.empresa + '</div>';
   html += '<div class="stats">';
   html += '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div></div>';
-  html += '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value">' + formatEur(totalCli) + '</div></div>';
+  html += '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value" style="color:#7ac87a;">' + formatEur(totalCli) + '</div></div>';
+  if (totalNom > 0) html += '<div class="stat"><div class="stat-label">Nóminas (coste)</div><div class="stat-value" style="color:#c87a7a;">' + formatEur(totalNom) + '</div></div>';
   html += '</div>';
 
   var passParam = passwordUsada ? '&password=' + encodeURIComponent(passwordUsada) : '';
@@ -145,7 +147,9 @@ function renderApp(d) {
       }
       html += '<div class="factura-card">';
       html += '<div class="factura-row"><span class="factura-nombre">N° ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
-      html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span><span>IVA ' + f.iva_porcentaje + '%: ' + formatEur(f.iva_importe) + '</span>';
+      var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum', mixto: '🔀 Mixto', sinpagar: '❌ Sin pagar', parcial: '⚠️ Parcial' };
+      var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : '⚠️ Sin clasificar';
+      html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span><span>IVA ' + f.iva_porcentaje + '%: ' + formatEur(f.iva_importe) + '</span><span style="color:#9a90b4;">' + epLabel + '</span>';
       if (f.contabilizado) html += '<span class="badge">✓ Contabilizado</span>';
       html += '</div>';
       var esCont = contabilizadosLocal.indexOf(String(f.id)) !== -1;
