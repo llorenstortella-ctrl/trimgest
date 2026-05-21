@@ -996,23 +996,42 @@
       var totalCli = cliPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
 
       var listaHTML = '';
-      // ordenar: proveedores agrupados por nombre y fecha, clientes solo por fecha
+      // ordenar facturas segun criterio seleccionado
       function ordenarListaEmpresa(arr) {
-        var provs = arr.filter(function(f) { return f.tipo !== 'cliente'; });
-        var clis = arr.filter(function(f) { return f.tipo === 'cliente'; });
-        var grupos = {};
-        provs.forEach(function(f) {
-          var key = (f.nombre || 'Sin proveedor').trim();
-          if (!grupos[key]) grupos[key] = [];
-          grupos[key].push(f);
-        });
-        Object.keys(grupos).forEach(function(k) {
-          grupos[k].sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
-        });
-        var provOrdenados = [];
-        Object.keys(grupos).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(grupos[k]); });
-        clis.sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
-        return provOrdenados.concat(clis);
+        var orden = window.ordenSel || 'proveedor';
+        if (orden === 'fecha_asc') {
+          return arr.slice().sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+        } else if (orden === 'fecha_desc') {
+          return arr.slice().sort(function(a, b) { return (b.fecha||'').localeCompare(a.fecha||''); });
+        } else if (orden === 'importe_asc') {
+          return arr.slice().sort(function(a, b) { return Number(a.total) - Number(b.total); });
+        } else if (orden === 'importe_desc') {
+          return arr.slice().sort(function(a, b) { return Number(b.total) - Number(a.total); });
+        } else if (orden === 'estado') {
+          var epOrd = { sinclasificar: 0, sinpagar: 1, parcial: 2, transferencia: 3, tarjeta: 4, domiciliacion: 5, bizum: 6, efectivo: 7, mixto: 8 };
+          return arr.slice().sort(function(a, b) {
+            var ea = a.estado_pago || 'sinclasificar';
+            var eb = b.estado_pago || 'sinclasificar';
+            return (epOrd[ea] !== undefined ? epOrd[ea] : 99) - (epOrd[eb] !== undefined ? epOrd[eb] : 99);
+          });
+        } else {
+          // proveedor A-Z agrupado (por defecto)
+          var provs = arr.filter(function(f) { return f.tipo !== 'cliente'; });
+          var clis = arr.filter(function(f) { return f.tipo === 'cliente'; });
+          var grupos = {};
+          provs.forEach(function(f) {
+            var key = (f.nombre || 'Sin proveedor').trim();
+            if (!grupos[key]) grupos[key] = [];
+            grupos[key].push(f);
+          });
+          Object.keys(grupos).forEach(function(k) {
+            grupos[k].sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+          });
+          var provOrdenados = [];
+          Object.keys(grupos).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(grupos[k]); });
+          clis.sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
+          return provOrdenados.concat(clis);
+        }
       }
       lista = ordenarListaEmpresa(lista);
 
@@ -1090,6 +1109,16 @@
         '<button onclick="window.filtroTipo=\'proveedor\';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='proveedor'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='proveedor'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Proveedores</button>' +
         '<button onclick="window.filtroTipo=\'cliente\';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='cliente'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='cliente'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Clientes</button>' +
         '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;padding:0 16px 8px;">' +
+        '<span style="font-size:11px;color:#6a6070;white-space:nowrap;">Ordenar:</span>' +
+        '<select onchange="window.ordenSel=this.value;renderApp()" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:6px 8px;font-size:12px;">' +
+        '<option value="proveedor"' + ((!window.ordenSel||window.ordenSel==='proveedor')?' selected':'') + '>Proveedor A-Z</option>' +
+        '<option value="fecha_desc"' + (window.ordenSel==='fecha_desc'?' selected':'') + '>Fecha ↓ (reciente)</option>' +
+        '<option value="fecha_asc"' + (window.ordenSel==='fecha_asc'?' selected':'') + '>Fecha ↑ (antigua)</option>' +
+        '<option value="importe_desc"' + (window.ordenSel==='importe_desc'?' selected':'') + '>Importe ↓ (mayor)</option>' +
+        '<option value="importe_asc"' + (window.ordenSel==='importe_asc'?' selected':'') + '>Importe ↑ (menor)</option>' +
+        '<option value="estado"' + (window.ordenSel==='estado'?' selected':'') + '>Estado de pago</option>' +
+        '</select></div>' +
         '<div class="stats">' +
         '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' pendientes</div></div>' +
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +

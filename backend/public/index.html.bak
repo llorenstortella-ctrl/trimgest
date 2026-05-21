@@ -74,6 +74,9 @@
     .badge-sinpagar { background: #2a1500; color: #e08030; border: 1px solid #6a3a10; }
     .badge-transferencia { background: #0d1a2a; color: #5090d0; border: 1px solid #1a3a5a; }
     .badge-efectivo { background: #1a2a0d; color: #70b040; border: 1px solid #3a5a1a; }
+    .badge-mixto { background: #2b1a2b; color: #c47fd4; border: 1px solid #5a3a5a; }
+    .badge-sinpagar { background: #2b0d0d; color: #e05555; border: 1px solid #5a1a1a; }
+    .badge-parcial { background: #2b2010; color: #d4944c; border: 1px solid #5a4020; }
     .badge-tarjeta { background: #1a0d2a; color: #a070d0; border: 1px solid #4a1a6a; }
     .badge-domiciliacion { background: #0d2a2a; color: #50c0c0; border: 1px solid #1a5a5a; }
     .badge-bizum { background: #2a1a0d; color: #d09050; border: 1px solid #6a4a1a; }
@@ -138,6 +141,9 @@
       </button>
       <button class="nav-btn inactive" id="nav-nominas" onclick="cambiarSeccion('nominas')">
         <span class="nav-icon">&#128100;</span>Nominas
+      </button>
+      <button class="nav-btn inactive" id="nav-resumen" onclick="cambiarSeccion('resumen')">
+        <span class="nav-icon">&#128200;</span>Resumen
       </button>
     </nav>
   </div>
@@ -323,8 +329,10 @@
       window.seccionActual = seccion;
       document.getElementById('nav-facturas').className = 'nav-btn ' + (seccion === 'facturas' ? 'active' : 'inactive');
       document.getElementById('nav-nominas').className = 'nav-btn ' + (seccion === 'nominas' ? 'active' : 'inactive');
+      document.getElementById('nav-resumen').className = 'nav-btn ' + (seccion === 'resumen' ? 'active' : 'inactive');
       if (seccion === 'facturas') renderApp();
       if (seccion === 'nominas') renderNominas();
+      if (seccion === 'resumen') renderResumen();
     }
 
     async function renderNominas() {
@@ -393,6 +401,91 @@
         '<div class="stat"><div class="stat-label">Neto pagado</div><div class="stat-value verde">' + formatEur(totalNeto) + '</div></div>' +
         '</div></div>' +
         '<div class="content"><div id="nominaUploadStatus"></div>' + listaHTML + '</div>';
+    }
+
+
+    async function renderResumen() {
+      var resF = await fetch(API + '/facturas/listar', { headers: getHeaders() });
+      var dataF = await resF.json();
+      var todasFacturas = dataF.facturas || [];
+      var resN = await fetch(API + '/nominas/listar', { headers: getHeaders() });
+      var dataN = await resN.json();
+      var todasNominas = dataN.nominas || [];
+      var annoActual = window.annoSel || String(new Date().getFullYear());
+      var anos = [];
+      for (var y = new Date().getFullYear() - 2; y <= new Date().getFullYear() + 1; y++) anos.push(String(y));
+      var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (annoActual === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
+      var mesesTrim = { T1: ['01','02','03'], T2: ['04','05','06'], T3: ['07','08','09'], T4: ['10','11','12'] };
+      function calcTrim(t) {
+        var provs = todasFacturas.filter(function(f) { return f.tipo !== 'cliente' && f.trimestre === t && String(f.anno) === annoActual; });
+        var clis = todasFacturas.filter(function(f) { return f.tipo === 'cliente' && f.trimestre === t && String(f.anno) === annoActual; });
+        var nomsT = todasNominas.filter(function(n) { return String(n.anno) === annoActual && mesesTrim[t] && mesesTrim[t].indexOf(String(n.mes).padStart(2,'0')) !== -1; });
+        return {
+          baseProvs: provs.reduce(function(s,f) { return s+Number(f.base_imponible||0); }, 0),
+          ivaProv: provs.reduce(function(s,f) { return s+Number(f.iva_importe||0); }, 0),
+          totalProv: provs.reduce(function(s,f) { return s+Number(f.total||0); }, 0),
+          numProvs: provs.length,
+          baseClis: clis.reduce(function(s,f) { return s+Number(f.base_imponible||0); }, 0),
+          ivaCli: clis.reduce(function(s,f) { return s+Number(f.iva_importe||0); }, 0),
+          totalCli: clis.reduce(function(s,f) { return s+Number(f.total||0); }, 0),
+          numClis: clis.length,
+          costeNom: nomsT.reduce(function(s,n) { return s+Number(n.coste_empresa||0); }, 0),
+          numNoms: nomsT.length
+        };
+      }
+      var trims = ['T1','T2','T3','T4'];
+      var datos = {};
+      trims.forEach(function(t) { datos[t] = calcTrim(t); });
+      var totalBaseProvAnual = trims.reduce(function(s,t) { return s+datos[t].baseProvs; }, 0);
+      var totalIvaProvAnual = trims.reduce(function(s,t) { return s+datos[t].ivaProv; }, 0);
+      var totalBaseCliAnual = trims.reduce(function(s,t) { return s+datos[t].baseClis; }, 0);
+      var totalIvaCliAnual = trims.reduce(function(s,t) { return s+datos[t].ivaCli; }, 0);
+      var totalNomAnual = trims.reduce(function(s,t) { return s+datos[t].costeNom; }, 0);
+      var ivaLiquidar = totalIvaCliAnual - totalIvaProvAnual;
+      function tarjeta(t) {
+        var d = datos[t];
+        var ivaRes = d.ivaCli - d.ivaProv;
+        var ivaColor = ivaRes >= 0 ? '#4caf7d' : '#e05555';
+        var html = '<div style="background:#16161e;border:1px solid #22223a;border-radius:14px;padding:18px;cursor:pointer;" onclick="window.trimestreSel=' + "'" + t + "'" + ';cambiarSeccion(' + "'facturas'" + ')">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">';
+        html += '<div style="font-size:18px;font-weight:600;color:#e8c87a;">' + t + '</div>';
+        html += '<div style="font-size:11px;color:#6a6070;">' + annoActual + '</div></div>';
+        html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:#6a6070;">Proveedores (' + d.numProvs + ')</span><span style="color:#e05555;">-' + formatEur(d.totalProv) + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:#6a6070;">Clientes (' + d.numClis + ')</span><span style="color:#4caf7d;">+' + formatEur(d.totalCli) + '</span></div>';
+        html += '<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:#6a6070;">Nominas (' + d.numNoms + ')</span><span style="color:#e05555;">-' + formatEur(d.costeNom) + '</span></div>';
+        html += '<div style="border-top:1px solid #22223a;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;font-size:12px;">';
+        html += '<span style="color:#6a6070;">IVA a liquidar</span><span style="color:' + ivaColor + ';font-weight:600;">' + formatEur(ivaRes) + '</span></div>';
+        html += '</div></div>';
+        return html;
+      }
+      var ivaColor = ivaLiquidar >= 0 ? '#4caf7d' : '#e05555';
+      var html = '<div class="header">';
+      html += '<div class="header-top"><div><div class="label">TrimGest</div><h1>Resumen ' + annoActual + '</h1></div>';
+      html += '<div style="display:flex;gap:4px;align-items:center;">';
+      html += '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>';
+      html += '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>';
+      html += '</div></div>';
+      html += '<div class="selectores"><select onchange="window.annoSel=this.value;renderResumen()">' + optsAno + '</select></div>';
+      html += '<div class="stats">';
+      html += '<div class="stat"><div class="stat-label">Ingresos</div><div class="stat-value verde">' + formatEur(totalBaseCliAnual) + '</div></div>';
+      html += '<div class="stat"><div class="stat-label">Gastos</div><div class="stat-value">' + formatEur(totalBaseProvAnual) + '</div></div>';
+      html += '<div class="stat"><div class="stat-label">IVA neto</div><div class="stat-value" style="color:' + ivaColor + ';">' + formatEur(ivaLiquidar) + '</div></div>';
+      html += '</div></div>';
+      html += '<div class="content">';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+      html += tarjeta('T1') + tarjeta('T2') + tarjeta('T3') + tarjeta('T4');
+      html += '</div>';
+      html += '<div style="background:#16161e;border:1px solid #22223a;border-radius:14px;padding:18px;">';
+      html += '<div style="font-size:13px;font-weight:600;color:#f0ede8;margin-bottom:14px;">Resumen anual</div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">Base imponible proveedores</span><span style="color:#e05555;">-' + formatEur(totalBaseProvAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">IVA soportado</span><span style="color:#e05555;">-' + formatEur(totalIvaProvAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">Base imponible clientes</span><span style="color:#4caf7d;">+' + formatEur(totalBaseCliAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">IVA repercutido</span><span style="color:#4caf7d;">+' + formatEur(totalIvaCliAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #22223a;font-size:13px;"><span style="color:#6a6070;">Coste nominas</span><span style="color:#e05555;">-' + formatEur(totalNomAnual) + '</span></div>';
+      html += '<div style="display:flex;justify-content:space-between;padding:10px 0;font-size:14px;font-weight:600;"><span style="color:#f0ede8;">IVA neto a liquidar</span><span style="color:' + ivaColor + ';">' + formatEur(ivaLiquidar) + '</span></div>';
+      html += '</div></div>';
+      document.getElementById('app').innerHTML = html;
     }
 
     function subirNomina() {
@@ -694,6 +787,23 @@
         '</div>' +
         '</div>' +
         '<button onclick="cerrarAjustes();mostrarPlanes()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px;">Ver planes y precios</button>' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:8px;">📧 Importar por email</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:12px;">Reenvía tus facturas de proveedor a esta dirección y la IA las procesará automáticamente:</div>' +
+        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
+        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Facturas de proveedor</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div id="emailFacturasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">facturas+' + perfil.empresaId + '@pelinul.resend.app</div>' +
+        '<button onclick="copiarEmail(' + "'facturas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
+        '</div></div>' +
+        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
+        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nominas</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@pelinul.resend.app</div>' +
+        '<button onclick="copiarEmail(' + "'nominas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
+        '</div></div>' +
+        '<div style="font-size:11px;color:#6a6070;">Recibirás un email de confirmación cuando se procesen.</div>' +
+        '</div>' +
         '<button onclick="cerrarSesion()" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cerrar sesion</button>' +
         '<div style="margin-top:40px;padding-top:24px;border-top:1px solid #22223a;text-align:center;"><button onclick="solicitarBaja()" style="background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;">Solicitar baja</button></div>' +
         '</div></div>' +
@@ -827,6 +937,15 @@
     }
 
     function cerrarAjustes() { var p = document.getElementById('ajustesPanel'); if (p) p.remove(); }
+    function copiarEmail(tipo) {
+      var id = tipo === 'facturas' ? 'emailFacturasInbound' : 'emailNominasInbound';
+      var el = document.getElementById(id);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText).then(function() {
+        var btn = el.nextElementSibling;
+        if (btn) { btn.innerText = '✓ Copiado'; setTimeout(function() { btn.innerText = 'Copiar'; }, 2000); }
+      });
+    }
 
     async function cargarFacturas() {
       var res = await fetch(API + '/facturas/listar', { headers: getHeaders() });
@@ -866,7 +985,7 @@
       for (var i = 0; i < facturas.length; i++) { if (facturas[i].anno) anosSet[String(facturas[i].anno)] = true; }
       var anos = Object.keys(anosSet).sort();
 
-      var facturasT = facturas.filter(function(f) { return f.trimestre === window.trimestreSel && String(f.anno) === window.annoSel; });
+      var facturasT = facturas.filter(function(f) { return (window.trimestreSel === 'TODOS' || f.trimestre === window.trimestreSel) && String(f.anno) === window.annoSel; });
       var pendientes = facturasT.filter(function(f) { return !f.enviado; });
       var enviadas = facturasT.filter(function(f) { return f.enviado; });
       var lista = window.tabSel === 'pendientes' ? pendientes : enviadas;
@@ -916,7 +1035,7 @@
           listaHTML += '<div class="factura-header"><span class="factura-nombre">' + f.nombre + '</span>';
           listaHTML += '<div class="factura-badges"><span class="factura-badge badge-' + f.tipo + '">' + f.tipo + '</span>';
           if (f.enviado) listaHTML += '<span class="factura-badge badge-enviada">enviada</span>';
-          var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum' };
+          var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum', mixto: '🔀 Mixto', sinpagar: '❌ Sin pagar', parcial: '⚠️ Parcial' };
           var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : '⚠️ Sin clasificar';
           var epClass = f.estado_pago || 'sinpagar';
           listaHTML += '<span class="factura-badge badge-' + epClass + '" style="cursor:pointer" onclick="cambiarEstadoPago(' + f.id + ')">'+epLabel+'</span>';
@@ -924,6 +1043,7 @@
           listaHTML += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
           if (f.cif) listaHTML += '<div style="font-size:11px;color:#6a6070;margin-top:2px;">CIF: ' + f.cif + '</div>';
           listaHTML += '<div class="factura-desglose">Base ' + formatEur(f.base_imponible) + ' IVA ' + f.iva_porcentaje + '% ' + formatEur(f.iva_importe) + '</div>';
+          if (f.nota) listaHTML += '<div style="font-size:12px;color:#9a90b4;margin-top:6px;padding:6px 8px;background:#1a1a24;border-radius:6px;border-left:2px solid #3a3a5a;">📝 ' + f.nota + '</div>';
           var contBadge = f.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
           var btnPDF = f.archivo ? '<a href="/facturas/archivo/' + f.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
           listaHTML += '<div class="factura-acciones">' + contBadge + btnPDF + '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button><button class="btn-borrar" onclick="borrarFactura(' + f.id + ',' + (f.contabilizado ? 'true' : 'false') + ')">Borrar</button></div>';
@@ -936,6 +1056,7 @@
           listaHTML += '<input class="edit-input" id="nfactura-' + f.id + '" value="' + f.numero_factura + '" placeholder="N factura">';
           listaHTML += '<input class="edit-input" id="fecha-' + f.id + '" value="' + f.fecha + '" placeholder="DD/MM/YYYY">';
           listaHTML += '<div class="edit-row"><input class="edit-input" id="base-edit-' + f.id + '" value="' + f.base_imponible + '" placeholder="Base" type="number" style="flex:1"><input class="edit-input" id="iva-edit-' + f.id + '" value="' + f.iva_porcentaje + '" placeholder="IVA%" type="number" style="flex:0.5"><input class="edit-input" id="total-edit-' + f.id + '" value="' + f.total + '" placeholder="Total" type="number" style="flex:1"></div>';
+          listaHTML += '<textarea class="edit-input" id="nota-' + f.id + '" placeholder="Nota (opcional)" style="resize:vertical;min-height:60px;font-family:inherit;">' + (f.nota || '') + '</textarea>';
           listaHTML += '<button class="btn-guardar" onclick="guardarEdicion(' + f.id + ')">Guardar cambios</button></div></div>';
         }
         listaHTML += '</div>';
@@ -949,7 +1070,7 @@
       botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">🔗 Compartir trimestre con gestoría</button>';
 
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
-      var optsTrim = ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
+      var optsTrim = '<option value="TODOS"' + (window.trimestreSel === 'TODOS' ? ' selected' : '') + '>Todos</option>' + ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
       var provClass = window.tipoSel === 'proveedor' ? ' selected-prov' : '';
       var cliClass = window.tipoSel === 'cliente' ? ' selected-cli' : '';
       var btnDisabled = !window.tipoSel ? ' disabled' : '';
@@ -957,7 +1078,7 @@
 
       document.getElementById('app').innerHTML =
         '<div class="header">' +
-        '<div class="header-top"><div><div class="label">' + (window.nombreEmpresa || 'TrimGest') + '</div><h1>' + window.trimestreSel + ' ' + window.annoSel + '</h1></div>' +
+        '<div class="header-top"><div><div class="label">' + (window.nombreEmpresa || 'TrimGest') + '</div><h1>' + (window.trimestreSel === 'TODOS' ? 'Año ' : window.trimestreSel + ' ') + window.annoSel + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
         '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
@@ -1020,7 +1141,7 @@
     }
 
     async function guardarEdicion(id) {
-      var cifEl = document.getElementById('cif-' + id); var body = { tipo: document.getElementById('tipo-' + id).value, trimestre: document.getElementById('trim-' + id).value, anno: document.getElementById('anno-' + id).value, nombre: document.getElementById('nombre-' + id).value, cif: cifEl ? cifEl.value : null, numero_factura: document.getElementById('nfactura-' + id).value, fecha: document.getElementById('fecha-' + id).value, base_imponible: document.getElementById('base-edit-' + id).value, iva_porcentaje: document.getElementById('iva-edit-' + id).value, total: document.getElementById('total-edit-' + id).value };
+      var cifEl = document.getElementById('cif-' + id); var notaEl = document.getElementById('nota-' + id); var body = { tipo: document.getElementById('tipo-' + id).value, trimestre: document.getElementById('trim-' + id).value, anno: document.getElementById('anno-' + id).value, nombre: document.getElementById('nombre-' + id).value, cif: cifEl ? cifEl.value : null, numero_factura: document.getElementById('nfactura-' + id).value, fecha: document.getElementById('fecha-' + id).value, base_imponible: document.getElementById('base-edit-' + id).value, iva_porcentaje: document.getElementById('iva-edit-' + id).value, total: document.getElementById('total-edit-' + id).value, nota: notaEl ? notaEl.value : '' };
       await fetch(API + '/facturas/editar/' + id, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(body) });
       renderApp();
     }
@@ -1042,7 +1163,7 @@
       var facturas = window.todasFacturas || [];
       var f = facturas.find(function(x) { return x.id === id; });
       if (!f) return;
-      var estados = ['transferencia', 'tarjeta', 'domiciliacion', 'bizum', 'efectivo', null];
+      var estados = [null, 'sinpagar', 'parcial', 'transferencia', 'tarjeta', 'domiciliacion', 'bizum', 'efectivo', 'mixto'];
       var idx = estados.indexOf(f.estado_pago || null);
       var siguiente = estados[(idx + 1) % estados.length];
       try {
