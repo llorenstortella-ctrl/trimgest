@@ -369,6 +369,7 @@ router.post('/cargar-demo', async (req, res) => {
 
 
     // Generar PDFs de prueba para las facturas
+    console.log('empDir:', empDir, 'pdfUploadsDir prev');
     const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
     var pdfUploadsDir = path.join(empDir, 'uploads');
     if (!fs.existsSync(pdfUploadsDir)) fs.mkdirSync(pdfUploadsDir, { recursive: true });
@@ -425,6 +426,7 @@ router.post('/cargar-demo', async (req, res) => {
         page.drawText(Number(f.total).toFixed(2) + ' EUR', { x:460, y:y2, size:12, font:bold, color:rgb(0.1,0.4,0.1) });
 
         var nombreArchivo = (f.id || Date.now()) + '-factura-demo.pdf';
+        console.log('generando PDF:', nombreArchivo, 'pdfUploadsDir:', pdfUploadsDir);
         var pdfBytes = await pdfDoc.save();
         fs.writeFileSync(path.join(pdfUploadsDir, nombreArchivo), pdfBytes);
         facturas[fi].archivo = nombreArchivo;
