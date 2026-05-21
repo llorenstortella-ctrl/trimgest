@@ -17,6 +17,19 @@ function getFacturas(empresaId) {
   return JSON.parse(fs.readFileSync(dbPath));
 }
 
+function getNominas(empresaId) {
+  const dbPath = path.join(baseDataDir, 'empresas', empresaId, 'nominas.json');
+  if (!fs.existsSync(dbPath)) return [];
+  return JSON.parse(fs.readFileSync(dbPath));
+}
+
+function mesesDeTrimestre(trimestre) {
+  if (trimestre === 'T1') return ['01','02','03'];
+  if (trimestre === 'T2') return ['04','05','06'];
+  if (trimestre === 'T3') return ['07','08','09'];
+  return ['10','11','12'];
+}
+
 const auth = require('../middleware/auth');
 
 // Generar enlace compartido
@@ -58,11 +71,17 @@ router.get('/:token', (req, res) => {
   const lista = facturas.filter(function(f) {
     return f.trimestre === enlaceEncontrado.trimestre && String(f.anno) === String(enlaceEncontrado.anno);
   });
+  const todasNominas = getNominas(empresaEncontrada.empresaId);
+  const meses = mesesDeTrimestre(enlaceEncontrado.trimestre);
+  const listaNominas = todasNominas.filter(function(n) {
+    return String(n.anno) === String(enlaceEncontrado.anno) && meses.indexOf(String(n.mes).padStart(2,'0')) !== -1;
+  });
   res.json({
     empresa: empresaEncontrada.nombre_empresa,
     trimestre: enlaceEncontrado.trimestre,
     anno: enlaceEncontrado.anno,
     facturas: lista,
+    nominas: listaNominas,
     contabilizados: enlaceEncontrado.contabilizados || []
   });
 });

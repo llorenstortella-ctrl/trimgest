@@ -35,6 +35,9 @@
   .banner p { font-size: 13px; color: #6a6070; margin-bottom: 8px; }
   .banner a { color: #e8c87a; text-decoration: none; font-weight: 600; }
   .badge { background: #0d2b1a; border: 1px solid #1a4a2a; color: #4caf7d; border-radius: 6px; padding: 2px 8px; font-size: 11px; }
+  .nomina-card { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px; margin-top: 8px; }
+  .nomina-neto { font-size: 15px; font-weight: 700; color: #7ac87a; }
+  .nomina-datos { font-size: 12px; color: #6a6070; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -82,6 +85,31 @@ async function entrarConPassword() {
 
 function formatEur(n) {
   return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+function exportarExcelCompartido() {
+  var d = datosGlobales;
+  if (!d) return;
+  var rows = [["Tipo","Nombre","Fecha","N Factura","Base","IVA%","IVA EUR","Total","Pago","Contabilizado"]];
+  d.facturas.forEach(function(f) {
+    var cont = contabilizadosLocal.indexOf(String(f.id)) !== -1 || f.contabilizado;
+    rows.push([f.tipo,f.nombre,f.fecha,f.numero_factura,f.base_imponible,f.iva_porcentaje,f.iva_importe,f.total,f.estado_pago||"",cont?"Si":"No"]);
+  });
+  if (d.nominas && d.nominas.length) {
+    rows.push([]);
+    rows.push(["NOMINAS","Trabajador","Mes/Anno","Devengado","Neto","IRPF%","IRPF EUR","SS Trabajador","SS Empresa","Coste Empresa"]);
+    d.nominas.forEach(function(n) {
+      rows.push(["nomina",n.trabajador,n.mes+"/"+n.anno,n.devengado,n.neto,n.irpf_porcentaje,n.irpf_importe,n.ss_trabajador,n.ss_empresa,n.coste_empresa]);
+    });
+  }
+  var sep = String.fromCharCode(10);
+  var csv = rows.map(function(r){return r.map(function(c){return'"'+String(c||"").replace(/"/g,'""')+'"';}).join(",");}).join(sep);
+  var bom = "\uFEFF";
+  var blob = new Blob([bom+csv],{type:"text/csv;charset=utf-8;"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href=url; a.download="trimgest_"+d.trimestre+"_"+d.anno+".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function renderApp(d) {
@@ -140,6 +168,28 @@ function renderApp(d) {
     });
   }
 
+  
+  html += '<button onclick="exportarExcelCompartido()" style="width:100%;margin-top:20px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">💾 Descargar Excel (facturas + nóminas)</button>';
+  if (d.nominas && d.nominas.length) {
+    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-top:28px;margin-bottom:8px;">Nóminas</div>';
+    var trabActual = null;
+    d.nominas.forEach(function(n) {
+      if (n.trabajador !== trabActual) {
+        html += '<div class="prov-header">' + n.trabajador + '</div>';
+        trabActual = n.trabajador;
+      }
+      html += '<div class="nomina-card">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-size:14px;font-weight:600;">Mes ' + n.mes + '/' + n.anno + '</span>';
+      html += '<span class="nomina-neto">Neto: ' + formatEur(n.neto) + '</span></div>';
+      html += '<div class="nomina-datos">';
+      html += '<span>Bruto: ' + formatEur(n.devengado) + '</span>';
+      html += '<span>IRPF ' + n.irpf_porcentaje + '%: ' + formatEur(n.irpf_importe) + '</span>';
+      html += '<span>SS trab: ' + formatEur(n.ss_trabajador) + '</span>';
+      html += '<span>Coste empresa: ' + formatEur(n.coste_empresa) + '</span>';
+      html += '</div></div>';
+    });
+  }
   html += '<div class="banner"><p>¿Quieres que todos tus clientes te envíen las facturas así de organizadas?</p><a href="https://trimgest.es/panel-gestoria#registro" target="_blank">Descubre TrimGest para gestorías — gratis →</a></div>';
   html += '</div>';
   document.getElementById('root').innerHTML = html;
