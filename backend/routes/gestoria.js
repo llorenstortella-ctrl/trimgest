@@ -894,11 +894,14 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
     portada.drawText('FACTURAS ' + (tipo==='proveedor'?'PROVEEDORES':'CLIENTES') + ' SELECCIONADAS', { x: 40, y: height-85, size: 10, font: regular, color: rgb(0.6,0.6,0.7) });
 
     let y = height-130;
-    portada.drawText('Nombre', { x: 40, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
-    portada.drawText('Fecha', { x: 200, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
-    portada.drawText('N Factura', { x: 280, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
-    portada.drawText('Base', { x: 370, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
-    portada.drawText('Total', { x: 460, y, size: 9, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Nombre', { x: 40, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Fecha', { x: 170, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('N Factura', { x: 230, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Base', { x: 310, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('IVA%', { x: 360, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('IVA EUR', { x: 395, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Total', { x: 450, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
+    portada.drawText('Pago', { x: 505, y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) });
     y -= 15;
     portada.drawLine({ start: { x:40, y }, end: { x:555, y }, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
     y -= 15;
@@ -910,11 +913,17 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
       var num = (f.numero_factura||'-').substring(0,12);
       var base = Number(f.base_imponible||0).toFixed(2);
       var total = Number(f.total||0).toFixed(2);
-      portada.drawText(nombre, { x:40, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
-      portada.drawText(fecha, { x:200, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
-      portada.drawText(num, { x:280, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
-      portada.drawText(base+' EUR', { x:370, y, size:9, font:regular, color:rgb(0.1,0.1,0.15) });
-      portada.drawText(total+' EUR', { x:460, y, size:9, font:bold, color:rgb(0.2,0.5,0.3) });
+      var ivaPct = String(f.iva_porcentaje||0) + '%';
+      var ivaImp = Number(f.iva_importe||0).toFixed(2);
+      var pago = f.estado_pago ? f.estado_pago.charAt(0).toUpperCase() + f.estado_pago.slice(1) : '-';
+      portada.drawText(nombre, { x:40, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(fecha, { x:170, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(num, { x:230, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(base+' EUR', { x:310, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(ivaPct, { x:360, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(ivaImp+' EUR', { x:395, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
+      portada.drawText(total+' EUR', { x:450, y, size:8, font:bold, color:rgb(0.2,0.5,0.3) });
+      portada.drawText(pago, { x:505, y, size:8, font:regular, color:rgb(0.1,0.1,0.15) });
       y -= 18;
     });
 
