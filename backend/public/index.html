@@ -1064,7 +1064,7 @@
 
       var botonesEnvio = '';
       if (window.tabSel === 'pendientes' && pendientes.length > 0) {
-        botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button><button class="btn-marcar" onclick="marcarEnviadas()">Marcar todas como enviadas</button>';
+        botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>';
       }
       botonesEnvio += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button></div>';
       var btnCompartirLabel = window.trimestreSel === 'TODOS' ? '🔗 Compartir año ' + window.annoSel + ' con gestoría' : '🔗 Compartir ' + window.trimestreSel + ' ' + window.annoSel + ' con gestoría';
