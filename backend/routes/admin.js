@@ -368,6 +368,121 @@ router.post('/cargar-demo', async (req, res) => {
 
 
 
+    // Generar PDFs demo
+    const PDFDocument = require('pdfkit');
+    const uploadsDirDemo = path.join(empDir, 'uploads');
+    if (!fs.existsSync(uploadsDirDemo)) fs.mkdirSync(uploadsDirDemo, { recursive: true });
+
+    function generarPDFFactura(factura) {
+      return new Promise(function(resolve, reject) {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const nombreArchivo = 'demo_' + factura.id + '.pdf';
+        const rutaArchivo = path.join(uploadsDirDemo, nombreArchivo);
+        const stream = fs.createWriteStream(rutaArchivo);
+        doc.pipe(stream);
+
+        // Cabecera
+        doc.fontSize(20).fillColor('#1a1a2e').text('CONSTRUCCIONES BALEAR S.L.', 50, 50);
+        doc.fontSize(10).fillColor('#666').text('B57123456 | Carrer Major 12, Palma de Mallorca', 50, 78);
+        doc.fontSize(10).fillColor('#666').text('info@construccionesbalear.es | Tel: 634 567 890', 50, 92);
+
+        // Linea separadora
+        doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e0e0e0').stroke();
+
+        // Titulo factura
+        const tipoLabel = factura.tipo === 'cliente' ? 'FACTURA EMITIDA' : 'FACTURA RECIBIDA';
+        doc.fontSize(14).fillColor('#1a1a2e').text(tipoLabel, 50, 125);
+        doc.fontSize(10).fillColor('#333');
+
+        // Datos factura
+        doc.text('Número:', 50, 155).text(factura.numero_factura, 150, 155);
+        doc.text('Fecha:', 50, 170).text(factura.fecha, 150, 170);
+        doc.text('Proveedor/Cliente:', 50, 185).text(factura.nombre, 150, 185);
+        doc.text('CIF:', 50, 200).text(factura.cif || '-', 150, 200);
+
+        // Linea separadora
+        doc.moveTo(50, 225).lineTo(545, 225).strokeColor('#e0e0e0').stroke();
+
+        // Tabla importes
+        doc.fontSize(10).fillColor('#666').text('Base imponible', 50, 240);
+        doc.fillColor('#333').text(factura.base_imponible.toFixed(2) + ' €', 400, 240, { align: 'right', width: 145 });
+
+        doc.fillColor('#666').text('IVA (' + factura.iva_porcentaje + '%)', 50, 258);
+        doc.fillColor('#333').text(factura.iva_importe.toFixed(2) + ' €', 400, 258, { align: 'right', width: 145 });
+
+        doc.moveTo(50, 278).lineTo(545, 278).strokeColor('#e0e0e0').stroke();
+
+        doc.fontSize(12).fillColor('#1a1a2e').text('TOTAL', 50, 290);
+        doc.fontSize(13).fillColor('#1a1a2e').text(factura.total.toFixed(2) + ' €', 400, 288, { align: 'right', width: 145 });
+
+        // Pie
+        doc.fontSize(8).fillColor('#aaa').text('Documento generado por TrimGest — trimgest.es', 50, 750, { align: 'center', width: 495 });
+
+        doc.end();
+        stream.on('finish', function() { resolve(nombreArchivo); });
+        stream.on('error', reject);
+      });
+    }
+
+    function generarPDFNomina(nomina) {
+      return new Promise(function(resolve, reject) {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const nombreArchivo = 'demo_nom_' + nomina.id + '.pdf';
+        const rutaArchivo = path.join(uploadsDirDemo, nombreArchivo);
+        const stream = fs.createWriteStream(rutaArchivo);
+        doc.pipe(stream);
+
+        doc.fontSize(20).fillColor('#1a1a2e').text('CONSTRUCCIONES BALEAR S.L.', 50, 50);
+        doc.fontSize(10).fillColor('#666').text('B57123456 | Carrer Major 12, Palma de Mallorca', 50, 78);
+
+        doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e0e0e0').stroke();
+
+        doc.fontSize(14).fillColor('#1a1a2e').text('NÓMINA', 50, 125);
+        doc.fontSize(10).fillColor('#333');
+
+        doc.text('Trabajador:', 50, 155).text(nomina.trabajador, 150, 155);
+        doc.text('Mes:', 50, 170).text(nomina.mes + '/' + nomina.anno, 150, 170);
+
+        doc.moveTo(50, 195).lineTo(545, 195).strokeColor('#e0e0e0').stroke();
+
+        doc.fillColor('#666').text('Devengado bruto', 50, 210);
+        doc.fillColor('#333').text(nomina.devengado.toFixed(2) + ' €', 400, 210, { align: 'right', width: 145 });
+
+        doc.fillColor('#666').text('SS trabajador', 50, 228);
+        doc.fillColor('#333').text('-' + nomina.ss_trabajador.toFixed(2) + ' €', 400, 228, { align: 'right', width: 145 });
+
+        doc.fillColor('#666').text('IRPF (' + nomina.irpf_porcentaje + '%)', 50, 246);
+        doc.fillColor('#333').text('-' + nomina.irpf_importe.toFixed(2) + ' €', 400, 246, { align: 'right', width: 145 });
+
+        doc.moveTo(50, 266).lineTo(545, 266).strokeColor('#e0e0e0').stroke();
+
+        doc.fontSize(12).fillColor('#1a1a2e').text('NETO A PERCIBIR', 50, 278);
+        doc.fontSize(13).fillColor('#1a1a2e').text(nomina.neto.toFixed(2) + ' €', 400, 276, { align: 'right', width: 145 });
+
+        doc.fontSize(10).fillColor('#666').text('Coste empresa: ' + nomina.coste_empresa.toFixed(2) + ' €', 50, 310);
+
+        doc.fontSize(8).fillColor('#aaa').text('Documento generado por TrimGest — trimgest.es', 50, 750, { align: 'center', width: 495 });
+
+        doc.end();
+        stream.on('finish', function() { resolve(nombreArchivo); });
+        stream.on('error', reject);
+      });
+    }
+
+    // Generar PDFs para todas las facturas
+    for (var fi = 0; fi < facturas.length; fi++) {
+      var nombrePDF = await generarPDFFactura(facturas[fi]);
+      facturas[fi].archivo = nombrePDF;
+    }
+    fs.writeFileSync(path.join(empDir, 'facturas.json'), JSON.stringify(facturas, null, 2));
+
+    // Generar PDFs para todas las nominas
+    for (var ni = 0; ni < nominas.length; ni++) {
+      var nombreNomPDF = await generarPDFNomina(nominas[ni]);
+      nominas[ni].archivo = nombreNomPDF;
+    }
+    fs.writeFileSync(path.join(empDir, 'nominas.json'), JSON.stringify(nominas, null, 2));
+
     res.json({ ok: true, mensaje: 'Demo cargada', facturas: facturas.length, nominas: nominas.length });
   } catch(e) {
     console.error(e);
