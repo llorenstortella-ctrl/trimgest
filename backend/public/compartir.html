@@ -12,23 +12,27 @@
   .empresa { font-size: 13px; color: #6a6070; }
   .content { max-width: 800px; margin: 0 auto; padding: 20px; }
   .titulo { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-  .subtitulo { font-size: 13px; color: #6a6070; margin-bottom: 20px; }
-  .stats { display: flex; gap: 12px; margin-bottom: 20px; }
-  .stat { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px 16px; flex: 1; }
+  .subtitulo { font-size: 13px; color: #6a6070; margin-bottom: 16px; }
+  .stats { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 120px; }
   .stat-label { font-size: 11px; color: #6a6070; text-transform: uppercase; letter-spacing: 1px; }
-  .stat-value { font-size: 18px; font-weight: 700; color: #e8c87a; margin-top: 2px; }
+  .stat-value { font-size: 16px; font-weight: 700; color: #e8c87a; margin-top: 2px; }
+  .filtros { background: #13131a; border: 1px solid #22223a; border-radius: 12px; padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .filtro-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filtro-label { font-size: 11px; color: #6a6070; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .btn-filtro { background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .btn-filtro.active { background: #e8c87a; border-color: #e8c87a; color: #1a1500; font-weight: 600; }
+  .acciones { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .btn-acc { flex: 1; min-width: 130px; background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 10px; padding: 10px 12px; font-size: 13px; cursor: pointer; }
+  .btn-acc-primary { background: #e8c87a; border-color: #e8c87a; color: #1a1500; font-weight: 600; }
   .prov-header { font-size: 12px; font-weight: 600; color: #9a90b4; text-transform: uppercase; letter-spacing: 1px; padding: 12px 0 6px; border-bottom: 1px solid #22223a; margin-top: 16px; }
   .factura-card { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px; margin-top: 8px; }
   .factura-row { display: flex; justify-content: space-between; align-items: center; }
   .factura-nombre { font-size: 14px; font-weight: 600; }
   .factura-total { font-size: 15px; font-weight: 700; color: #e8c87a; }
-  .factura-datos { font-size: 12px; color: #6a6070; margin-top: 4px; display: flex; gap: 12px; }
+  .factura-datos { font-size: 12px; color: #6a6070; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
   .btn-pdf { background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; text-decoration: none; }
-  .btns { display: flex; gap: 8px; margin-bottom: 20px; }
-  .btn-descargar { flex: 1; background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .btn-excel { flex: 1; background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 10px; padding: 12px; font-size: 14px; cursor: pointer; }
   .password-box { background: #16161e; border: 1px solid #22223a; border-radius: 12px; padding: 30px; text-align: center; max-width: 400px; margin: 60px auto; }
-  .password-box h2 { margin-bottom: 16px; }
   .password-input { width: 100%; background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
   .btn-entrar { width: 100%; background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
   .banner { background: #13131a; border: 1px solid #22223a; border-radius: 12px; padding: 20px; text-align: center; margin-top: 40px; }
@@ -38,20 +42,25 @@
   .nomina-card { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px; margin-top: 8px; }
   .nomina-neto { font-size: 15px; font-weight: 700; color: #7ac87a; }
   .nomina-datos { font-size: 12px; color: #6a6070; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .seccion-titulo { font-size: 15px; font-weight: 700; color: #e0d8cc; margin-top: 24px; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #22223a; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script>
-const token = location.pathname.split('/compartir/')[1];
+var token = location.pathname.split('/compartir/')[1];
 var passwordUsada = '';
 var datosGlobales = null;
 var contabilizadosLocal = [];
+var filtroSeccion = 'todos';
+var filtroContabilizado = 'todos';
+var filtroEstado = 'todos';
+var filtroTrimestre = 'todos';
 
 async function cargar(pass) {
-  const url = '/api/compartir/' + token + (pass ? '?password=' + encodeURIComponent(pass) : '');
-  const r = await fetch(url);
-  const d = await r.json();
+  var url = '/api/compartir/' + token + (pass ? '?password=' + encodeURIComponent(pass) : '');
+  var r = await fetch(url);
+  var d = await r.json();
   if (r.status === 401) { mostrarPassword(); return; }
   if (r.status === 404) { document.getElementById('root').innerHTML = '<div style="text-align:center;padding:60px;"><h2>Enlace no encontrado</h2></div>'; return; }
   datosGlobales = d;
@@ -63,21 +72,21 @@ async function cargar(pass) {
 function mostrarPassword() {
   document.getElementById('root').innerHTML =
     '<div class="password-box">' +
-    '<h2>🔒 Enlace protegido</h2>' +
-    '<p style="color:#6a6070;font-size:13px;margin-bottom:16px;">Introduce la contraseña para ver las facturas</p>' +
-    '<input class="password-input" id="passInput" type="password" placeholder="Contraseña">' +
+    '<h2>Enlace protegido</h2>' +
+    '<p style="color:#6a6070;font-size:13px;margin-bottom:16px;">Introduce la contrase&ntilde;a para ver las facturas</p>' +
+    '<input class="password-input" id="passInput" type="password" placeholder="Contrase&ntilde;a">' +
     '<button class="btn-entrar" onclick="entrarConPassword()">Entrar</button>' +
     '<p id="passError" style="color:#e87a7a;font-size:12px;margin-top:8px;"></p>' +
     '</div>';
 }
 
 async function entrarConPassword() {
-  const pass = document.getElementById('passInput').value;
+  var pass = document.getElementById('passInput').value;
   if (!pass) return;
-  const url = '/api/compartir/' + token + '?password=' + encodeURIComponent(pass);
-  const r = await fetch(url);
-  if (r.status === 401) { document.getElementById('passError').textContent = 'Contraseña incorrecta'; return; }
-  const d = await r.json();
+  var url = '/api/compartir/' + token + '?password=' + encodeURIComponent(pass);
+  var r = await fetch(url);
+  if (r.status === 401) { document.getElementById('passError').textContent = 'Contrase&ntilde;a incorrecta'; return; }
+  var d = await r.json();
   datosGlobales = d; passwordUsada = pass;
   contabilizadosLocal = d.contabilizados || [];
   renderApp(d);
@@ -86,99 +95,230 @@ async function entrarConPassword() {
 function formatEur(n) {
   return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
-function exportarExcelCompartido() {
+
+var epLabels = { transferencia: 'Transferencia', efectivo: 'Efectivo', tarjeta: 'Tarjeta', domiciliacion: 'Domiciliación', bizum: 'Bizum', mixto: 'Mixto', sinpagar: 'Sin pagar', parcial: 'Parcial' };
+
+function mesesDeTrimestre(t) {
+  if (t === 'T1') return ['01','02','03'];
+  if (t === 'T2') return ['04','05','06'];
+  if (t === 'T3') return ['07','08','09'];
+  return ['10','11','12'];
+}
+
+function trimDeFactura(f) {
+  var p = (f.fecha || '').split('/');
+  if (p.length < 2) return null;
+  var m = String(parseInt(p[1])).padStart(2,'0');
+  if (['01','02','03'].indexOf(m) !== -1) return 'T1';
+  if (['04','05','06'].indexOf(m) !== -1) return 'T2';
+  if (['07','08','09'].indexOf(m) !== -1) return 'T3';
+  return 'T4';
+}
+
+function aplicarFiltros(d) {
+  var facts = d.facturas.slice();
+  if (filtroSeccion === 'proveedores') facts = facts.filter(function(f) { return f.tipo === 'proveedor'; });
+  else if (filtroSeccion === 'clientes') facts = facts.filter(function(f) { return f.tipo === 'cliente'; });
+  else if (filtroSeccion === 'nominas') facts = [];
+  if (d.trimestre === 'TODOS' && filtroTrimestre !== 'todos') {
+    facts = facts.filter(function(f) { return trimDeFactura(f) === filtroTrimestre; });
+  }
+  if (filtroContabilizado === 'si') facts = facts.filter(function(f) { return f.contabilizado || contabilizadosLocal.indexOf(String(f.id)) !== -1; });
+  else if (filtroContabilizado === 'no') facts = facts.filter(function(f) { return !f.contabilizado && contabilizadosLocal.indexOf(String(f.id)) === -1; });
+  if (filtroEstado !== 'todos') {
+    if (filtroEstado === 'sinclasificar') facts = facts.filter(function(f) { return !f.estado_pago; });
+    else facts = facts.filter(function(f) { return f.estado_pago === filtroEstado; });
+  }
+  var noms = (filtroSeccion === 'proveedores' || filtroSeccion === 'clientes') ? [] : (d.nominas || []).slice();
+  if (d.trimestre === 'TODOS' && filtroTrimestre !== 'todos') {
+    var meses = mesesDeTrimestre(filtroTrimestre);
+    noms = noms.filter(function(n) { return meses.indexOf(String(n.mes).padStart(2,'0')) !== -1; });
+  }
+  if (filtroContabilizado === 'si') noms = noms.filter(function(n) { return n.contabilizado; });
+  else if (filtroContabilizado === 'no') noms = noms.filter(function(n) { return !n.contabilizado; });
+  return { facturas: facts, nominas: noms };
+}
+
+function setFiltro(key, val) {
+  if (key === 'filtroSeccion') filtroSeccion = val;
+  else if (key === 'filtroContabilizado') filtroContabilizado = val;
+  else if (key === 'filtroEstado') filtroEstado = val;
+  else if (key === 'filtroTrimestre') filtroTrimestre = val;
+  renderApp(datosGlobales);
+}
+
+function btnF(label, key, val, actual) {
+  var active = actual === val ? ' active' : '';
+  return '<button class="btn-filtro' + active + '" onclick="setFiltro(' + "'" + key + "','" + val + "')" + '>' + label + '</button>';
+}
+
+function exportarExcel() {
+  var facts = window._facts || [];
+  var noms = window._noms || [];
   var d = datosGlobales;
-  if (!d) return;
-  var rows = [["Tipo","Nombre","Fecha","N Factura","Base","IVA%","IVA EUR","Total","Pago","Contabilizado"]];
-  d.facturas.forEach(function(f) {
+  var rows = [['Tipo','Nombre','Fecha','N Factura','Base','IVA%','IVA EUR','Total','Pago','Contabilizado']];
+  facts.forEach(function(f) {
     var cont = contabilizadosLocal.indexOf(String(f.id)) !== -1 || f.contabilizado;
-    rows.push([f.tipo,f.nombre,f.fecha,f.numero_factura,f.base_imponible,f.iva_porcentaje,f.iva_importe,f.total,f.estado_pago||"",cont?"Si":"No"]);
+    rows.push([f.tipo,f.nombre,f.fecha,f.numero_factura,f.base_imponible,f.iva_porcentaje,f.iva_importe,f.total,f.estado_pago||'',cont?'Si':'No']);
   });
-  if (d.nominas && d.nominas.length) {
+  if (noms.length) {
     rows.push([]);
-    rows.push(["NOMINAS","Trabajador","Mes/Anno","Devengado","Neto","IRPF%","IRPF EUR","SS Trabajador","SS Empresa","Coste Empresa"]);
-    d.nominas.forEach(function(n) {
-      rows.push(["nomina",n.trabajador,n.mes+"/"+n.anno,n.devengado,n.neto,n.irpf_porcentaje,n.irpf_importe,n.ss_trabajador,n.ss_empresa,n.coste_empresa]);
+    rows.push(['NOMINAS','Trabajador','Mes/Anno','Devengado','Neto','IRPF%','IRPF EUR','SS Trabajador','SS Empresa','Coste Empresa']);
+    noms.forEach(function(n) {
+      rows.push(['nomina',n.trabajador,n.mes+'/'+n.anno,n.devengado,n.neto,n.irpf_porcentaje,n.irpf_importe,n.ss_trabajador,n.ss_empresa,n.coste_empresa]);
     });
   }
   var sep = String.fromCharCode(10);
-  var csv = rows.map(function(r){return r.map(function(c){return'"'+String(c||"").replace(/"/g,'""')+'"';}).join(",");}).join(sep);
-  var bom = "\uFEFF";
-  var blob = new Blob([bom+csv],{type:"text/csv;charset=utf-8;"});
+  var csv = rows.map(function(r){return r.map(function(c){return '"'+String(c||'').replace(/"/g,'""')+'"';}).join(',');}).join(sep);
+  var blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
   var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href=url; a.download="trimgest_"+d.trimestre+"_"+d.anno+".csv";
+  var a = document.createElement('a');
+  a.href=url; a.download='trimgest_'+d.trimestre+'_'+d.anno+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function generarPDFCompartido(tipo) {
+  var facts = window._facts || [];
+  var noms = window._noms || [];
+  var d = datosGlobales;
+  var lineas = [d.empresa + ' - ' + (d.trimestre === 'TODOS' ? 'Ano ' : d.trimestre + ' ') + d.anno, ''];
+  if (tipo === 'todos' || tipo === 'proveedores') {
+    var provs = facts.filter(function(f){return f.tipo==='proveedor';});
+    if (provs.length) { lineas.push('PROVEEDORES'); provs.forEach(function(f){ lineas.push(f.nombre + ' | ' + f.numero_factura + ' | ' + f.fecha + ' | ' + formatEur(f.total)); }); lineas.push(''); }
+  }
+  if (tipo === 'todos' || tipo === 'clientes') {
+    var clis = facts.filter(function(f){return f.tipo==='cliente';});
+    if (clis.length) { lineas.push('CLIENTES'); clis.forEach(function(f){ lineas.push(f.nombre + ' | ' + f.numero_factura + ' | ' + f.fecha + ' | ' + formatEur(f.total)); }); lineas.push(''); }
+  }
+  if (tipo === 'todos' || tipo === 'nominas') {
+    if (noms.length) { lineas.push('NOMINAS'); noms.forEach(function(n){ lineas.push(n.trabajador + ' | Mes ' + n.mes + '/' + n.anno + ' | Neto: ' + formatEur(n.neto) + ' | Coste: ' + formatEur(n.coste_empresa)); }); }
+  }
+  var blob = new Blob([lineas.join('\n')],{type:'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href=url; a.download='trimgest_'+tipo+'_'+d.anno+'.txt';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
 function renderApp(d) {
-  var totalProv = 0; var totalCli = 0; var totalNom = 0;
+  var totalProv = 0, totalCli = 0, totalNom = 0;
   d.facturas.forEach(function(f) {
     if (f.tipo === 'proveedor') totalProv += Number(f.total);
     else totalCli += Number(f.total);
   });
   if (d.nominas) d.nominas.forEach(function(n) { totalNom += Number(n.coste_empresa); });
 
-  var proveedores = d.facturas.filter(function(f) { return f.tipo === 'proveedor'; });
-  var clientes = d.facturas.filter(function(f) { return f.tipo === 'cliente'; });
+  var filtrado = aplicarFiltros(d);
+  var facts = filtrado.facturas;
+  var noms = filtrado.nominas;
+  window._facts = facts;
+  window._noms = noms;
+  var proveedores = facts.filter(function(f) { return f.tipo === 'proveedor'; });
+  var clientes = facts.filter(function(f) { return f.tipo === 'cliente'; });
+  var tituloLabel = d.trimestre === 'TODOS' ? 'A&ntilde;o ' + d.anno : d.trimestre + ' ' + d.anno;
 
   var html = '<div class="header"><div class="logo">TrimGest</div><div class="empresa">' + d.empresa + '</div></div>';
   html += '<div class="content">';
-  var tituloLabel = d.trimestre === 'TODOS' ? 'Año ' + d.anno : d.trimestre + ' ' + d.anno;
   html += '<div class="titulo">' + tituloLabel + '</div>';
   html += '<div class="subtitulo">Facturas compartidas por ' + d.empresa + '</div>';
+
   html += '<div class="stats">';
   html += '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div></div>';
   html += '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value" style="color:#7ac87a;">' + formatEur(totalCli) + '</div></div>';
-  if (totalNom > 0) html += '<div class="stat"><div class="stat-label">Nóminas (coste)</div><div class="stat-value" style="color:#c87a7a;">' + formatEur(totalNom) + '</div></div>';
+  if (totalNom > 0) html += '<div class="stat"><div class="stat-label">N&oacute;minas coste</div><div class="stat-value" style="color:#c87a7a;">' + formatEur(totalNom) + '</div></div>';
   html += '</div>';
 
-  var passParam = passwordUsada ? '&password=' + encodeURIComponent(passwordUsada) : '';
+  html += '<div class="acciones">';
+  html += '<button class="btn-acc btn-acc-primary" onclick="exportarExcel()">Excel todo</button>';
+  html += '<button class="btn-acc" onclick="generarPDFCompartido(' + "'todos'" + ')">PDF todo</button>';
+  html += '<button class="btn-acc" onclick="generarPDFCompartido(' + "'proveedores'" + ')">PDF proveedores</button>';
+  html += '<button class="btn-acc" onclick="generarPDFCompartido(' + "'clientes'" + ')">PDF clientes</button>';
+  if (d.nominas && d.nominas.length) html += '<button class="btn-acc" onclick="generarPDFCompartido(' + "'nominas'" + ')">PDF n&oacute;minas</button>';
+  html += '</div>';
+
+  html += '<div class="filtros">';
+  html += '<div><div class="filtro-label">Ver</div><div class="filtro-row">';
+  html += btnF('Todos','filtroSeccion','todos',filtroSeccion);
+  html += btnF('Proveedores','filtroSeccion','proveedores',filtroSeccion);
+  html += btnF('Clientes','filtroSeccion','clientes',filtroSeccion);
+  if (d.nominas && d.nominas.length) html += btnF('N&oacute;minas','filtroSeccion','nominas',filtroSeccion);
+  html += '</div></div>';
+  if (d.trimestre === 'TODOS') {
+    html += '<div><div class="filtro-label">Trimestre</div><div class="filtro-row">';
+    html += btnF('Todos','filtroTrimestre','todos',filtroTrimestre);
+    html += btnF('T1','filtroTrimestre','T1',filtroTrimestre);
+    html += btnF('T2','filtroTrimestre','T2',filtroTrimestre);
+    html += btnF('T3','filtroTrimestre','T3',filtroTrimestre);
+    html += btnF('T4','filtroTrimestre','T4',filtroTrimestre);
+    html += '</div></div>';
+  }
+  html += '<div><div class="filtro-label">Contabilizado</div><div class="filtro-row">';
+  html += btnF('Todos','filtroContabilizado','todos',filtroContabilizado);
+  html += btnF('S&iacute;','filtroContabilizado','si',filtroContabilizado);
+  html += btnF('No','filtroContabilizado','no',filtroContabilizado);
+  html += '</div></div>';
+  if (filtroSeccion !== 'nominas') {
+    html += '<div><div class="filtro-label">Estado pago</div><div class="filtro-row">';
+    html += btnF('Todos','filtroEstado','todos',filtroEstado);
+    html += btnF('Sin clasificar','filtroEstado','sinclasificar',filtroEstado);
+    html += btnF('Sin pagar','filtroEstado','sinpagar',filtroEstado);
+    html += btnF('Transferencia','filtroEstado','transferencia',filtroEstado);
+    html += btnF('Tarjeta','filtroEstado','tarjeta',filtroEstado);
+    html += btnF('Domiciliaci&oacute;n','filtroEstado','domiciliacion',filtroEstado);
+    html += btnF('Bizum','filtroEstado','bizum',filtroEstado);
+    html += btnF('Efectivo','filtroEstado','efectivo',filtroEstado);
+    html += btnF('Mixto','filtroEstado','mixto',filtroEstado);
+    html += btnF('Parcial','filtroEstado','parcial',filtroEstado);
+    html += '</div></div>';
+  }
+  html += '</div>';
 
   if (proveedores.length) {
-    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-bottom:8px;">Proveedores</div>';
+    html += '<div class="seccion-titulo">Proveedores (' + proveedores.length + ')</div>';
     var provActual = null;
     proveedores.forEach(function(f) {
       var prov = (f.nombre || 'Sin proveedor').trim();
       if (prov !== provActual) {
-        html += '<div class="prov-header">' + prov + (f.cif ? ' · <span style="font-weight:400;color:#6a6070;">' + f.cif + '</span>' : '') + '</div>';
+        html += '<div class="prov-header">' + prov + (f.cif ? ' &middot; <span style="font-weight:400;color:#6a6070;">' + f.cif + '</span>' : '') + '</div>';
         provActual = prov;
       }
+      var esCont = f.contabilizado || contabilizadosLocal.indexOf(String(f.id)) !== -1;
+      var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : 'Sin clasificar';
       html += '<div class="factura-card">';
-      html += '<div class="factura-row"><span class="factura-nombre">N° ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
-      var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum', mixto: '🔀 Mixto', sinpagar: '❌ Sin pagar', parcial: '⚠️ Parcial' };
-      var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : '⚠️ Sin clasificar';
+      html += '<div class="factura-row"><span class="factura-nombre">N&ordm; ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
       html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span><span>IVA ' + f.iva_porcentaje + '%: ' + formatEur(f.iva_importe) + '</span><span style="color:#9a90b4;">' + epLabel + '</span>';
-      if (f.contabilizado) html += '<span class="badge">✓ Contabilizado</span>';
+      if (esCont) html += '<span class="badge">Contabilizado</span>';
       html += '</div>';
-      var esCont = contabilizadosLocal.indexOf(String(f.id)) !== -1;
       html += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center;">';
       if (f.archivo) html += '<a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a>';
-      html += '<button onclick="toggleContabilizado(\'' + f.id + '\')" style="background:' + (esCont ? '#0d2b1a' : '#1e1e28') + ';border:1px solid ' + (esCont ? '#1a4a2a' : '#2a2a3a') + ';color:' + (esCont ? '#4caf7d' : '#9a90b4') + ';border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">' + (esCont ? '✓ Contabilizado' : 'Marcar contabilizado') + '</button>';
+      html += '<button id="cont-' + f.id + '" style="background:' + (esCont?'#0d2b1a':'#1e1e28') + ';border:1px solid ' + (esCont?'#1a4a2a':'#2a2a3a') + ';color:' + (esCont?'#4caf7d':'#9a90b4') + ';border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">' + (esCont?'Contabilizado':'Marcar contabilizado') + '</button>';
       html += '</div></div>';
     });
   }
 
   if (clientes.length) {
-    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-top:20px;margin-bottom:8px;">Clientes</div>';
+    html += '<div class="seccion-titulo">Clientes (' + clientes.length + ')</div>';
     clientes.forEach(function(f) {
+      var esCont = f.contabilizado || contabilizadosLocal.indexOf(String(f.id)) !== -1;
+      var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : 'Sin clasificar';
       html += '<div class="factura-card">';
       html += '<div class="factura-row"><span class="factura-nombre">' + f.nombre + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
-      html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N° ' + f.numero_factura + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span>';
-      if (f.contabilizado) html += '<span class="badge">✓ Contabilizado</span>';
+      html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N&ordm; ' + f.numero_factura + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span><span style="color:#9a90b4;">' + epLabel + '</span>';
+      if (esCont) html += '<span class="badge">Contabilizado</span>';
       html += '</div>';
-      if (f.archivo) html += '<div style="margin-top:8px;"><a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a></div>';
-      html += '</div>';
+      html += '<div style="margin-top:8px;display:flex;gap:8px;">';
+      if (f.archivo) html += '<a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a>';
+      html += '<button id="cont-' + f.id + '" style="background:' + (esCont?'#0d2b1a':'#1e1e28') + ';border:1px solid ' + (esCont?'#1a4a2a':'#2a2a3a') + ';color:' + (esCont?'#4caf7d':'#9a90b4') + ';border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">' + (esCont?'Contabilizado':'Marcar contabilizado') + '</button>';
+      html += '</div></div>';
     });
   }
 
-  
-  html += '<button onclick="exportarExcelCompartido()" style="width:100%;margin-top:20px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">💾 Descargar Excel (facturas + nóminas)</button>';
-  if (d.nominas && d.nominas.length) {
-    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-top:28px;margin-bottom:8px;">Nóminas</div>';
+  if (noms.length) {
+    html += '<div class="seccion-titulo">N&oacute;minas (' + noms.length + ')</div>';
     var trabActual = null;
-    d.nominas.forEach(function(n) {
+    noms.forEach(function(n) {
       if (n.trabajador !== trabActual) {
         html += '<div class="prov-header">' + n.trabajador + '</div>';
         trabActual = n.trabajador;
@@ -187,17 +327,23 @@ function renderApp(d) {
       html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
       html += '<span style="font-size:14px;font-weight:600;">Mes ' + n.mes + '/' + n.anno + '</span>';
       html += '<span class="nomina-neto">Neto: ' + formatEur(n.neto) + '</span></div>';
-      html += '<div class="nomina-datos">';
-      html += '<span>Bruto: ' + formatEur(n.devengado) + '</span>';
-      html += '<span>IRPF ' + n.irpf_porcentaje + '%: ' + formatEur(n.irpf_importe) + '</span>';
-      html += '<span>SS trab: ' + formatEur(n.ss_trabajador) + '</span>';
-      html += '<span>Coste empresa: ' + formatEur(n.coste_empresa) + '</span>';
-      html += '</div></div>';
+      html += '<div class="nomina-datos"><span>Bruto: ' + formatEur(n.devengado) + '</span><span>IRPF ' + n.irpf_porcentaje + '%: ' + formatEur(n.irpf_importe) + '</span><span>SS trab: ' + formatEur(n.ss_trabajador) + '</span><span>Coste empresa: ' + formatEur(n.coste_empresa) + '</span></div>';
+      html += '</div>';
     });
   }
-  html += '<div class="banner"><p>¿Quieres que todos tus clientes te envíen las facturas así de organizadas?</p><a href="https://trimgest.es/panel-gestoria#registro" target="_blank">Descubre TrimGest para gestorías — gratis →</a></div>';
+
+  if (!proveedores.length && !clientes.length && !noms.length) {
+    html += '<div style="text-align:center;padding:40px;color:#6a6070;">No hay documentos con los filtros seleccionados</div>';
+  }
+
+  html += '<div class="banner"><p>&iquest;Quieres que todos tus clientes te env&iacute;en las facturas as&iacute; de organizadas?</p><a href="https://trimgest.es/panel-gestoria#registro" target="_blank">Descubre TrimGest para gestor&iacute;as &mdash; gratis &rarr;</a></div>';
   html += '</div>';
   document.getElementById('root').innerHTML = html;
+
+  facts.forEach(function(f) {
+    var btn = document.getElementById('cont-' + f.id);
+    if (btn) btn.onclick = (function(id) { return function() { toggleContabilizado(id); }; })(f.id);
+  });
 }
 
 async function toggleContabilizado(facturaId) {

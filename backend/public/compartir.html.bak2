@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrimGest — Facturas compartidas</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, sans-serif; background: #0f0f13; color: #e0d8cc; min-height: 100vh; }
+  .header { background: #13131a; border-bottom: 1px solid #22223a; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 20px; font-weight: 700; color: #e8c87a; }
+  .empresa { font-size: 13px; color: #6a6070; }
+  .content { max-width: 800px; margin: 0 auto; padding: 20px; }
+  .titulo { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .subtitulo { font-size: 13px; color: #6a6070; margin-bottom: 20px; }
+  .stats { display: flex; gap: 12px; margin-bottom: 20px; }
+  .stat { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px 16px; flex: 1; }
+  .stat-label { font-size: 11px; color: #6a6070; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-value { font-size: 18px; font-weight: 700; color: #e8c87a; margin-top: 2px; }
+  .prov-header { font-size: 12px; font-weight: 600; color: #9a90b4; text-transform: uppercase; letter-spacing: 1px; padding: 12px 0 6px; border-bottom: 1px solid #22223a; margin-top: 16px; }
+  .factura-card { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px; margin-top: 8px; }
+  .factura-row { display: flex; justify-content: space-between; align-items: center; }
+  .factura-nombre { font-size: 14px; font-weight: 600; }
+  .factura-total { font-size: 15px; font-weight: 700; color: #e8c87a; }
+  .factura-datos { font-size: 12px; color: #6a6070; margin-top: 4px; display: flex; gap: 12px; }
+  .btn-pdf { background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; text-decoration: none; }
+  .btns { display: flex; gap: 8px; margin-bottom: 20px; }
+  .btn-descargar { flex: 1; background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-excel { flex: 1; background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 10px; padding: 12px; font-size: 14px; cursor: pointer; }
+  .password-box { background: #16161e; border: 1px solid #22223a; border-radius: 12px; padding: 30px; text-align: center; max-width: 400px; margin: 60px auto; }
+  .password-box h2 { margin-bottom: 16px; }
+  .password-input { width: 100%; background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+  .btn-entrar { width: 100%; background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .banner { background: #13131a; border: 1px solid #22223a; border-radius: 12px; padding: 20px; text-align: center; margin-top: 40px; }
+  .banner p { font-size: 13px; color: #6a6070; margin-bottom: 8px; }
+  .banner a { color: #e8c87a; text-decoration: none; font-weight: 600; }
+  .badge { background: #0d2b1a; border: 1px solid #1a4a2a; color: #4caf7d; border-radius: 6px; padding: 2px 8px; font-size: 11px; }
+  .nomina-card { background: #16161e; border: 1px solid #22223a; border-radius: 10px; padding: 12px; margin-top: 8px; }
+  .nomina-neto { font-size: 15px; font-weight: 700; color: #7ac87a; }
+  .nomina-datos { font-size: 12px; color: #6a6070; margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const token = location.pathname.split('/compartir/')[1];
+var passwordUsada = '';
+var datosGlobales = null;
+var contabilizadosLocal = [];
+
+async function cargar(pass) {
+  const url = '/api/compartir/' + token + (pass ? '?password=' + encodeURIComponent(pass) : '');
+  const r = await fetch(url);
+  const d = await r.json();
+  if (r.status === 401) { mostrarPassword(); return; }
+  if (r.status === 404) { document.getElementById('root').innerHTML = '<div style="text-align:center;padding:60px;"><h2>Enlace no encontrado</h2></div>'; return; }
+  datosGlobales = d;
+  passwordUsada = pass || '';
+  contabilizadosLocal = d.contabilizados || [];
+  renderApp(d);
+}
+
+function mostrarPassword() {
+  document.getElementById('root').innerHTML =
+    '<div class="password-box">' +
+    '<h2>🔒 Enlace protegido</h2>' +
+    '<p style="color:#6a6070;font-size:13px;margin-bottom:16px;">Introduce la contraseña para ver las facturas</p>' +
+    '<input class="password-input" id="passInput" type="password" placeholder="Contraseña">' +
+    '<button class="btn-entrar" onclick="entrarConPassword()">Entrar</button>' +
+    '<p id="passError" style="color:#e87a7a;font-size:12px;margin-top:8px;"></p>' +
+    '</div>';
+}
+
+async function entrarConPassword() {
+  const pass = document.getElementById('passInput').value;
+  if (!pass) return;
+  const url = '/api/compartir/' + token + '?password=' + encodeURIComponent(pass);
+  const r = await fetch(url);
+  if (r.status === 401) { document.getElementById('passError').textContent = 'Contraseña incorrecta'; return; }
+  const d = await r.json();
+  datosGlobales = d; passwordUsada = pass;
+  contabilizadosLocal = d.contabilizados || [];
+  renderApp(d);
+}
+
+function formatEur(n) {
+  return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+function exportarExcelCompartido() {
+  var d = datosGlobales;
+  if (!d) return;
+  var rows = [["Tipo","Nombre","Fecha","N Factura","Base","IVA%","IVA EUR","Total","Pago","Contabilizado"]];
+  d.facturas.forEach(function(f) {
+    var cont = contabilizadosLocal.indexOf(String(f.id)) !== -1 || f.contabilizado;
+    rows.push([f.tipo,f.nombre,f.fecha,f.numero_factura,f.base_imponible,f.iva_porcentaje,f.iva_importe,f.total,f.estado_pago||"",cont?"Si":"No"]);
+  });
+  if (d.nominas && d.nominas.length) {
+    rows.push([]);
+    rows.push(["NOMINAS","Trabajador","Mes/Anno","Devengado","Neto","IRPF%","IRPF EUR","SS Trabajador","SS Empresa","Coste Empresa"]);
+    d.nominas.forEach(function(n) {
+      rows.push(["nomina",n.trabajador,n.mes+"/"+n.anno,n.devengado,n.neto,n.irpf_porcentaje,n.irpf_importe,n.ss_trabajador,n.ss_empresa,n.coste_empresa]);
+    });
+  }
+  var sep = String.fromCharCode(10);
+  var csv = rows.map(function(r){return r.map(function(c){return'"'+String(c||"").replace(/"/g,'""')+'"';}).join(",");}).join(sep);
+  var bom = "\uFEFF";
+  var blob = new Blob([bom+csv],{type:"text/csv;charset=utf-8;"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href=url; a.download="trimgest_"+d.trimestre+"_"+d.anno+".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderApp(d) {
+  var totalProv = 0; var totalCli = 0; var totalNom = 0;
+  d.facturas.forEach(function(f) {
+    if (f.tipo === 'proveedor') totalProv += Number(f.total);
+    else totalCli += Number(f.total);
+  });
+  if (d.nominas) d.nominas.forEach(function(n) { totalNom += Number(n.coste_empresa); });
+
+  var proveedores = d.facturas.filter(function(f) { return f.tipo === 'proveedor'; });
+  var clientes = d.facturas.filter(function(f) { return f.tipo === 'cliente'; });
+
+  var html = '<div class="header"><div class="logo">TrimGest</div><div class="empresa">' + d.empresa + '</div></div>';
+  html += '<div class="content">';
+  var tituloLabel = d.trimestre === 'TODOS' ? 'Año ' + d.anno : d.trimestre + ' ' + d.anno;
+  html += '<div class="titulo">' + tituloLabel + '</div>';
+  html += '<div class="subtitulo">Facturas compartidas por ' + d.empresa + '</div>';
+  html += '<div class="stats">';
+  html += '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div></div>';
+  html += '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value" style="color:#7ac87a;">' + formatEur(totalCli) + '</div></div>';
+  if (totalNom > 0) html += '<div class="stat"><div class="stat-label">Nóminas (coste)</div><div class="stat-value" style="color:#c87a7a;">' + formatEur(totalNom) + '</div></div>';
+  html += '</div>';
+
+  var passParam = passwordUsada ? '&password=' + encodeURIComponent(passwordUsada) : '';
+
+  if (proveedores.length) {
+    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-bottom:8px;">Proveedores</div>';
+    var provActual = null;
+    proveedores.forEach(function(f) {
+      var prov = (f.nombre || 'Sin proveedor').trim();
+      if (prov !== provActual) {
+        html += '<div class="prov-header">' + prov + (f.cif ? ' · <span style="font-weight:400;color:#6a6070;">' + f.cif + '</span>' : '') + '</div>';
+        provActual = prov;
+      }
+      html += '<div class="factura-card">';
+      html += '<div class="factura-row"><span class="factura-nombre">N° ' + f.numero_factura + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
+      var epLabels = { transferencia: '🔄 Transferencia', efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', domiciliacion: '🏦 Domiciliación', bizum: '📱 Bizum', mixto: '🔀 Mixto', sinpagar: '❌ Sin pagar', parcial: '⚠️ Parcial' };
+      var epLabel = f.estado_pago ? (epLabels[f.estado_pago] || f.estado_pago) : '⚠️ Sin clasificar';
+      html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span><span>IVA ' + f.iva_porcentaje + '%: ' + formatEur(f.iva_importe) + '</span><span style="color:#9a90b4;">' + epLabel + '</span>';
+      if (f.contabilizado) html += '<span class="badge">✓ Contabilizado</span>';
+      html += '</div>';
+      var esCont = contabilizadosLocal.indexOf(String(f.id)) !== -1;
+      html += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center;">';
+      if (f.archivo) html += '<a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a>';
+      html += '<button onclick="toggleContabilizado(\'' + f.id + '\')" style="background:' + (esCont ? '#0d2b1a' : '#1e1e28') + ';border:1px solid ' + (esCont ? '#1a4a2a' : '#2a2a3a') + ';color:' + (esCont ? '#4caf7d' : '#9a90b4') + ';border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">' + (esCont ? '✓ Contabilizado' : 'Marcar contabilizado') + '</button>';
+      html += '</div></div>';
+    });
+  }
+
+  if (clientes.length) {
+    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-top:20px;margin-bottom:8px;">Clientes</div>';
+    clientes.forEach(function(f) {
+      html += '<div class="factura-card">';
+      html += '<div class="factura-row"><span class="factura-nombre">' + f.nombre + '</span><span class="factura-total">' + formatEur(f.total) + '</span></div>';
+      html += '<div class="factura-datos"><span>' + f.fecha + '</span><span>N° ' + f.numero_factura + '</span><span>Base: ' + formatEur(f.base_imponible) + '</span>';
+      if (f.contabilizado) html += '<span class="badge">✓ Contabilizado</span>';
+      html += '</div>';
+      if (f.archivo) html += '<div style="margin-top:8px;"><a class="btn-pdf" href="/api/compartir/' + token + '/archivo/' + f.archivo + '?password=' + encodeURIComponent(passwordUsada) + '" target="_blank">Ver PDF</a></div>';
+      html += '</div>';
+    });
+  }
+
+  
+  html += '<button onclick="exportarExcelCompartido()" style="width:100%;margin-top:20px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">💾 Descargar Excel (facturas + nóminas)</button>';
+  if (d.nominas && d.nominas.length) {
+    html += '<div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-top:28px;margin-bottom:8px;">Nóminas</div>';
+    var trabActual = null;
+    d.nominas.forEach(function(n) {
+      if (n.trabajador !== trabActual) {
+        html += '<div class="prov-header">' + n.trabajador + '</div>';
+        trabActual = n.trabajador;
+      }
+      html += '<div class="nomina-card">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-size:14px;font-weight:600;">Mes ' + n.mes + '/' + n.anno + '</span>';
+      html += '<span class="nomina-neto">Neto: ' + formatEur(n.neto) + '</span></div>';
+      html += '<div class="nomina-datos">';
+      html += '<span>Bruto: ' + formatEur(n.devengado) + '</span>';
+      html += '<span>IRPF ' + n.irpf_porcentaje + '%: ' + formatEur(n.irpf_importe) + '</span>';
+      html += '<span>SS trab: ' + formatEur(n.ss_trabajador) + '</span>';
+      html += '<span>Coste empresa: ' + formatEur(n.coste_empresa) + '</span>';
+      html += '</div></div>';
+    });
+  }
+  html += '<div class="banner"><p>¿Quieres que todos tus clientes te envíen las facturas así de organizadas?</p><a href="https://trimgest.es/panel-gestoria#registro" target="_blank">Descubre TrimGest para gestorías — gratis →</a></div>';
+  html += '</div>';
+  document.getElementById('root').innerHTML = html;
+}
+
+async function toggleContabilizado(facturaId) {
+  var r = await fetch('/api/compartir/' + token + '/contabilizar/' + facturaId, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: passwordUsada })
+  });
+  var d = await r.json();
+  if (d.ok) { contabilizadosLocal = d.contabilizados; renderApp(datosGlobales); }
+}
+
+cargar('');
+</script>
+</body>
+</html>
