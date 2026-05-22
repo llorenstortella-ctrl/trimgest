@@ -937,16 +937,19 @@ async function descargarPDFCliente(tipo) {
   var selA = tipo === 'cliente' ? document.getElementById('sel-anno-cli') : document.getElementById('sel-anno');
   var t = (selT && selT.value) ? selT.value : 'T1';
   var a = (selA && selA.value) ? selA.value : new Date().getFullYear();
-  try {
-    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/pdf/' + tipo + '/' + t + '/' + a, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!r.ok) throw new Error('Error');
-    var blob = await r.blob();
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url; link.download = clienteNombreActivo + '-' + tipo + '-' + t + '-' + a + '.pdf';
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-  } catch(e) { alert('Error al generar PDF. Selecciona trimestre y ano primero.'); }
+  abrirModalPdf(async function(conAdjuntos) {
+    try {
+      var url2 = API + '/gestoria/cliente/' + clienteActivo + '/pdf/' + tipo + '/' + t + '/' + a + (conAdjuntos ? '?conAdjuntos=true' : '');
+      var r = await fetch(url2, { headers: { 'Authorization': 'Bearer ' + token } });
+      if (!r.ok) throw new Error('Error');
+      var blob = await r.blob();
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url; link.download = clienteNombreActivo + '-' + tipo + '-' + t + '-' + a + '.pdf';
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    } catch(e) { alert('Error al generar PDF. Selecciona trimestre y ano primero.'); }
+  });
 }
 
 async function descargarPDFNominasCliente() {
@@ -1080,20 +1083,22 @@ async function descargarPDFFacturasSeleccionadas(tipo) {
   document.querySelectorAll('.fact-check[data-tipo="' + tipo + '"]:checked').forEach(function(cb) { ids.push(cb.dataset.id); });
   if (!ids.length) { alert('Selecciona al menos una factura'); return; }
   if (!clienteActivo) return;
-  try {
-    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/pdf/facturas-seleccionadas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ ids: ids, tipo: tipo })
-    });
-    if (!r.ok) throw new Error('Error');
-    var blob = await r.blob();
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url; link.download = clienteNombreActivo + '-facturas-' + tipo + '-seleccionadas.pdf';
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-  } catch(e) { alert('Error al generar PDF'); }
+  abrirModalPdf(async function(conAdjuntos) {
+    try {
+      var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/pdf/facturas-seleccionadas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ ids: ids, tipo: tipo, conAdjuntos: conAdjuntos })
+      });
+      if (!r.ok) throw new Error('Error');
+      var blob = await r.blob();
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = url; link.download = clienteNombreActivo + '-facturas-' + tipo + '-seleccionadas.pdf';
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    } catch(e) { alert('Error al generar PDF'); }
+  });
 }
 
 async function toggleContabilizadoNomina(id) {
@@ -1192,5 +1197,23 @@ if (token) {
     .catch(function() {});
 }
 </script>
+<div id="modal-pdf" class="modal-overlay" style="display:none">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">📄 Generar PDF</div>
+    <p style="font-size:13px;color:#9a90b4;margin-bottom:20px;">Elige qué quieres incluir en el PDF</p>
+    <div id="pdf-opcion-resumen" style="background:#13131a;border:2px solid #e8c87a;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;">
+      <div style="font-size:14px;font-weight:600;color:#e8c87a;margin-bottom:4px;">📊 Solo informe resumen</div>
+      <div style="font-size:12px;color:#6a6070;">Tabla con todas las facturas seleccionadas: número, fecha, proveedor, importes y forma de pago.</div>
+    </div>
+    <div id="pdf-opcion-adjuntos" style="background:#13131a;border:2px solid #2a2a35;border-radius:12px;padding:16px;margin-bottom:20px;cursor:pointer;">
+      <div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-bottom:4px;">📎 Informe + PDFs adjuntos</div>
+      <div style="font-size:12px;color:#6a6070;">El informe resumen seguido de los PDFs originales de cada factura adjuntados al final.</div>
+    </div>
+    <div class="modal-btns">
+      <button id="btn-pdf-generar" class="btn btn-primary" style="flex:1;">Generar PDF</button>
+      <button onclick="cerrarModalPdf()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

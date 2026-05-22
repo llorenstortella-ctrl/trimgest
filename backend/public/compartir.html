@@ -473,7 +473,95 @@ function abrirPdfNominas(soloSel) {
   }
 }
 
+var pdfModalCb = null;
+var pdfModalAdj = false;
+
+function abrirModalPdfComp(cb) {
+  pdfModalCb = cb;
+  pdfModalAdj = false;
+  document.getElementById('pdf-op-resumen').style.borderColor = '#e8c87a';
+  document.getElementById('pdf-op-adjuntos').style.borderColor = '#2a2a35';
+  var m = document.getElementById('modal-pdf');
+  m.style.display = 'flex';
+  document.getElementById('pdf-op-resumen').onclick = function() {
+    pdfModalAdj = false;
+    document.getElementById('pdf-op-resumen').style.borderColor = '#e8c87a';
+    document.getElementById('pdf-op-adjuntos').style.borderColor = '#2a2a35';
+  };
+  document.getElementById('pdf-op-adjuntos').onclick = function() {
+    pdfModalAdj = true;
+    document.getElementById('pdf-op-adjuntos').style.borderColor = '#e8c87a';
+    document.getElementById('pdf-op-resumen').style.borderColor = '#2a2a35';
+  };
+  document.getElementById('btn-pdf-modal-generar').onclick = function() {
+    document.getElementById('modal-pdf').style.display = 'none';
+    if (pdfModalCb) pdfModalCb(pdfModalAdj);
+  };
+  document.getElementById('btn-pdf-modal-cancelar').onclick = function() {
+    document.getElementById('modal-pdf').style.display = 'none';
+  };
+}
+
+function abrirPdf(tipo, soloSel) {
+  var d = datosGlobales;
+  if (!d) return;
+  abrirModalPdfComp(function(conAdjuntos) {
+    var ids = [];
+    if (soloSel) {
+      var sel = tipo === 'proveedor' ? selProv : selCli;
+      var lista = d.facturas.filter(function(f) { return f.tipo === tipo; });
+      lista.forEach(function(f) { if (sel[f.id]) ids.push(f.id); });
+      if (!ids.length) { alert('Selecciona al menos una factura'); return; }
+    }
+    var passParam = passwordUsada ? '&password=' + encodeURIComponent(passwordUsada) : '';
+    var tr = d.trimestre || 'TODOS';
+    var an = d.anno;
+    var adjParam = conAdjuntos ? '&conAdjuntos=true' : '';
+    var url;
+    if (soloSel) {
+      url = '/api/compartir/' + token + '/pdf/seleccionadas?tipo=' + tipo + '&ids=' + ids.join(',') + (conAdjuntos ? '&conAdjuntos=true' : '') + passParam;
+    } else {
+      url = '/api/compartir/' + token + '/pdf/' + tipo + '/' + tr + '/' + an + '?' + passParam.replace(/^&/,'') + adjParam;
+    }
+    window.open(url, '_blank');
+  });
+}
+
+function abrirPdfNominas(soloSel) {
+  var d = datosGlobales;
+  if (!d) return;
+  abrirModalPdfComp(function(conAdjuntos) {
+    var passParam = passwordUsada ? '&password=' + encodeURIComponent(passwordUsada) : '';
+    if (soloSel) {
+      var ids = [];
+      (d.nominas || []).forEach(function(n) { if (selNom[n.id]) ids.push(n.id); });
+      if (!ids.length) { alert('Selecciona al menos una nomina'); return; }
+      window.open('/api/compartir/' + token + '/pdf/nominas-seleccionadas?ids=' + ids.join(',') + passParam, '_blank');
+    } else {
+      window.open('/api/compartir/' + token + '/pdf/nominas/' + d.anno + '?' + passParam.replace(/^&/,''), '_blank');
+    }
+  });
+}
+
 cargar('');
 </script>
+<div id="modal-pdf" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a20;border:1px solid #2a2a35;border-radius:16px;padding:28px;width:100%;max-width:420px;">
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px;color:#e8c87a;">Generar PDF</div>
+    <p style="font-size:13px;color:#9a90b4;margin-bottom:20px;">Elige que quieres incluir en el PDF</p>
+    <div id="pdf-op-resumen" style="background:#13131a;border:2px solid #e8c87a;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;">
+      <div style="font-size:14px;font-weight:600;color:#e8c87a;margin-bottom:4px;">Solo informe resumen</div>
+      <div style="font-size:12px;color:#6a6070;">Tabla con todas las facturas: numero, fecha, proveedor, importes y forma de pago.</div>
+    </div>
+    <div id="pdf-op-adjuntos" style="background:#13131a;border:2px solid #2a2a35;border-radius:12px;padding:16px;margin-bottom:20px;cursor:pointer;">
+      <div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-bottom:4px;">Informe + PDFs adjuntos</div>
+      <div style="font-size:12px;color:#6a6070;">El informe resumen seguido de los PDFs originales de cada factura adjuntados al final.</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button id="btn-pdf-modal-generar" style="flex:1;background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;">Generar PDF</button>
+      <button id="btn-pdf-modal-cancelar" style="flex:1;background:#1e1e28;border:1px solid #2a2a35;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

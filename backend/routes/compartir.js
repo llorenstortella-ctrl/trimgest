@@ -160,7 +160,8 @@ router.get('/:token/pdf/:tipo/:trimestre/:anno', (req, res) => {
     if (esTodos) return String(f.anno) === String(enlaceEncontrado.anno);
     return f.trimestre === enlaceEncontrado.trimestre && String(f.anno) === String(enlaceEncontrado.anno);
   });
-  generarPdfFacturas(res, lista, empresaEncontrada.nombre_empresa, tipo, enlaceEncontrado.trimestre, enlaceEncontrado.anno);
+  var conAdjuntos = req.query.conAdjuntos === 'true';
+  generarPdfFacturas(res, lista, empresaEncontrada.nombre_empresa, tipo, enlaceEncontrado.trimestre, enlaceEncontrado.anno, conAdjuntos, empresaEncontrada.empresaId);
 });
 
 // PDF facturas seleccionadas
@@ -182,7 +183,8 @@ router.get('/:token/pdf/seleccionadas', (req, res) => {
   const idsList = (ids || '').split(',').map(function(x) { return x.trim(); });
   const facturas = getFacturas(empresaEncontrada.empresaId);
   const lista = facturas.filter(function(f) { return idsList.indexOf(String(f.id)) !== -1; });
-  generarPdfFacturas(res, lista, empresaEncontrada.nombre_empresa, tipo || 'proveedor', enlaceEncontrado.trimestre, enlaceEncontrado.anno);
+  var conAdjuntos = req.query.conAdjuntos === 'true';
+  generarPdfFacturas(res, lista, empresaEncontrada.nombre_empresa, tipo || 'proveedor', enlaceEncontrado.trimestre, enlaceEncontrado.anno, conAdjuntos, empresaEncontrada.empresaId);
 });
 
 // PDF nominas todas
@@ -232,26 +234,80 @@ router.get('/:token/pdf/nominas-seleccionadas', (req, res) => {
   generarPdfNominas(res, lista, empresaEncontrada.nombre_empresa, enlaceEncontrado.trimestre, enlaceEncontrado.anno);
 });
 
-function generarPdfFacturas(res, lista, empresa, tipo, trimestre, anno) {
+async function generarPdfFacturas(res, lista, empresa, tipo, trimestre, anno, conAdjuntos, empresaId) {
+  const tipoLabel = tipo === 'proveedor' ? 'Proveedores' : 'Clientes';
+  const periodoLabel = trimestre === 'TODOS' ? 'Anno ' + anno : trimestre + ' ' + anno;
+  const epLabels = { transferencia: 'Transferencia', efectivo: 'Efectivo', tarjeta: 'Tarjeta', domiciliacion: 'Domiciliacion', bizum: 'Bizum', mixto: 'Mixto', sinpagar: 'Sin pagar', parcial: 'Parcial' };
+
+  if (conAdjuntos && empresaId) {
+    // Usar pdf-lib para combinar informe + PDFs adjuntos
+    const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+    const pdfDoc = await PDFDocument.create();
+    const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const portada = pdfDoc.addPage([595, 842]);
+    const { width, height } = portada.getSize();
+    portada.drawRectangle({ x: 0, y: height-80, width, height: 80, color: rgb(0.06,0.06,0.1) });
+    portada.drawText('TrimGest', { x: 40, y: height-35, size: 20, font: bold, color: rgb(0.91,0.78,0.48) });
+    portada.drawText(empresa, { x: 40, y: height-55, size: 10, font: regular, color: rgb(0.8,0.8,0.8) });
+    portada.drawText(tipoLabel.toUpperCase() + ' - ' + periodoLabel, { x: 40, y: height-70, size: 9, font: regular, color: rgb(0.6,0.6,0.7) });
+    let y = height - 110;
+    var cols = ['Nombre', 'Fecha', 'N Factura', 'Base', 'IVA', 'Total', 'Pago'];
+    var xs = [40, 160, 215, 285, 340, 390, 450];
+    cols.forEach(function(col, i) { portada.drawText(col, { x: xs[i], y, size: 8, font: bold, color: rgb(0.5,0.5,0.6) }); });
+    y -= 12;
+    portada.drawLine({ start: {x:40,y}, end: {x:555,y}, thickness: 0.5, color: rgb(0.3,0.3,0.4) });
+    y -= 14;
+    lista.forEach(function(f) {
+      if (y < 50) return;
+      var vals = [
+        (f.nombre||'-').substring(0,18),
+        (f.fecha||'-'),
+        (f.numero_factura||'-').substring(0,10),
+        Number(f.base_imponible||0).toFixed(2),
+        (f.iva_porcentaje||0) + '%',
+        Number(f.total||0).toFixed(2),
+        f.estado_pago ? (epLabels[f.estado_pago]||f.estado_pago) : '-'
+      ];
+      vals.forEach(function(val, i) { portada.drawText(String(val), { x: xs[i], y, size: 8, font: regular, color: rgb(0.1,0.1,0.15) }); });
+      y -= 16;
+    });
+    var totalSum = lista.reduce(function(a, f) { return a + Number(f.total); }, 0);
+    y -= 10;
+    portada.drawText('Total: ' + totalSum.toFixed(2) + ' EUR', { x: 390, y, size: 10, font: bold, color: rgb(0.2,0.5,0.3) });
+    // Adjuntar PDFs originales
+    for (var i = 0; i < lista.length; i++) {
+      var f = lista[i];
+      if (!f.archivo) continue;
+      var archivoPath = path.join(baseDataDir, 'empresas', empresaId, 'uploads', f.archivo);
+      if (!fs.existsSync(archivoPath)) continue;
+      try {
+        var pdfBytes2 = fs.readFileSync(archivoPath);
+        var facturaPdf = await PDFDocument.load(pdfBytes2);
+        var pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
+        pages.forEach(function(p) { pdfDoc.addPage(p); });
+      } catch(e) { console.error('Error adjuntando PDF:', e.message); }
+    }
+    var pdfBytes = await pdfDoc.save();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="facturas.pdf"');
+    res.send(Buffer.from(pdfBytes));
+    return;
+  }
+
+  // Solo informe — usar pdfkit
   const PDFDocument = require('pdfkit');
   const doc = new PDFDocument({ margin: 40, size: 'A4' });
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'inline; filename="facturas.pdf"');
   doc.pipe(res);
-  const tipoLabel = tipo === 'proveedor' ? 'Proveedores' : 'Clientes';
-  const periodoLabel = trimestre === 'TODOS' ? 'Anno ' + anno : trimestre + ' ' + anno;
   doc.fontSize(18).fillColor('#1a1a1a').text('TrimGest - ' + tipoLabel, { align: 'left' });
   doc.fontSize(11).fillColor('#666').text(empresa + ' | ' + periodoLabel);
   doc.moveDown(0.5);
   doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#cccccc').stroke();
   doc.moveDown(0.5);
-  if (!lista.length) {
-    doc.fontSize(12).fillColor('#666').text('Sin facturas');
-    doc.end();
-    return;
-  }
-  var epLabels = { transferencia: 'Transferencia', efectivo: 'Efectivo', tarjeta: 'Tarjeta', domiciliacion: 'Domiciliacion', bizum: 'Bizum', mixto: 'Mixto', sinpagar: 'Sin pagar', parcial: 'Parcial' };
-  lista.forEach(function(f, i) {
+  if (!lista.length) { doc.fontSize(12).fillColor('#666').text('Sin facturas'); doc.end(); return; }
+  lista.forEach(function(f) {
     if (doc.y > 700) doc.addPage();
     doc.fontSize(11).fillColor('#1a1a1a').text((f.nombre || 'Sin nombre') + '  |  N: ' + (f.numero_factura || '-') + '  |  ' + (f.fecha || '-'));
     var base = Number(f.base_imponible).toFixed(2);

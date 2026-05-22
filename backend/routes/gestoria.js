@@ -880,6 +880,7 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
     const facturasPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
     const todasFacturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
     const lista = todasFacturas.filter(f => ids.includes(String(f.id)));
+    const conAdjuntos = req.body.conAdjuntos === true;
 
     const pdfDoc = await PDFDocument.create();
     const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -927,17 +928,19 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
       y -= 18;
     });
 
-    // Adjuntar PDFs originales
-    for (const f of lista) {
-      if (!f.archivo) continue;
-      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', f.archivo);
-      if (!fs.existsSync(archivoPath)) continue;
-      try {
-        const pdfBytes = fs.readFileSync(archivoPath);
-        const facturaPdf = await PDFDocument.load(pdfBytes);
-        const pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
-        pages.forEach(p => pdfDoc.addPage(p));
-      } catch(e) { console.error('Error adjuntando factura:', e.message); }
+    // Adjuntar PDFs originales solo si conAdjuntos=true
+    if (conAdjuntos) {
+      for (const f of lista) {
+        if (!f.archivo) continue;
+        const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', f.archivo);
+        if (!fs.existsSync(archivoPath)) continue;
+        try {
+          const pdfBytes = fs.readFileSync(archivoPath);
+          const facturaPdf = await PDFDocument.load(pdfBytes);
+          const pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
+          pages.forEach(p => pdfDoc.addPage(p));
+        } catch(e) { console.error('Error adjuntando factura:', e.message); }
+      }
     }
 
     const pdfBytes = await pdfDoc.save();
