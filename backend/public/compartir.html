@@ -33,7 +33,7 @@
   .tabla tr:hover td { background: #16161e; }
   .badge-pago { border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 500; white-space: nowrap; }
   .badge-cont { background: #0d2b1a; border: 1px solid #1a4a2a; color: #4caf7d; border-radius: 6px; padding: 2px 8px; font-size: 11px; }
-  .btn-cont { border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; border: 1px solid #2a2a3a; background: #1e1e28; color: #9a90b4; white-space: nowrap; }
+  .btn-cont { border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; border: 1px solid #2a2a3a; background: #1e1e28; color: #6a6070; white-space: nowrap; }
   .btn-cont.contabilizado { background: #0d2b1a; border-color: #1a4a2a; color: #4caf7d; }
   .btn-ver-pdf { background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; text-decoration: none; white-space: nowrap; }
   .empty { color: #6a6070; font-size: 13px; padding: 20px 12px; }
@@ -97,15 +97,13 @@ function formatEur(n) {
   return Number(n).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' EUR';
 }
 
-var epLabels = { transferencia: 'Transferencia', efectivo: 'Efectivo', tarjeta: 'Tarjeta', domiciliacion: 'Domiciliacion', bizum: 'Bizum', mixto: 'Mixto', sinpagar: 'Sin pagar', parcial: 'Parcial' };
-var epColors = { transferencia: '#1a2a3a:#2a4a6a:#7ab4e8', efectivo: '#1a2a1a:#2a4a2a:#7ae87a', tarjeta: '#2a1a2a:#4a2a4a:#c87ae8', domiciliacion: '#1a1a2a:#2a2a4a:#7a7ae8', bizum: '#2a1a1a:#4a2a2a:#e87a7a', mixto: '#2a2a1a:#4a4a2a:#e8e87a', sinpagar: '#2a1a1a:#4a2a2a:#e87a7a', parcial: '#2a1e1a:#4a3a2a:#e8b47a' };
+var badgeColorsPago = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
 
 function badgePago(estado) {
-  if (!estado) return '<span class="badge-pago" style="background:#1e1e28;border:1px solid #2a2a3a;color:#6a6070;">Sin clasificar</span>';
-  var c = epColors[estado];
-  if (!c) return '<span class="badge-pago" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;">' + estado + '</span>';
-  var parts = c.split(':');
-  return '<span class="badge-pago" style="background:' + parts[0] + ';border:1px solid ' + parts[1] + ';color:' + parts[2] + ';">' + (epLabels[estado] || estado) + '</span>';
+  if (!estado || !badgeColorsPago[estado]) return '<span style="color:#555;font-size:11px;">-</span>';
+  var bc = badgeColorsPago[estado];
+  var label = estado.charAt(0).toUpperCase() + estado.slice(1);
+  return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + bc.bg + ';color:' + bc.color + ';">' + label + '</span>';
 }
 
 function switchTab(tab) {
