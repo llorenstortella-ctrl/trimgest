@@ -191,7 +191,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <div class="card">
               <div class="tabla-wrap">
                 <table class="tabla">
-                  <thead><tr><th><input type="checkbox" id="check-all-prov" onclick="toggleTodos('prov',this.checked)"></th><th>Numero</th><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Acciones</th></tr></thead>
+                  <thead><tr><th><input type="checkbox" id="check-all-prov" onclick="toggleTodos('prov',this.checked)"></th><th>Numero</th><th>Fecha</th><th>Proveedor</th><th>Concepto</th><th>Base</th><th>IVA</th><th>Total</th><th>Pago</th><th>Acciones</th></tr></thead>
                   <tbody id="tabla-proveedores"></tbody>
                 </table>
               </div>
@@ -620,6 +620,9 @@ function renderTarjetaMobil(f) {
   var base = f.base_imponible ? Number(f.base_imponible).toFixed(2) + ' EUR' : '-';
   var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
   var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
+  var estadoPago = f.estado_pago || null;
+  var badgeColors = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
+  var badgeHtml = estadoPago && badgeColors[estadoPago] ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + badgeColors[estadoPago].bg + ';color:' + badgeColors[estadoPago].color + ';">' + estadoPago.charAt(0).toUpperCase() + estadoPago.slice(1) + '</span>' : '<span style="color:#555;font-size:11px;">—</span>';
   return '<div class="mobile-factura-card">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
     '<div>' +
@@ -632,6 +635,7 @@ function renderTarjetaMobil(f) {
     '<div class="mobile-factura-row"><span>Base</span><span>' + base + '</span></div>' +
     '<div class="mobile-factura-row"><span>IVA</span><span>' + iva + '</span></div>' +
     '<div class="mobile-factura-total">' + total + '</div>' +
+    '<div style="margin:6px 0 4px 0;">' + badgeHtml + '</div>' +
     '<div class="mobile-factura-btns">' +
     (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo||'') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
     '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
@@ -649,6 +653,9 @@ function renderFila(f) {
   var base = f.base_imponible ? Number(f.base_imponible).toFixed(2) + ' EUR' : '-';
   var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
   var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
+  var estadoPago = f.estado_pago || null;
+  var badgeColors = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
+  var badgeHtml = estadoPago && badgeColors[estadoPago] ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + badgeColors[estadoPago].bg + ';color:' + badgeColors[estadoPago].color + ';">' + estadoPago.charAt(0).toUpperCase() + estadoPago.slice(1) + '</span>' : '<span style="color:#555;font-size:11px;">—</span>';
   return '<tr>' +
     '<td><input type="checkbox" class="fact-check" data-id="' + f.id + '" data-tipo="' + (f.tipo||'') + '"></td>' +
     '<td>' + numero + '</td>' +
@@ -658,6 +665,7 @@ function renderFila(f) {
     '<td>' + base + '</td>' +
     '<td>' + iva + '</td>' +
     '<td style="font-weight:600;color:#e8c87a">' + total + '</td>' +
+    '<td>' + badgeHtml + '</td>' +
     '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
       (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
       '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +

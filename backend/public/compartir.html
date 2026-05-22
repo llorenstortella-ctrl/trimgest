@@ -37,6 +37,9 @@
   .btn-cont.contabilizado { background: #0d2b1a; border-color: #1a4a2a; color: #4caf7d; }
   .btn-ver-pdf { background: #1e1e28; border: 1px solid #2a2a3a; color: #9a90b4; border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; text-decoration: none; white-space: nowrap; }
   .empty { color: #6a6070; font-size: 13px; padding: 20px 12px; }
+  .filtros-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .filtros-bar input[type="text"] { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 8px; padding: 7px 12px; color: #e8e8e8; font-size: 13px; outline: none; min-width: 180px; flex: 1; }
+  .filtros-bar select { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 8px; padding: 7px 12px; color: #e8e8e8; font-size: 13px; outline: none; }
   .password-box { background: #16161e; border: 1px solid #22223a; border-radius: 12px; padding: 30px; text-align: center; max-width: 400px; margin: 60px auto; }
   .password-box h2 { margin-bottom: 16px; }
   .password-input { width: 100%; background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
@@ -62,6 +65,9 @@ var tabActual = 'proveedores';
 var selProv = {};
 var selCli = {};
 var selNom = {};
+var filtrosProv = { buscar: '', estado: '', cont: '' };
+var filtrosCli = { buscar: '', estado: '' };
+var filtrosNom = { buscar: '' };
 
 async function cargar(pass) {
   var url = '/api/compartir/' + token + (pass ? '?password=' + encodeURIComponent(pass) : '');
@@ -164,6 +170,11 @@ function renderApp(d) {
   html += '</div>';
 
   html += '<div class="tab-content active" id="content-proveedores">';
+  html += '<div class="filtros-bar">';
+  html += '<input type="text" id="filtro-buscar-prov" placeholder="Buscar proveedor, n factura..." >';
+  html += '<select id="filtro-estado-prov"><option value="">Todos los estados</option><option value="sinclasificar">Sin clasificar</option><option value="sinpagar">Sin pagar</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="domiciliacion">Domiciliacion</option><option value="bizum">Bizum</option><option value="efectivo">Efectivo</option><option value="mixto">Mixto</option><option value="parcial">Parcial</option></select>';
+  html += '<select id="filtro-cont-prov"><option value="">Contabilizado: todos</option><option value="si">Contabilizado</option><option value="no">No contabilizado</option></select>';
+  html += '</div>';
   html += '<div class="acciones-bar" id="acciones-prov">';
   html += '<button class="btn btn-excel" id="btn-excel-prov-todas">Excel todas</button>';
   html += '<button class="btn btn-excel" id="btn-excel-prov-sel">Excel seleccionadas</button>';
@@ -177,6 +188,10 @@ function renderApp(d) {
   html += '</div>';
 
   html += '<div class="tab-content" id="content-clientes">';
+  html += '<div class="filtros-bar">';
+  html += '<input type="text" id="filtro-buscar-cli" placeholder="Buscar cliente, n factura..." >';
+  html += '<select id="filtro-estado-cli"><option value="">Todos los estados</option><option value="sinclasificar">Sin clasificar</option><option value="sinpagar">Sin pagar</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="domiciliacion">Domiciliacion</option><option value="bizum">Bizum</option><option value="efectivo">Efectivo</option><option value="mixto">Mixto</option><option value="parcial">Parcial</option></select>';
+  html += '</div>';
   html += '<div class="acciones-bar">';
   html += '<button class="btn btn-excel" id="btn-excel-cli-todas">Excel todas</button>';
   html += '<button class="btn btn-excel" id="btn-excel-cli-sel">Excel seleccionadas</button>';
@@ -190,6 +205,9 @@ function renderApp(d) {
   html += '</div>';
 
   html += '<div class="tab-content" id="content-nominas">';
+  html += '<div class="filtros-bar">';
+  html += '<input type="text" id="filtro-buscar-nom" placeholder="Buscar trabajador..." >';
+  html += '</div>';
   html += '<div class="acciones-bar">';
   html += '<button class="btn btn-excel" id="btn-excel-nom-todas">Excel todas</button>';
   html += '<button class="btn btn-excel" id="btn-excel-nom-sel">Excel seleccionadas</button>';
@@ -210,6 +228,19 @@ function renderApp(d) {
   document.getElementById('tab-proveedores').onclick = function() { switchTab('proveedores'); };
   document.getElementById('tab-clientes').onclick = function() { switchTab('clientes'); };
   document.getElementById('tab-nominas').onclick = function() { switchTab('nominas'); };
+
+  var fpb = document.getElementById('filtro-buscar-prov');
+  if (fpb) fpb.oninput = function() { filtrosProv.buscar = this.value.toLowerCase().trim(); renderTablas(datosGlobales); };
+  var fep = document.getElementById('filtro-estado-prov');
+  if (fep) fep.onchange = function() { filtrosProv.estado = this.value; renderTablas(datosGlobales); };
+  var fcp = document.getElementById('filtro-cont-prov');
+  if (fcp) fcp.onchange = function() { filtrosProv.cont = this.value; renderTablas(datosGlobales); };
+  var fcb = document.getElementById('filtro-buscar-cli');
+  if (fcb) fcb.oninput = function() { filtrosCli.buscar = this.value.toLowerCase().trim(); renderTablas(datosGlobales); };
+  var fec = document.getElementById('filtro-estado-cli');
+  if (fec) fec.onchange = function() { filtrosCli.estado = this.value; renderTablas(datosGlobales); };
+  var fnb = document.getElementById('filtro-buscar-nom');
+  if (fnb) fnb.oninput = function() { filtrosNom.buscar = this.value.toLowerCase().trim(); renderTablas(datosGlobales); };
 
   var checkAllProv = document.getElementById('check-all-prov');
   if (checkAllProv) checkAllProv.onclick = function() { toggleTodos('prov', this.checked); };
@@ -238,6 +269,35 @@ function renderApp(d) {
 function renderTablas(d) {
   var proveedores = d.facturas.filter(function(f) { return f.tipo === 'proveedor'; });
   var clientes = d.facturas.filter(function(f) { return f.tipo === 'cliente'; });
+  var nominas = d.nominas || [];
+
+  if (filtrosProv.buscar) proveedores = proveedores.filter(function(f) {
+    var nombre = (f.nombre || '').toLowerCase();
+    var numero = (f.numero_factura || '').toLowerCase();
+    var concepto = (f.concepto || '').toLowerCase();
+    return nombre.indexOf(filtrosProv.buscar) !== -1 || numero.indexOf(filtrosProv.buscar) !== -1 || concepto.indexOf(filtrosProv.buscar) !== -1;
+  });
+  if (filtrosProv.estado) proveedores = proveedores.filter(function(f) {
+    if (filtrosProv.estado === 'sinclasificar') return !f.estado_pago;
+    return f.estado_pago === filtrosProv.estado;
+  });
+  if (filtrosProv.cont) proveedores = proveedores.filter(function(f) {
+    var esCont = contabilizadosLocal.indexOf(String(f.id)) !== -1 || f.contabilizado;
+    return filtrosProv.cont === 'si' ? esCont : !esCont;
+  });
+  if (filtrosCli.buscar) clientes = clientes.filter(function(f) {
+    var nombre = (f.nombre || '').toLowerCase();
+    var numero = (f.numero_factura || '').toLowerCase();
+    var concepto = (f.concepto || '').toLowerCase();
+    return nombre.indexOf(filtrosCli.buscar) !== -1 || numero.indexOf(filtrosCli.buscar) !== -1 || concepto.indexOf(filtrosCli.buscar) !== -1;
+  });
+  if (filtrosCli.estado) clientes = clientes.filter(function(f) {
+    if (filtrosCli.estado === 'sinclasificar') return !f.estado_pago;
+    return f.estado_pago === filtrosCli.estado;
+  });
+  if (filtrosNom.buscar) nominas = nominas.filter(function(n) {
+    return (n.trabajador || '').toLowerCase().indexOf(filtrosNom.buscar) !== -1;
+  });
 
   var tbodyProv = document.getElementById('tbody-prov');
   if (tbodyProv) {
@@ -304,7 +364,6 @@ function renderTablas(d) {
 
   var tbodyNom = document.getElementById('tbody-nom');
   if (tbodyNom) {
-    var nominas = d.nominas || [];
     if (!nominas.length) {
       tbodyNom.innerHTML = '<tr><td colspan="9" class="empty">Sin nominas</td></tr>';
     } else {

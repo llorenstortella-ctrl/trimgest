@@ -63,6 +63,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .export-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .filtros-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
 .filtros-bar select { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 8px; padding: 7px 12px; color: #e8e8e8; font-size: 13px; outline: none; }
+  .filtros-bar input[type="text"] { background: #1a1a20; border: 1px solid #2a2a35; border-radius: 8px; padding: 7px 12px; color: #e8e8e8; font-size: 13px; outline: none; min-width: 180px; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
 .badge-green { background: #0d2b1a; color: #4caf7d; }
 .badge-red { background: #2b0d0d; color: #e05555; }
@@ -168,6 +169,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
           <div id="tab-proveedores-content">
             <div class="filtros-bar">
+              <input type="text" id="buscar-prov" placeholder="🔍 Buscar proveedor, nº factura..." oninput="filtrarFacturas()">
               <select id="sel-trimestre" onchange="filtrarFacturas()">
                 <option value="">Todos los trimestres</option>
                 <option value="T1">T1</option>
@@ -180,6 +182,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 <option value="2024">2024</option>
                 <option value="2025">2025</option>
                 <option value="2026">2026</option>
+              </select>
+              <select id="sel-estado-prov" onchange="filtrarFacturas()">
+                <option value="">Todos los estados</option>
+                <option value="sinclasificar">Sin clasificar</option>
+                <option value="sinpagar">Sin pagar</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="domiciliacion">Domiciliacion</option>
+                <option value="bizum">Bizum</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="mixto">Mixto</option>
+                <option value="parcial">Parcial</option>
+              </select>
+              <select id="sel-cont-prov" onchange="filtrarFacturas()">
+                <option value="">Contabilizado: todos</option>
+                <option value="si">Contabilizado</option>
+                <option value="no">No contabilizado</option>
               </select>
             </div>
             <div class="export-bar">
@@ -201,6 +220,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
           <div id="tab-clientes-content" style="display:none">
             <div class="filtros-bar">
+              <input type="text" id="buscar-cli" placeholder="🔍 Buscar cliente, nº factura..." oninput="filtrarFacturas()">
               <select id="sel-trimestre-cli" onchange="filtrarFacturas()">
                 <option value="">Todos los trimestres</option>
                 <option value="T1">T1</option>
@@ -213,6 +233,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 <option value="2024">2024</option>
                 <option value="2025">2025</option>
                 <option value="2026">2026</option>
+              </select>
+              <select id="sel-estado-cli" onchange="filtrarFacturas()">
+                <option value="">Todos los estados</option>
+                <option value="sinclasificar">Sin clasificar</option>
+                <option value="sinpagar">Sin pagar</option>
+                <option value="transferencia">Transferencia</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="domiciliacion">Domiciliacion</option>
+                <option value="bizum">Bizum</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="mixto">Mixto</option>
+                <option value="parcial">Parcial</option>
+              </select>
+              <select id="sel-cont-cli" onchange="filtrarFacturas()">
+                <option value="">Contabilizado: todos</option>
+                <option value="si">Contabilizado</option>
+                <option value="no">No contabilizado</option>
               </select>
             </div>
             <div class="export-bar">
@@ -234,6 +271,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
           <div id="tab-nominas-content" style="display:none">
             <div class="filtros-bar">
+              <input type="text" id="buscar-nom" placeholder="🔍 Buscar trabajador..." oninput="filtrarNominas()">
               <select id="sel-empleado" onchange="filtrarNominas()">
                 <option value="">Todos los trabajadores</option>
               </select>
@@ -496,6 +534,12 @@ function filtrarFacturas() {
   var a = document.getElementById('sel-anno') ? document.getElementById('sel-anno').value : '';
   var tCli = document.getElementById('sel-trimestre-cli') ? document.getElementById('sel-trimestre-cli').value : '';
   var aCli = document.getElementById('sel-anno-cli') ? document.getElementById('sel-anno-cli').value : '';
+  var buscarProv = document.getElementById('buscar-prov') ? document.getElementById('buscar-prov').value.toLowerCase().trim() : '';
+  var buscarCli = document.getElementById('buscar-cli') ? document.getElementById('buscar-cli').value.toLowerCase().trim() : '';
+  var estadoProv = document.getElementById('sel-estado-prov') ? document.getElementById('sel-estado-prov').value : '';
+  var estadoCli = document.getElementById('sel-estado-cli') ? document.getElementById('sel-estado-cli').value : '';
+  var contProv = document.getElementById('sel-cont-prov') ? document.getElementById('sel-cont-prov').value : '';
+  var contCli = document.getElementById('sel-cont-cli') ? document.getElementById('sel-cont-cli').value : '';
   var validas = todasFacturas.filter(function(f) {
     if (!f || f.borrado) return false;
     var nombre = f.nombre || f.proveedor || f.emisor || f.cliente || '';
@@ -508,7 +552,28 @@ function filtrarFacturas() {
   if (a) proveedores = proveedores.filter(function(f) { return String(f.anno) === a; });
   if (tCli) clientes = clientes.filter(function(f) { return f.trimestre === tCli; });
   if (aCli) clientes = clientes.filter(function(f) { return String(f.anno) === aCli; });
-  // ordenar proveedores por nombre y fecha
+  if (buscarProv) proveedores = proveedores.filter(function(f) {
+    var nombre = (f.nombre || f.proveedor || f.emisor || '').toLowerCase();
+    var numero = (f.numero_factura || f.numero || '').toLowerCase();
+    var concepto = (f.concepto || f.descripcion || '').toLowerCase();
+    return nombre.indexOf(buscarProv) !== -1 || numero.indexOf(buscarProv) !== -1 || concepto.indexOf(buscarProv) !== -1;
+  });
+  if (buscarCli) clientes = clientes.filter(function(f) {
+    var nombre = (f.nombre || f.cliente || '').toLowerCase();
+    var numero = (f.numero_factura || f.numero || '').toLowerCase();
+    var concepto = (f.concepto || f.descripcion || '').toLowerCase();
+    return nombre.indexOf(buscarCli) !== -1 || numero.indexOf(buscarCli) !== -1 || concepto.indexOf(buscarCli) !== -1;
+  });
+  if (estadoProv) proveedores = proveedores.filter(function(f) {
+    if (estadoProv === 'sinclasificar') return !f.estado_pago;
+    return f.estado_pago === estadoProv;
+  });
+  if (estadoCli) clientes = clientes.filter(function(f) {
+    if (estadoCli === 'sinclasificar') return !f.estado_pago;
+    return f.estado_pago === estadoCli;
+  });
+  if (contProv) proveedores = proveedores.filter(function(f) { return contProv === 'si' ? f.contabilizado : !f.contabilizado; });
+  if (contCli) clientes = clientes.filter(function(f) { return contCli === 'si' ? f.contabilizado : !f.contabilizado; });
   var gruposP = {};
   proveedores.forEach(function(f) {
     var key = (f.nombre || f.proveedor || f.emisor || 'Sin proveedor').trim();
@@ -518,7 +583,6 @@ function filtrarFacturas() {
   Object.keys(gruposP).forEach(function(k) { gruposP[k].sort(function(a,b) { return (a.fecha||'').localeCompare(b.fecha||''); }); });
   var provOrdenados = [];
   Object.keys(gruposP).sort().forEach(function(k) { provOrdenados = provOrdenados.concat(gruposP[k]); });
-  // ordenar clientes por fecha
   clientes.sort(function(a, b) { return (a.fecha||'').localeCompare(b.fecha||''); });
   var esMobil = window.innerWidth <= 768;
   document.querySelectorAll('.tabla-wrap table').forEach(function(t) { t.style.display = esMobil ? 'none' : 'table'; });
@@ -725,18 +789,7 @@ function renderNominas(lista) {
   tbody.innerHTML = filas;
 }
 
-function filtrarNominas() {
-  if (!window.todasNominas) return;
-  var emp = document.getElementById('sel-empleado') ? document.getElementById('sel-empleado').value : '';
-  var anno = document.getElementById('sel-anno-nom') ? document.getElementById('sel-anno-nom').value : '';
-  var lista = window.todasNominas.filter(function(n) {
-    var trab = n.trabajador || n.empleado || n.nombre || '';
-    if (emp && trab !== emp) return false;
-    if (anno && String(n.anno) !== anno) return false;
-    return true;
-  });
-  renderNominas(lista);
-}
+// filtrarNominas definida mas abajo
 
 function abrirEditarFactura(id) {
   var f = todasFacturas.find(function(x) { return String(x.id) === String(id); });
@@ -934,10 +987,12 @@ function filtrarNominas() {
   if (!window.todasNominas) return;
   var emp = document.getElementById('sel-empleado') ? document.getElementById('sel-empleado').value : '';
   var anno = document.getElementById('sel-anno-nom') ? document.getElementById('sel-anno-nom').value : '';
+  var buscar = document.getElementById('buscar-nom') ? document.getElementById('buscar-nom').value.toLowerCase().trim() : '';
   var lista = window.todasNominas.filter(function(n) {
     var trab = n.trabajador || n.empleado || n.nombre || '';
     if (emp && trab !== emp) return false;
     if (anno && String(n.anno) !== anno) return false;
+    if (buscar && trab.toLowerCase().indexOf(buscar) === -1) return false;
     return true;
   });
   var tbody = document.getElementById('tabla-nominas');
