@@ -942,6 +942,7 @@ async function descargarPDFCliente(tipo) {
   abrirModalPdf(async function(conAdjuntos) {
     try {
       var url2 = API + '/gestoria/cliente/' + clienteActivo + '/pdf/' + tipo + '/' + t + '/' + a + (conAdjuntos ? '?conAdjuntos=true' : '');
+      alert('DEBUG URL: ' + url2);
       var r = await fetch(url2, { headers: { 'Authorization': 'Bearer ' + token } });
       if (!r.ok) { var err = await r.json().catch(function(){return{};}); alert('Error: ' + (err.error||r.status)); return; }
       var blob = await r.blob();
