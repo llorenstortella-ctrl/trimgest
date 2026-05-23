@@ -204,8 +204,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <div class="export-bar">
               <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('proveedor')">&#128196; Excel</button>
               <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('proveedor')">📄 PDF todas</button>
-              <button class="btn btn-primary btn-sm" onclick="descargarPDFFacturasSeleccionadas('proveedor')">📄 PDF seleccionadas</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportarExcelSeleccionadas('proveedor')">📊 Excel seleccionadas</button>
+              <button id="btn-pdf-sel-prov" class="btn btn-secondary btn-sm" disabled onclick="descargarPDFFacturasSeleccionadas('proveedor')">📄 PDF seleccionadas</button>
+              <button id="btn-excel-sel-prov" class="btn btn-secondary btn-sm" disabled onclick="exportarExcelSeleccionadas('proveedor')">📊 Excel seleccionadas</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
@@ -255,8 +255,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <div class="export-bar">
               <button class="btn btn-secondary btn-sm" onclick="exportarExcelCliente('cliente')">&#128196; Excel</button>
               <button class="btn btn-secondary btn-sm" onclick="descargarPDFCliente('cliente')">📄 PDF todas</button>
-              <button class="btn btn-primary btn-sm" onclick="descargarPDFFacturasSeleccionadas('cliente')">📄 PDF seleccionadas</button>
-              <button class="btn btn-secondary btn-sm" onclick="exportarExcelSeleccionadas('cliente')">📊 Excel seleccionadas</button>
+              <button id="btn-pdf-sel-cli" class="btn btn-secondary btn-sm" disabled onclick="descargarPDFFacturasSeleccionadas('cliente')">📄 PDF seleccionadas</button>
+              <button id="btn-excel-sel-cli" class="btn btn-secondary btn-sm" disabled onclick="exportarExcelSeleccionadas('cliente')">📊 Excel seleccionadas</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
@@ -284,7 +284,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             </div>
             <div class="export-bar">
               <button class="btn btn-secondary btn-sm" onclick="descargarPDFNominasCliente()">📄 PDF todas</button>
-              <button class="btn btn-primary btn-sm" onclick="descargarPDFSeleccionadas()">📄 PDF seleccionadas</button>
+              <button id="btn-pdf-sel-nom" class="btn btn-secondary btn-sm" disabled onclick="descargarPDFSeleccionadas()">📄 PDF seleccionadas</button>
             </div>
             <div class="card">
               <div class="tabla-wrap">
@@ -1227,6 +1227,29 @@ function seleccionarOpcionPdf(opcion) {
   document.getElementById('pdf-opcion-resumen').querySelector('div').style.color = pdfModalConAdjuntos ? '#e0d8cc' : '#e8c87a';
   document.getElementById('pdf-opcion-adjuntos').querySelector('div').style.color = pdfModalConAdjuntos ? '#e8c87a' : '#e0d8cc';
 }
+
+
+function actualizarBotonesSeleccionadas() {
+  var provChecked = document.querySelectorAll('.fact-check[data-tipo="proveedor"]:checked').length > 0;
+  var cliChecked = document.querySelectorAll('.fact-check[data-tipo="cliente"]:checked').length > 0;
+  var nomChecked = document.querySelectorAll('.nom-check:checked').length > 0;
+  var btnPdfProv = document.getElementById('btn-pdf-sel-prov');
+  var btnExcelProv = document.getElementById('btn-excel-sel-prov');
+  var btnPdfCli = document.getElementById('btn-pdf-sel-cli');
+  var btnExcelCli = document.getElementById('btn-excel-sel-cli');
+  var btnPdfNom = document.getElementById('btn-pdf-sel-nom');
+  if (btnPdfProv) { btnPdfProv.disabled = !provChecked; btnPdfProv.className = provChecked ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'; }
+  if (btnExcelProv) { btnExcelProv.disabled = !provChecked; btnExcelProv.className = provChecked ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'; }
+  if (btnPdfCli) { btnPdfCli.disabled = !cliChecked; btnPdfCli.className = cliChecked ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'; }
+  if (btnExcelCli) { btnExcelCli.disabled = !cliChecked; btnExcelCli.className = cliChecked ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'; }
+  if (btnPdfNom) { btnPdfNom.disabled = !nomChecked; btnPdfNom.className = nomChecked ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'; }
+}
+
+document.addEventListener('change', function(e) {
+  if (e.target && (e.target.classList.contains('fact-check') || e.target.classList.contains('nom-check'))) {
+    actualizarBotonesSeleccionadas();
+  }
+});
 
 function ejecutarPdfModal() {
   var cb = pdfModalCallback;
