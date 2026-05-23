@@ -937,7 +937,6 @@ async function descargarPDFCliente(tipo) {
   var selA = tipo === 'cliente' ? document.getElementById('sel-anno-cli') : document.getElementById('sel-anno');
   var t = (selT && selT.value) ? selT.value : '';
   var a = (selA && selA.value) ? selA.value : '';
-  if (!t) { alert('Selecciona un trimestre primero'); return; }
   if (!a) { alert('Selecciona un ano primero'); return; }
   abrirModalPdf(async function(conAdjuntos) {
     try {
@@ -1213,16 +1212,6 @@ function abrirModalPdf(callback) {
   opResumen.style.borderColor = '#e8c87a';
   opAdjuntos.style.borderColor = '#2a2a35';
   document.getElementById('modal-pdf').style.display = 'flex';
-  opResumen.onclick = function() {
-    pdfModalConAdjuntos = false;
-    opResumen.style.borderColor = '#e8c87a';
-    opAdjuntos.style.borderColor = '#2a2a35';
-  };
-  opAdjuntos.onclick = function() {
-    pdfModalConAdjuntos = true;
-    opAdjuntos.style.borderColor = '#e8c87a';
-    opResumen.style.borderColor = '#2a2a35';
-  };
 
 }
 
