@@ -1196,6 +1196,38 @@ if (token) {
     .then(function(d) { if (d.ok !== undefined) entrarApp(); else localStorage.removeItem('gest_token'); })
     .catch(function() {});
 }
+
+var pdfModalCallback = null;
+var pdfModalConAdjuntos = false;
+
+function abrirModalPdf(callback) {
+  pdfModalCallback = callback;
+  pdfModalConAdjuntos = false;
+  var opResumen = document.getElementById('pdf-opcion-resumen');
+  var opAdjuntos = document.getElementById('pdf-opcion-adjuntos');
+  opResumen.style.borderColor = '#e8c87a';
+  opAdjuntos.style.borderColor = '#2a2a35';
+  document.getElementById('modal-pdf').style.display = 'flex';
+  opResumen.onclick = function() {
+    pdfModalConAdjuntos = false;
+    opResumen.style.borderColor = '#e8c87a';
+    opAdjuntos.style.borderColor = '#2a2a35';
+  };
+  opAdjuntos.onclick = function() {
+    pdfModalConAdjuntos = true;
+    opAdjuntos.style.borderColor = '#e8c87a';
+    opResumen.style.borderColor = '#2a2a35';
+  };
+  document.getElementById('btn-pdf-generar').onclick = function() {
+    cerrarModalPdf();
+    if (pdfModalCallback) pdfModalCallback(pdfModalConAdjuntos);
+  };
+}
+
+function cerrarModalPdf() {
+  document.getElementById('modal-pdf').style.display = 'none';
+  pdfModalCallback = null;
+}
 </script>
 <div id="modal-pdf" class="modal-overlay" style="display:none">
   <div class="modal" style="max-width:420px;">
