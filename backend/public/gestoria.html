@@ -937,18 +937,20 @@ async function descargarPDFCliente(tipo) {
   var selA = tipo === 'cliente' ? document.getElementById('sel-anno-cli') : document.getElementById('sel-anno');
   var t = (selT && selT.value) ? selT.value : 'T1';
   var a = (selA && selA.value) ? selA.value : new Date().getFullYear();
+  if (!t) { alert('Selecciona un trimestre primero'); return; }
+  if (!a) { alert('Selecciona un ano primero'); return; }
   abrirModalPdf(async function(conAdjuntos) {
     try {
       var url2 = API + '/gestoria/cliente/' + clienteActivo + '/pdf/' + tipo + '/' + t + '/' + a + (conAdjuntos ? '?conAdjuntos=true' : '');
       var r = await fetch(url2, { headers: { 'Authorization': 'Bearer ' + token } });
-      if (!r.ok) throw new Error('Error');
+      if (!r.ok) { var err = await r.json().catch(function(){return{};}); alert('Error: ' + (err.error||r.status)); return; }
       var blob = await r.blob();
       var url = URL.createObjectURL(blob);
       var link = document.createElement('a');
       link.href = url; link.download = clienteNombreActivo + '-' + tipo + '-' + t + '-' + a + '.pdf';
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
       setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
-    } catch(e) { alert('Error al generar PDF. Selecciona trimestre y ano primero.'); }
+    } catch(e) { alert('Error al generar PDF: ' + e.message); }
   });
 }
 
@@ -1229,6 +1231,14 @@ function cerrarModalPdf() {
   pdfModalCallback = null;
 }
 
+function seleccionarOpcionPdf(opcion) {
+  pdfModalConAdjuntos = opcion === 'adjuntos';
+  document.getElementById('pdf-opcion-resumen').style.borderColor = pdfModalConAdjuntos ? '#2a2a35' : '#e8c87a';
+  document.getElementById('pdf-opcion-adjuntos').style.borderColor = pdfModalConAdjuntos ? '#e8c87a' : '#2a2a35';
+  document.getElementById('pdf-opcion-resumen').querySelector('div').style.color = pdfModalConAdjuntos ? '#e0d8cc' : '#e8c87a';
+  document.getElementById('pdf-opcion-adjuntos').querySelector('div').style.color = pdfModalConAdjuntos ? '#e8c87a' : '#e0d8cc';
+}
+
 function ejecutarPdfModal() {
   cerrarModalPdf();
   if (pdfModalCallback) pdfModalCallback(pdfModalConAdjuntos);
@@ -1238,11 +1248,11 @@ function ejecutarPdfModal() {
   <div class="modal" style="max-width:420px;">
     <div class="modal-title">📄 Generar PDF</div>
     <p style="font-size:13px;color:#9a90b4;margin-bottom:20px;">Elige qué quieres incluir en el PDF</p>
-    <div id="pdf-opcion-resumen" style="background:#13131a;border:2px solid #e8c87a;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;">
+    <div id="pdf-opcion-resumen" style="background:#13131a;border:2px solid #e8c87a;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;" onclick="seleccionarOpcionPdf('resumen')">
       <div style="font-size:14px;font-weight:600;color:#e8c87a;margin-bottom:4px;">📊 Solo informe resumen</div>
-      <div style="font-size:12px;color:#6a6070;">Tabla con todas las facturas seleccionadas: número, fecha, proveedor, importes y forma de pago.</div>
+      <div style="font-size:12px;color:#6a6070;">Tabla con todas las facturas: número, fecha, proveedor, importes y forma de pago.</div>
     </div>
-    <div id="pdf-opcion-adjuntos" style="background:#13131a;border:2px solid #2a2a35;border-radius:12px;padding:16px;margin-bottom:20px;cursor:pointer;">
+    <div id="pdf-opcion-adjuntos" style="background:#13131a;border:2px solid #2a2a35;border-radius:12px;padding:16px;margin-bottom:20px;cursor:pointer;" onclick="seleccionarOpcionPdf('adjuntos')">
       <div style="font-size:14px;font-weight:600;color:#e0d8cc;margin-bottom:4px;">📎 Informe + PDFs adjuntos</div>
       <div style="font-size:12px;color:#6a6070;">El informe resumen seguido de los PDFs originales de cada factura adjuntados al final.</div>
     </div>
