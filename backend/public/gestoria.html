@@ -1228,6 +1228,11 @@ function cerrarModalPdf() {
   document.getElementById('modal-pdf').style.display = 'none';
   pdfModalCallback = null;
 }
+
+function ejecutarPdfModal() {
+  cerrarModalPdf();
+  if (pdfModalCallback) pdfModalCallback(pdfModalConAdjuntos);
+}
 </script>
 <div id="modal-pdf" class="modal-overlay" style="display:none">
   <div class="modal" style="max-width:420px;">
@@ -1242,7 +1247,7 @@ function cerrarModalPdf() {
       <div style="font-size:12px;color:#6a6070;">El informe resumen seguido de los PDFs originales de cada factura adjuntados al final.</div>
     </div>
     <div class="modal-btns">
-      <button id="btn-pdf-generar" class="btn btn-primary" style="flex:1;">Generar PDF</button>
+      <button id="btn-pdf-generar" class="btn btn-primary" style="flex:1;" onclick="ejecutarPdfModal()">Generar PDF</button>
       <button onclick="cerrarModalPdf()" class="btn btn-secondary" style="flex:1;">Cancelar</button>
     </div>
   </div>
