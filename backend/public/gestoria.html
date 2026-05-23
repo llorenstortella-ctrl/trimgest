@@ -935,14 +935,13 @@ async function descargarPDFCliente(tipo) {
   if (!clienteActivo) return;
   var selT = tipo === 'cliente' ? document.getElementById('sel-trimestre-cli') : document.getElementById('sel-trimestre');
   var selA = tipo === 'cliente' ? document.getElementById('sel-anno-cli') : document.getElementById('sel-anno');
-  var t = (selT && selT.value) ? selT.value : 'T1';
-  var a = (selA && selA.value) ? selA.value : new Date().getFullYear();
+  var t = (selT && selT.value) ? selT.value : '';
+  var a = (selA && selA.value) ? selA.value : '';
   if (!t) { alert('Selecciona un trimestre primero'); return; }
   if (!a) { alert('Selecciona un ano primero'); return; }
   abrirModalPdf(async function(conAdjuntos) {
     try {
       var url2 = API + '/gestoria/cliente/' + clienteActivo + '/pdf/' + tipo + '/' + t + '/' + a + (conAdjuntos ? '?conAdjuntos=true' : '');
-      alert('DEBUG URL: ' + url2);
       var r = await fetch(url2, { headers: { 'Authorization': 'Bearer ' + token } });
       if (!r.ok) { var err = await r.json().catch(function(){return{};}); alert('Error: ' + (err.error||r.status)); return; }
       var blob = await r.blob();
