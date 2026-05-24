@@ -62,7 +62,7 @@
     .section-title { font-size: 11px; letter-spacing: 2px; color: #6a6070; text-transform: uppercase; margin-bottom: 14px; }
     .empty { text-align: center; color: #4a4055; padding: 40px 20px; font-size: 14px; }
     .facturas-list { display: flex; flex-direction: column; gap: 10px; }
-    .factura-card { background: #16161e; border: 1px solid #22223a; border-radius: 12px; padding: 14px; }
+    .factura-card { background: #16161e; border: 1px solid #22223a; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
     .factura-card.enviada { opacity: 0.5; }
     .factura-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .factura-nombre { font-size: 15px; font-weight: 500; color: #e0d8cc; }
@@ -992,8 +992,8 @@
       if (window.filtroTipo) lista = lista.filter(function(f) { return f.tipo === window.filtroTipo; });
       var provPend = pendientes.filter(function(f) { return f.tipo === 'proveedor'; });
       var cliPend = pendientes.filter(function(f) { return f.tipo === 'cliente'; });
-      var totalProv = provPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
-      var totalCli = cliPend.reduce(function(s, f) { return s + Number(f.total); }, 0);
+      var totalProv = facturasT.filter(function(f) { return f.tipo === 'proveedor'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
+      var totalCli = facturasT.filter(function(f) { return f.tipo === 'cliente'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
 
       var listaHTML = '';
       // ordenar: proveedores agrupados por nombre y fecha, clientes solo por fecha
@@ -1064,10 +1064,11 @@
 
       var botonesEnvio = '';
       if (window.tabSel === 'pendientes' && pendientes.length > 0) {
-        botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button><button class="btn-marcar" onclick="marcarEnviadas()">Marcar todas como enviadas</button>';
+        botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>';
       }
       botonesEnvio += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button></div>';
-      botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">🔗 Compartir trimestre con gestoría</button>';
+      var btnCompartirLabel = window.trimestreSel === 'TODOS' ? '🔗 Compartir año ' + window.annoSel + ' con gestoría' : '🔗 Compartir ' + window.trimestreSel + ' ' + window.annoSel + ' con gestoría';
+      botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">' + btnCompartirLabel + '</button>';
 
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
       var optsTrim = '<option value="TODOS"' + (window.trimestreSel === 'TODOS' ? ' selected' : '') + '>Todos</option>' + ['T1','T2','T3','T4'].map(function(t) { return '<option value="' + t + '"' + (window.trimestreSel === t ? ' selected' : '') + '>' + t + '</option>'; }).join('');
@@ -1234,13 +1235,53 @@ async function exportarExcel(tipo) {
       } catch(e) { alert('Error al exportar'); }
     }
 
-    async function compartirTrimestre() {
-      var pass = prompt('Contraseña para proteger el enlace (opcional, deja vacío para sin contraseña):');
-      if (pass === null) return;
-      var r = await fetch(API + '/api/compartir/generar', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ trimestre: window.trimestreSel, anno: window.annoSel, password: pass || null }) });
+    function compartirTrimestre() {
+      var anno = window.annoSel;
+      var trim = window.trimestreSel;
+      var div = document.createElement('div');
+      div.id = 'compartirPanel';
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+      var botonesOpciones = '';
+      if (trim !== 'TODOS') {
+        botonesOpciones += '<button id="btnTrim" style="background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;text-align:left;">📅 Solo ' + trim + ' ' + anno + '</button>';
+      }
+      botonesOpciones += '<button id="btnTodos" style="background:#1e1e28;border:1px solid ' + (trim === 'TODOS' ? '#e8c87a' : '#2a2a3a') + ';color:' + (trim === 'TODOS' ? '#e8c87a' : '#9a90b4') + ';border-radius:10px;padding:12px;font-size:14px;cursor:pointer;text-align:left;">📆 Todo el año ' + anno + '</button>';
+      div.innerHTML =
+        '<div style="background:#16161e;border:1px solid #2a2a3a;border-radius:16px;padding:28px;width:100%;max-width:380px;">' +
+        '<div style="font-size:17px;font-weight:700;color:#f0ede8;margin-bottom:6px;">🔗 Compartir con gestoría</div>' +
+        '<div style="font-size:13px;color:#6a6070;margin-bottom:20px;">Elige qué periodo quieres compartir</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">' + botonesOpciones + '</div>' +
+        '<input id="compartirPass" placeholder="Contraseña (opcional)" style="width:100%;background:#1e1e28;border:1px solid #2a2a3a;color:#f0ede8;border-radius:8px;padding:10px;font-size:13px;margin-bottom:12px;">' +
+        '<button id="btnCancelarCompartir" style="width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;">Cancelar</button>' +
+        '</div>';
+      document.body.appendChild(div);
+      if (trim !== 'TODOS') document.getElementById('btnTrim').onclick = function() { ejecutarCompartir(trim, anno); };
+      document.getElementById('btnTodos').onclick = function() { ejecutarCompartir('TODOS', anno); };
+      document.getElementById('btnCancelarCompartir').onclick = function() { document.getElementById('compartirPanel').remove(); };
+    }
+
+    async function ejecutarCompartir(trimestre, anno) {
+      var pass = document.getElementById('compartirPass') ? document.getElementById('compartirPass').value || null : null;
+      var panel = document.getElementById('compartirPanel');
+      if (panel) panel.remove();
+      var r = await fetch(API + '/api/compartir/generar', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ trimestre: trimestre, anno: anno, password: pass }) });
       var d = await r.json();
       if (d.url) {
-        prompt('Enlace generado. Cópialo y envíaselo a tu gestoría:', d.url);
+        var url = d.url;
+        var div2 = document.createElement('div');
+        div2.id = 'enlacePanel';
+        div2.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;';
+        div2.innerHTML =
+          '<div style="background:#16161e;border:1px solid #2a2a3a;border-radius:16px;padding:28px;width:100%;max-width:380px;">' +
+          '<div style="font-size:17px;font-weight:700;color:#f0ede8;margin-bottom:6px;">✅ Enlace generado</div>' +
+          '<div style="font-size:13px;color:#6a6070;margin-bottom:16px;">Cópialo y envíalo a tu gestoría</div>' +
+          '<div style="background:#1e1e28;border:1px solid #2a2a3a;border-radius:8px;padding:12px;font-size:12px;color:#e8c87a;word-break:break-all;margin-bottom:16px;">' + url + '</div>' +
+          '<button id="btnCopiarEnlace" style="width:100%;background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;">📋 Copiar enlace</button>' +
+          '<button id="btnCerrarEnlace" style="width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;">Cerrar</button>' +
+          '</div>';
+        document.body.appendChild(div2);
+        document.getElementById('btnCopiarEnlace').onclick = function() { navigator.clipboard.writeText(url).then(function(){ alert('Copiado!'); }); };
+        document.getElementById('btnCerrarEnlace').onclick = function() { document.getElementById('enlacePanel').remove(); };
       }
     }
 
