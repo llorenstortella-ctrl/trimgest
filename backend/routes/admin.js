@@ -493,6 +493,8 @@ router.post('/cargar-demo', async (req, res) => {
 
 // Test recordatorio trimestral
 router.post('/test-recordatorio', async (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
   try {
     const { enviarRecordatorioTrimestral } = require('../utils/email');
     const email = req.body.email || 'feimcateva@gmail.com';
