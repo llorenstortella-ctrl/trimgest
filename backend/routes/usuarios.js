@@ -113,7 +113,7 @@ router.get('/perfil', (req, res) => {
     const usuarios = getUsuarios();
     const usuario = usuarios.find(u => u.id === decoded.id);
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', cp: usuario.cp || '', ciudad: usuario.ciudad || '', provincia: usuario.provincia || '', email: usuario.email, plan: usuario.plan || 'basico', facturas_mes: usuario.subidas_mes || usuario.facturas_mes || 0, plan_gratuito: usuario.plan_gratuito || false, telefono: usuario.telefono || '' });
+    res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, nif: usuario.nif || '', direccion: usuario.direccion || '', cp: usuario.cp || '', ciudad: usuario.ciudad || '', provincia: usuario.provincia || '', email: usuario.email, plan: usuario.plan || 'basico', facturas_mes: usuario.subidas_mes || usuario.facturas_mes || 0, plan_gratuito: usuario.plan_gratuito || false, telefono: usuario.telefono || '', onboarding_completado: usuario.onboarding_completado || false, empresaId: usuario.empresaId });
   } catch(e) {
     res.status(401).json({ error: 'No autorizado' });
   }
