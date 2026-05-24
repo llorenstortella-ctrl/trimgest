@@ -1,5 +1,4 @@
 const express = require('express');
-const { simpleParser } = require('mailparser');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
@@ -146,28 +145,13 @@ async function procesarPDFNomina(buffer, nombreArchivo, empresaId) {
   return { ok: true, nomina: nueva };
 }
 
-router.post('/inbound', express.text({ type: '*/*', limit: '25mb' }), async (req, res) => {
+router.post('/inbound', express.json({ limit: '25mb' }), async (req, res) => {
   res.json({ ok: true });
 
   try {
-    let toEmail, fromEmail, adjuntos;
-
-    // Si viene raw email del Worker de Cloudflare
-    if (typeof req.body === 'string' && req.body.includes('MIME-Version')) {
-      const parsed = await simpleParser(req.body);
-      toEmail = (parsed.to && parsed.to.text || '').toLowerCase();
-      fromEmail = (parsed.from && parsed.from.text || '').toLowerCase();
-      adjuntos = (parsed.attachments || []).map(function(a) {
-        return { filename: a.filename, content: a.content.toString('base64') };
-      });
-    } else {
-      // Formato JSON (Resend o Worker con JSON)
-      let payload;
-      try { payload = JSON.parse(req.body); } catch(e) { payload = req.body; }
-      toEmail = (payload.to || '').toLowerCase();
-      fromEmail = (payload.from || '').toLowerCase();
-      adjuntos = payload.attachments || [];
-    }
+    const payload = req.body;
+    const toEmail = (payload.to || '').toLowerCase();
+    const fromEmail = (payload.from || '').toLowerCase();
 
     // Extraer empresaId del email destinatario
     // facturas+emp_XXXX@... o nominas+emp_XXXX@...
@@ -187,8 +171,8 @@ router.post('/inbound', express.text({ type: '*/*', limit: '25mb' }), async (req
     if (!usuario) return;
 
     // Procesar adjuntos PDF
-
-    const pdfs = (adjuntos || []).filter(function(a) {
+    const adjuntos = payload.attachments || [];
+    const pdfs = adjuntos.filter(function(a) {
       return a.filename && a.filename.toLowerCase().endsWith('.pdf');
     });
 
