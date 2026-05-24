@@ -2,49 +2,7 @@
 <html lang="es">
 <head>
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-LRLKFDTN1E">
-function mostrarModalEmail() {
-  var empresaId = localStorage.getItem('trimgest_empresaId') || '';
-  var emailFact = 'facturas+' + empresaId + '@trimgest.es';
-  var emailNom = 'nominas+' + empresaId + '@trimgest.es';
-  var modal = document.createElement('div');
-  modal.id = 'modalEmailImport';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
-  var inner = document.createElement('div');
-  inner.style.cssText = 'background:#16161e;border-radius:16px;padding:24px;max-width:480px;width:100%;border:1px solid #2a2a3a;';
-  inner.innerHTML = '<div style="font-size:20px;color:#e8c87a;font-weight:600;margin-bottom:8px;">&#128267; Importar por email</div>' +
-    '<p style="color:#9a90b4;font-size:14px;margin-bottom:20px;">Reenvía cualquier factura o nómina en PDF a estas direcciones y la IA la clasificará automáticamente en tu panel.</p>' +
-    '<div style="margin-bottom:16px;">' +
-    '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">FACTURAS DE PROVEEDOR</div>' +
-    '<div style="display:flex;align-items:center;gap:8px;background:#0f0f13;border-radius:10px;padding:12px;">' +
-    '<div style="font-size:13px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;" id="modalEmailFact">' + emailFact + '</div>' +
-    '<button onclick="copiarEmailModal('modalEmailFact')" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Copiar</button>' +
-    '</div></div>' +
-    '<div style="margin-bottom:24px;">' +
-    '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">NÓMINAS</div>' +
-    '<div style="display:flex;align-items:center;gap:8px;background:#0f0f13;border-radius:10px;padding:12px;">' +
-    '<div style="font-size:13px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;" id="modalEmailNom">' + emailNom + '</div>' +
-    '<button onclick="copiarEmailModal('modalEmailNom')" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Copiar</button>' +
-    '</div></div>' +
-    '<button onclick="document.getElementById('modalEmailImport').remove()" style="width:100%;background:#2a2a3a;color:#9a90b4;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;">Cerrar</button>';
-  modal.appendChild(inner);
-  modal.onclick = function(e) { if(e.target===modal) modal.remove(); };
-  document.body.appendChild(modal);
-}
-
-function copiarEmailModal(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  navigator.clipboard.writeText(el.textContent).then(function() {
-    var btn = el.nextElementSibling;
-    var orig = btn.textContent;
-    btn.textContent = '¡Copiado!';
-    btn.style.background = '#7ec47e';
-    setTimeout(function() { btn.textContent = orig; btn.style.background = '#e8c87a'; }, 2000);
-  });
-}
-
-</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LRLKFDTN1E"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -1413,6 +1371,77 @@ async function exportarExcel(tipo) {
         if (d.url) window.location.href = d.url;
       } catch(e) { alert('Error al conectar con el sistema de pago'); }
     }
+
+function mostrarModalEmail() {
+  var empresaId = localStorage.getItem('trimgest_empresaId') || '';
+  var emailFact = 'facturas+' + empresaId + '@trimgest.es';
+  var emailNom = 'nominas+' + empresaId + '@trimgest.es';
+
+  var modal = document.createElement('div');
+  modal.id = 'modalEmailImport';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  var inner = document.createElement('div');
+  inner.style.cssText = 'background:#16161e;border-radius:16px;padding:24px;max-width:480px;width:100%;border:1px solid #2a2a3a;';
+
+  var titulo = document.createElement('div');
+  titulo.style.cssText = 'font-size:20px;color:#e8c87a;font-weight:600;margin-bottom:8px;';
+  titulo.textContent = 'Importar por email';
+
+  var desc = document.createElement('p');
+  desc.style.cssText = 'color:#9a90b4;font-size:14px;margin-bottom:20px;';
+  desc.textContent = 'Reenvía cualquier factura o nómina en PDF a estas direcciones y la IA la clasificará automáticamente en tu panel.';
+
+  function crearFila(label, email, idEl) {
+    var bloque = document.createElement('div');
+    bloque.style.marginBottom = '16px';
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:12px;color:#6a6070;margin-bottom:6px;';
+    lbl.textContent = label;
+    var fila = document.createElement('div');
+    fila.style.cssText = 'display:flex;align-items:center;gap:8px;background:#0f0f13;border-radius:10px;padding:12px;';
+    var txt = document.createElement('div');
+    txt.id = idEl;
+    txt.style.cssText = 'font-size:13px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;';
+    txt.textContent = email;
+    var btn = document.createElement('button');
+    btn.style.cssText = 'background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;';
+    btn.textContent = 'Copiar';
+    btn.onclick = function() { copiarEmailModal(idEl); };
+    fila.appendChild(txt);
+    fila.appendChild(btn);
+    bloque.appendChild(lbl);
+    bloque.appendChild(fila);
+    return bloque;
+  }
+
+  var btnCerrar = document.createElement('button');
+  btnCerrar.style.cssText = 'width:100%;background:#2a2a3a;color:#9a90b4;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;';
+  btnCerrar.textContent = 'Cerrar';
+  btnCerrar.onclick = function() { modal.remove(); };
+
+  inner.appendChild(titulo);
+  inner.appendChild(desc);
+  inner.appendChild(crearFila('FACTURAS DE PROVEEDOR', emailFact, 'modalEmailFact'));
+  inner.appendChild(crearFila('NOMINAS', emailNom, 'modalEmailNom'));
+  inner.appendChild(btnCerrar);
+
+  modal.appendChild(inner);
+  modal.onclick = function(e) { if(e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+function copiarEmailModal(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    var btn = el.nextElementSibling;
+    var orig = btn.textContent;
+    btn.textContent = '¡Copiado!';
+    btn.style.background = '#7ec47e';
+    setTimeout(function() { btn.textContent = orig; btn.style.background = '#e8c87a'; }, 2000);
+  });
+}
   </script>
 </body>
 </html>
