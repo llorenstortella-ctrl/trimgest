@@ -69,8 +69,7 @@ ${texto}` }
   return JSON.parse(clean);
 }
 
-async function procesarPDFFactura(buffer, nombreArchivo, empresaId, emailUsuario, tipoFactura) {
-  tipoFactura = tipoFactura || 'proveedor';
+async function procesarPDFFactura(buffer, nombreArchivo, empresaId, emailUsuario) {
   const { uploadsDir, facturasPath } = getEmpresaDirs(empresaId);
   const nombreFinal = Date.now() + '-' + nombreArchivo;
   const rutaFinal = path.join(uploadsDir, nombreFinal);
@@ -90,7 +89,7 @@ async function procesarPDFFactura(buffer, nombreArchivo, empresaId, emailUsuario
   const nueva = {
     id: Date.now() + Math.floor(Math.random() * 1000),
     archivo: nombreFinal,
-    tipo: tipoFactura,
+    tipo: 'proveedor',
     nombre: datos.nombre,
     cif: datos.cif || null,
     numero_factura: datos.numero_factura,
@@ -178,9 +177,8 @@ router.post('/inbound', express.text({ type: '*/*', limit: '25mb' }), async (req
 
     // Determinar tipo: facturas o nominas
     const esFact = toEmail.startsWith('facturas+');
-    const esCli = toEmail.startsWith('clientes+');
     const esNom = toEmail.startsWith('nominas+');
-    if (!esFact && !esCli && !esNom) return;
+    if (!esFact && !esNom) return;
 
     // Verificar que el remitente es el usuario registrado
     const usuariosPath = path.join(baseDataDir, 'usuarios.json');
@@ -202,9 +200,8 @@ router.post('/inbound', express.text({ type: '*/*', limit: '25mb' }), async (req
       try {
         var buffer = Buffer.from(adj.content, 'base64');
         var resultado;
-        if (esFact || esCli) {
-          var tipoFact = esCli ? 'cliente' : 'proveedor';
-          resultado = await procesarPDFFactura(buffer, adj.filename, empresaId, usuario.email, tipoFact);
+        if (esFact) {
+          resultado = await procesarPDFFactura(buffer, adj.filename, empresaId, usuario.email);
         } else {
           resultado = await procesarPDFNomina(buffer, adj.filename, empresaId);
         }
@@ -217,7 +214,7 @@ router.post('/inbound', express.text({ type: '*/*', limit: '25mb' }), async (req
     // Email resumen al usuario
     const ok = resultados.filter(function(r) { return r.ok; }).length;
     const err = resultados.filter(function(r) { return !r.ok; }).length;
-    const tipo = esNom ? 'nominas' : esCli ? 'facturas de cliente' : 'facturas de proveedor';
+    const tipo = esFact ? 'facturas' : 'nominas';
 
     let htmlResumen = '<h2>TrimGest — Importacion por email</h2>';
     htmlResumen += '<p>Hemos procesado tu email con ' + pdfs.length + ' archivo(s):</p><ul>';

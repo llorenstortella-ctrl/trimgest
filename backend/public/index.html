@@ -1393,6 +1393,7 @@ function mostrarModalEmail() {
     } catch(e) {}
   }
   var emailFact = 'facturas+' + empresaId + '@trimgest.es';
+  var emailCli = 'clientes+' + empresaId + '@trimgest.es';
   var emailNom = 'nominas+' + empresaId + '@trimgest.es';
 
   var modal = document.createElement('div');
@@ -1441,6 +1442,7 @@ function mostrarModalEmail() {
   inner.appendChild(titulo);
   inner.appendChild(desc);
   inner.appendChild(crearFila('FACTURAS DE PROVEEDOR', emailFact, 'modalEmailFact'));
+  inner.appendChild(crearFila('FACTURAS DE CLIENTE', emailCli, 'modalEmailCli'));
   inner.appendChild(crearFila('NOMINAS', emailNom, 'modalEmailNom'));
   inner.appendChild(btnCerrar);
 
