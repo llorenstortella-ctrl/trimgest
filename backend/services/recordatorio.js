@@ -46,7 +46,7 @@ async function ejecutarRecordatorios() {
     for (const empresa of empresas) {
       for (const t of trimestres) {
         // Comprobar si ya enviamos hoy para no duplicar
-        const claveHoy = `recordatorio_${t.trimestre}_${t.anno}_${new Date().toISOString().slice(0, 10)}`;
+        const claveHoy = `recordatorio_${t.trimestre}_${t.anno}`;
         if (empresa.recordatorios_enviados && empresa.recordatorios_enviados.includes(claveHoy)) {
           console.log('[Recordatorio] Ya enviado hoy a', empresa.email);
           continue;
