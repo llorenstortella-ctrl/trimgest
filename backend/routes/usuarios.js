@@ -136,6 +136,7 @@ router.put('/perfil', (req, res) => {
     if (ciudad !== undefined) usuarios[idx].ciudad = ciudad;
     if (provincia !== undefined) usuarios[idx].provincia = provincia;
     if (telefono !== undefined) usuarios[idx].telefono = telefono;
+    if (req.body.onboarding_completado !== undefined) usuarios[idx].onboarding_completado = req.body.onboarding_completado;
     saveUsuarios(usuarios);
     res.json({ ok: true });
   } catch(e) {

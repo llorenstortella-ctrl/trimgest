@@ -962,6 +962,7 @@
       var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await perfilRes.json();
       window.empresaId = perfil.empresaId || '';
+      window.perfilOnboarding = perfil;
       var bannerHTML = '';
       if (!perfil.plan_gratuito) {
         var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
@@ -1465,7 +1466,7 @@ function copiarEmailModal(id) {
 }
 
 function mostrarOnboarding() {
-  if (localStorage.getItem('trimgest_onboarding') === 'done') return;
+  if (window.perfilOnboarding && window.perfilOnboarding.onboarding_completado) return;
 
   var paso = 1;
 
@@ -1529,7 +1530,8 @@ function mostrarOnboarding() {
         paso++;
         renderPaso();
       } else {
-        localStorage.setItem('trimgest_onboarding', 'done');
+        fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
+        if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
         overlay.remove();
         window.uploadOpen = true;
         renderApp();
@@ -1540,7 +1542,8 @@ function mostrarOnboarding() {
     btnSaltar.style.cssText = 'width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;margin-top:12px;padding:8px;';
     btnSaltar.textContent = 'Saltar introducción';
     btnSaltar.onclick = function() {
-      localStorage.setItem('trimgest_onboarding', 'done');
+      fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
+      if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
       overlay.remove();
     };
 
