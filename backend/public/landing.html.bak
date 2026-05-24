@@ -104,7 +104,7 @@
   <nav class="nav">
     <div class="nav-logo">TrimGest</div>
     <div style="display:flex;gap:12px;align-items:center;">
-      <a href="/panel-gestoria" class="nav-btn">Soy gestoría</a>
+      <a href="/panel-gestoria#registro" class="nav-btn">Soy gestoría</a>
       <a href="/app" class="nav-btn">Entrar</a>
     </div>
   </nav>
@@ -215,7 +215,7 @@
             <li>Clientes ilimitados</li>
             <li>Sin coste para la gestoria</li>
           </ul>
-          <a href="/panel-gestoria" class="plan-btn" style="background:#7ec47e;">Registrarse gratis</a>
+          <a href="/panel-gestoria#registro" class="plan-btn" style="background:#7ec47e;">Registrarse gratis</a>
         </div>
       </div>
       <div class="extra">Subidas extra: <span>0,20€ por subida</span> si superas tu limite trimestral</div>

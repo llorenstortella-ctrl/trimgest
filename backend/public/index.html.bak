@@ -34,6 +34,7 @@
     .selectores { display: flex; gap: 8px; margin-top: 10px; margin-bottom: 16px; }
     .selectores select { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 6px 10px; border-radius: 8px; font-size: 13px; cursor: pointer; }
     .btn-subir { background: #e8c87a; color: #1a1500; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-email-import { background: #1e1e28; color: #e8c87a; border: 1px solid #e8c87a; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .btn-ajustes { background: none; border: none; color: #6a6070; font-size: 22px; cursor: pointer; padding: 8px; }
     .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .stat { background: #1e1e28; border-radius: 10px; padding: 14px; }
@@ -393,7 +394,7 @@
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
         '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
-        '<button class="btn-subir" onclick="subirNomina()">+ Subir</button>' +
+        '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores"><select onchange="window.annoSel=this.value;renderNominas()">' + optsAno + '</select></div>' +
         '<div class="stats">' +
@@ -793,13 +794,13 @@
         '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
         '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Facturas de proveedor</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<div id="emailFacturasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">facturas+' + perfil.empresaId + '@pelinul.resend.app</div>' +
+        '<div id="emailFacturasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">facturas+' + perfil.empresaId + '@trimgest.es</div>' +
         '<button onclick="copiarEmail(' + "'facturas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
         '</div></div>' +
         '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
         '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nominas</div>' +
         '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@pelinul.resend.app</div>' +
+        '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@trimgest.es</div>' +
         '<button onclick="copiarEmail(' + "'nominas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
         '</div></div>' +
         '<div style="font-size:11px;color:#6a6070;">Recibirás un email de confirmación cuando se procesen.</div>' +
@@ -959,6 +960,9 @@
       var facturas = await cargarFacturas();
       var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await perfilRes.json();
+      window.empresaId = perfil.empresaId || '';
+      window.perfilOnboarding = perfil;
+      if (!window.onboardingMostrado) { window.onboardingMostrado = true; mostrarOnboarding(); }
       var bannerHTML = '';
       if (!perfil.plan_gratuito) {
         var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
@@ -1098,10 +1102,14 @@
         bannerHTML +
         '<div class="content">' +
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
-        '<div class="upload-title">Subir factura</div><div class="upload-sub">Primero indica que tipo es</div>' +
-        '<div class="tipo-selector"><div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">Proveedor</div><div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">Cliente</div></div>' +
-        '<div class="upload-btns" style="width:100%"><button class="btn-file" style="width:100%;font-size:16px;padding:16px;"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">+ Subir factura</button></div>' +
-        '<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Introducir manual</button>' +
+        '<div class="upload-title">&#128203; ¿Qué quieres subir?</div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">' +
+        '<button id="btnSubirProv" style="width:100%;background:#2a1a1a;border:1px solid #c06060;color:#c06060;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">&#128196; Factura de proveedor</button>' +
+        '<button id="btnSubirCli" style="width:100%;background:#1a2a1a;border:1px solid #7ec47e;color:#7ec47e;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">&#129534; Factura de cliente</button>' +
+        '<button id="btnSubirNom" style="width:100%;background:#1a1a2a;border:1px solid #9a90b4;color:#9a90b4;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">&#128100; Nómina</button>' +
+        '<button id="btnImportEmail" style="width:100%;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">&#128267; Importar por email</button>' +
+        '<button id="btnIntroManual" style="width:100%;background:#1e1e28;border:1px solid #2a2a3a;color:#6a6070;border-radius:10px;padding:8px;font-size:12px;cursor:pointer;">&#9999;&#65039; Introducir manual</button>' +
+        '</div>' +
         '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
         '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
         '<input id="manualNombre" class="manual-input" placeholder="Nombre proveedor/cliente">' +
@@ -1119,6 +1127,16 @@
         '<div class="tabs"><div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div><div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div></div>' +
         '<div class="section-title">Facturas del periodo</div>' +
         botonesEnvio + listaHTML + botonesEnvio + '</div>';
+      var btnEmail = document.getElementById('btnImportEmail');
+      if (btnEmail) btnEmail.onclick = mostrarModalEmail;
+      var btnProv = document.getElementById('btnSubirProv');
+      if (btnProv) btnProv.onclick = function() { window.tipoSel = 'proveedor'; document.getElementById('fileInput').click(); };
+      var btnCli = document.getElementById('btnSubirCli');
+      if (btnCli) btnCli.onclick = function() { window.tipoSel = 'cliente'; document.getElementById('fileInput').click(); };
+      var btnNom = document.getElementById('btnSubirNom');
+      if (btnNom) btnNom.onclick = function() { subirNomina(); };
+      var btnManual = document.getElementById('btnIntroManual');
+      if (btnManual) btnManual.onclick = function() { toggleManual(); };
     }
 
     function seleccionarTipo(tipo) {
@@ -1367,6 +1385,199 @@ async function exportarExcel(tipo) {
         if (d.url) window.location.href = d.url;
       } catch(e) { alert('Error al conectar con el sistema de pago'); }
     }
+
+function mostrarModalEmail() {
+  var empresaId = window.empresaId || '';
+  if (!empresaId) {
+    try {
+      var token = localStorage.getItem('trimgest_token');
+      if (token) { var payload = JSON.parse(atob(token.split('.')[1])); empresaId = payload.empresaId || ''; }
+    } catch(e) {}
+  }
+  var emailFact = 'facturas+' + empresaId + '@trimgest.es';
+  var emailCli = 'clientes+' + empresaId + '@trimgest.es';
+  var emailNom = 'nominas+' + empresaId + '@trimgest.es';
+
+  var modal = document.createElement('div');
+  modal.id = 'modalEmailImport';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  var inner = document.createElement('div');
+  inner.style.cssText = 'background:#16161e;border-radius:16px;padding:24px;max-width:480px;width:100%;border:1px solid #2a2a3a;';
+
+  var titulo = document.createElement('div');
+  titulo.style.cssText = 'font-size:20px;color:#e8c87a;font-weight:600;margin-bottom:8px;';
+  titulo.textContent = 'Importar por email';
+
+  var desc = document.createElement('p');
+  desc.style.cssText = 'color:#9a90b4;font-size:14px;margin-bottom:20px;';
+  desc.textContent = 'Reenvía cualquier factura o nómina en PDF a estas direcciones y la IA la clasificará automáticamente en tu panel.';
+
+  function crearFila(label, email, idEl) {
+    var bloque = document.createElement('div');
+    bloque.style.marginBottom = '16px';
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:12px;color:#6a6070;margin-bottom:6px;';
+    lbl.textContent = label;
+    var fila = document.createElement('div');
+    fila.style.cssText = 'display:flex;align-items:center;gap:8px;background:#0f0f13;border-radius:10px;padding:12px;';
+    var txt = document.createElement('div');
+    txt.id = idEl;
+    txt.style.cssText = 'font-size:13px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;';
+    txt.textContent = email;
+    var btn = document.createElement('button');
+    btn.style.cssText = 'background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;';
+    btn.textContent = 'Copiar';
+    btn.onclick = function() { copiarEmailModal(idEl); };
+    fila.appendChild(txt);
+    fila.appendChild(btn);
+    bloque.appendChild(lbl);
+    bloque.appendChild(fila);
+    return bloque;
+  }
+
+  var btnCerrar = document.createElement('button');
+  btnCerrar.style.cssText = 'width:100%;background:#2a2a3a;color:#9a90b4;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;';
+  btnCerrar.textContent = 'Cerrar';
+  btnCerrar.onclick = function() { modal.remove(); };
+
+  inner.appendChild(titulo);
+  inner.appendChild(desc);
+  inner.appendChild(crearFila('FACTURAS DE PROVEEDOR', emailFact, 'modalEmailFact'));
+  inner.appendChild(crearFila('FACTURAS DE CLIENTE', emailCli, 'modalEmailCli'));
+  inner.appendChild(crearFila('NOMINAS', emailNom, 'modalEmailNom'));
+  inner.appendChild(btnCerrar);
+
+  modal.appendChild(inner);
+  modal.onclick = function(e) { if(e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+function copiarEmailModal(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    var btn = el.nextElementSibling;
+    var orig = btn.textContent;
+    btn.textContent = '¡Copiado!';
+    btn.style.background = '#7ec47e';
+    setTimeout(function() { btn.textContent = orig; btn.style.background = '#e8c87a'; }, 2000);
+  });
+}
+
+function mostrarOnboarding() {
+  if (window.perfilOnboarding && window.perfilOnboarding.onboarding_completado) return;
+
+  var paso = 1;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'onboardingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  function renderPaso() {
+    overlay.innerHTML = '';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#16161e;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;border:1px solid #2a2a3a;';
+
+    var pasos = [
+      {
+        emoji: '👋',
+        titulo: 'Bienvenido a TrimGest',
+        texto: 'Gestiona tus facturas y nóminas con IA. En menos de 2 minutos tendrás todo listo para tu primer trimestre.',
+        btn: 'Empezar →'
+      },
+      {
+        emoji: '📄',
+        titulo: 'Sube tu primera factura',
+        texto: 'Toca "+ Subir" y selecciona el tipo de documento. La IA extraerá todos los datos automáticamente. También puedes reenviar facturas por email.',
+        btn: 'Entendido →'
+      },
+      {
+        emoji: '🤝',
+        titulo: 'Conecta con tu gestoría',
+        texto: 'Invita a tu gestoría para que acceda a tus datos directamente desde su panel. Es gratis para ellos y te ahorra tiempo a ti.',
+        btn: '¡Listo, empezar!'
+      }
+    ];
+
+    var p = pasos[paso - 1];
+
+    var indicadores = document.createElement('div');
+    indicadores.style.cssText = 'display:flex;justify-content:center;gap:6px;margin-bottom:24px;';
+    for (var i = 1; i <= 3; i++) {
+      var dot = document.createElement('div');
+      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (i === paso ? '#e8c87a' : '#2a2a3a') + ';';
+      indicadores.appendChild(dot);
+    }
+
+    var emoji = document.createElement('div');
+    emoji.style.cssText = 'font-size:48px;text-align:center;margin-bottom:16px;';
+    emoji.textContent = p.emoji;
+
+    var titulo = document.createElement('div');
+    titulo.style.cssText = 'font-size:20px;color:#f0ede8;font-weight:700;text-align:center;margin-bottom:12px;';
+    titulo.textContent = p.titulo;
+
+    var texto = document.createElement('p');
+    texto.style.cssText = 'color:#9a90b4;font-size:14px;text-align:center;line-height:1.6;margin-bottom:28px;';
+    texto.textContent = p.texto;
+
+    var checkRow = null;
+    if (paso === 3) {
+      checkRow = document.createElement('div');
+      checkRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;';
+      var chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.id = 'noMostrarOnboarding';
+      chk.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#e8c87a;';
+      var chkLabel = document.createElement('label');
+      chkLabel.htmlFor = 'noMostrarOnboarding';
+      chkLabel.style.cssText = 'color:#9a90b4;font-size:13px;cursor:pointer;';
+      chkLabel.textContent = 'No volver a mostrar';
+      checkRow.appendChild(chk);
+      checkRow.appendChild(chkLabel);
+    }
+
+    var btnSiguiente = document.createElement('button');
+    btnSiguiente.style.cssText = 'width:100%;background:#e8c87a;color:#1a1500;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;';
+    btnSiguiente.textContent = p.btn;
+    btnSiguiente.onclick = function() {
+      if (paso < 3) {
+        paso++;
+        renderPaso();
+      } else {
+        var noMostrar = document.getElementById('noMostrarOnboarding');
+        if (noMostrar && noMostrar.checked) {
+          fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
+          if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
+        }
+        overlay.remove();
+        window.uploadOpen = true;
+        renderApp();
+      }
+    };
+
+    var btnSaltar = document.createElement('button');
+    btnSaltar.style.cssText = 'width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;margin-top:12px;padding:8px;';
+    btnSaltar.textContent = 'Saltar introducción';
+    btnSaltar.onclick = function() {
+      overlay.remove();
+    };
+
+    box.appendChild(indicadores);
+    box.appendChild(emoji);
+    box.appendChild(titulo);
+    box.appendChild(texto);
+    if (checkRow) box.appendChild(checkRow);
+    box.appendChild(btnSiguiente);
+    box.appendChild(btnSaltar);
+    overlay.appendChild(box);
+  }
+
+  renderPaso();
+  document.body.appendChild(overlay);
+}
+
   </script>
 </body>
 </html>
