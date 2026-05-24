@@ -1126,7 +1126,6 @@ function copiarEmailModal(id) {
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
         '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
-        '<button class="btn-email-import" onclick="mostrarModalEmail()">&#128267; Email</button>' +
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores"><select onchange="window.trimestreSel=this.value;renderApp()">' + optsTrim + '</select><select onchange="window.annoSel=this.value;renderApp()">' + optsAno + '</select></div>' +
@@ -1146,6 +1145,7 @@ function copiarEmailModal(id) {
         '<div class="tipo-selector"><div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">Proveedor</div><div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">Cliente</div></div>' +
         '<div class="upload-btns" style="width:100%"><button class="btn-file" style="width:100%;font-size:16px;padding:16px;"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">+ Subir factura</button></div>' +
         '<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Introducir manual</button>' +
+        '<button id="btnImportEmail" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">&#128267; Importar por email</button>' +
         '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
         '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
         '<input id="manualNombre" class="manual-input" placeholder="Nombre proveedor/cliente">' +
@@ -1178,6 +1178,8 @@ function copiarEmailModal(id) {
       window.uploadOpen = !window.uploadOpen;
       if (!window.uploadOpen) window.tipoSel = null;
       renderApp();
+      var btn = document.getElementById('btnImportEmail');
+      if (btn) btn.onclick = mostrarModalEmail;
     }
 
     function toggleEdit(id) {
