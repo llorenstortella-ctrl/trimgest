@@ -1522,6 +1522,22 @@ function mostrarOnboarding() {
     texto.style.cssText = 'color:#9a90b4;font-size:14px;text-align:center;line-height:1.6;margin-bottom:28px;';
     texto.textContent = p.texto;
 
+    var checkRow = null;
+    if (paso === 3) {
+      checkRow = document.createElement('div');
+      checkRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;';
+      var chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.id = 'noMostrarOnboarding';
+      chk.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#e8c87a;';
+      var chkLabel = document.createElement('label');
+      chkLabel.htmlFor = 'noMostrarOnboarding';
+      chkLabel.style.cssText = 'color:#9a90b4;font-size:13px;cursor:pointer;';
+      chkLabel.textContent = 'No volver a mostrar';
+      checkRow.appendChild(chk);
+      checkRow.appendChild(chkLabel);
+    }
+
     var btnSiguiente = document.createElement('button');
     btnSiguiente.style.cssText = 'width:100%;background:#e8c87a;color:#1a1500;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;';
     btnSiguiente.textContent = p.btn;
@@ -1530,8 +1546,11 @@ function mostrarOnboarding() {
         paso++;
         renderPaso();
       } else {
-        fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
-        if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
+        var noMostrar = document.getElementById('noMostrarOnboarding');
+        if (noMostrar && noMostrar.checked) {
+          fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
+          if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
+        }
         overlay.remove();
         window.uploadOpen = true;
         renderApp();
@@ -1542,8 +1561,6 @@ function mostrarOnboarding() {
     btnSaltar.style.cssText = 'width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;margin-top:12px;padding:8px;';
     btnSaltar.textContent = 'Saltar introducción';
     btnSaltar.onclick = function() {
-      fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
-      if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
       overlay.remove();
     };
 
@@ -1551,6 +1568,7 @@ function mostrarOnboarding() {
     box.appendChild(emoji);
     box.appendChild(titulo);
     box.appendChild(texto);
+    if (checkRow) box.appendChild(checkRow);
     box.appendChild(btnSiguiente);
     box.appendChild(btnSaltar);
     overlay.appendChild(box);
