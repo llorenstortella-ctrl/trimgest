@@ -960,6 +960,7 @@
       var facturas = await cargarFacturas();
       var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await perfilRes.json();
+      window.empresaId = perfil.empresaId || '';
       var bannerHTML = '';
       if (!perfil.plan_gratuito) {
         var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
@@ -1373,7 +1374,7 @@ async function exportarExcel(tipo) {
     }
 
 function mostrarModalEmail() {
-  var empresaId = localStorage.getItem('trimgest_empresaId') || '';
+  var empresaId = window.empresaId || '';
   var emailFact = 'facturas+' + empresaId + '@trimgest.es';
   var emailNom = 'nominas+' + empresaId + '@trimgest.es';
 
