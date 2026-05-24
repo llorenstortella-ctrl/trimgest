@@ -292,7 +292,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
               <button class="btn btn-secondary btn-sm" onclick="descargarPDFNominasCliente()">📄 PDF todas</button>
               <button id="btn-pdf-sel-nom" class="btn btn-secondary btn-sm" onclick="descargarPDFSeleccionadas()">📄 PDF seleccionadas</button>
             </div>
-            <div class="card">
+            <div class="card desktop-only">
               <div class="tabla-wrap">
                 <table class="tabla">
                   <thead><tr><th><input type="checkbox" id="check-all-nominas" onclick="toggleTodosNominas(this.checked)"></th><th>Trabajador</th><th>Mes</th><th>Ano</th><th>Bruto</th><th>Neto</th><th>Acciones</th></tr></thead>
@@ -300,6 +300,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 </table>
               </div>
             </div>
+            <div id="mobile-nominas-list" class="mobile-only"></div>
           </div>
         </div>
 
