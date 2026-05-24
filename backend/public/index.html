@@ -283,7 +283,6 @@
       window.trimestreSel = getTrimestre();
       window.annoSel = String(new Date().getFullYear());
       renderApp();
-      setTimeout(mostrarOnboarding, 500);
     }
 
     function cerrarSesion() {
@@ -963,6 +962,7 @@
       var perfil = await perfilRes.json();
       window.empresaId = perfil.empresaId || '';
       window.perfilOnboarding = perfil;
+      if (!window.onboardingMostrado) { window.onboardingMostrado = true; mostrarOnboarding(); }
       var bannerHTML = '';
       if (!perfil.plan_gratuito) {
         var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
