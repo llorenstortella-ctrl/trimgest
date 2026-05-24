@@ -1375,6 +1375,12 @@ async function exportarExcel(tipo) {
 
 function mostrarModalEmail() {
   var empresaId = window.empresaId || '';
+  if (!empresaId) {
+    try {
+      var token = localStorage.getItem('trimgest_token');
+      if (token) { var payload = JSON.parse(atob(token.split('.')[1])); empresaId = payload.empresaId || ''; }
+    } catch(e) {}
+  }
   var emailFact = 'facturas+' + empresaId + '@trimgest.es';
   var emailNom = 'nominas+' + empresaId + '@trimgest.es';
 
