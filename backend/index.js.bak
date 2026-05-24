@@ -19,10 +19,12 @@ const adminRouter = require('./routes/admin');
 const stripeRouter = require('./routes/stripe');
 const gestoriaRouter = require('./routes/gestoria');
 const compartirRouter = require('./routes/compartir');
+const inboundRouter = require('./routes/inbound');
 app.use(cors());
 app.use(express.json());
 
 app.use('/facturas', facturasRouter);
+app.use('/resend', inboundRouter);
 app.use('/generar', generarRouter);
 app.use('/auth', authRouter);
 app.use('/asesor', asesorRouter);
@@ -61,6 +63,9 @@ app.get('/compartir/:token', (req, res) => {
 
 app.get('/privacidad', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/privacidad.html'));
+});
+app.get('/gestores', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/gestores.html'));
 });
 
 app.get('/panel-gestoria', (req, res) => {
