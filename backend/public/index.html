@@ -17,7 +17,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; }
     .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
-    .auth-logo { font-size: 13px; letter-spacing: 4px; color: #6a6070; text-transform: uppercase; margin-bottom: 8px; }
+    .auth-logo { display: flex; justify-content: center; margin-bottom: 16px; }
     .auth-title { font-size: 28px; font-weight: 400; color: #e8c87a; margin-bottom: 40px; }
     .auth-form { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
     .auth-input { background: #16161e; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 14px; border-radius: 10px; font-size: 16px; width: 100%; }
@@ -122,7 +122,7 @@
   </div>
 
   <div class="auth-screen" id="registroScreen" style="display:none;">
-    <div class="auth-logo">TrimGest</div>
+    <div class="auth-logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="0" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="0" x2="14.5" y2="30" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="14.5" x2="30" y2="14.5" stroke="#0f0f13" stroke-width="2"/><text x="38" y="12" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="300" fill="#f0ede8" letter-spacing="-0.3">Trim</text><text x="38" y="27" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="600" fill="#e8c87a" letter-spacing="-0.3">Gest</text></svg></div>
     <div class="auth-title">Crear cuenta</div>
     <div class="auth-form">
       <input class="auth-input" id="regEmpresa" type="text" placeholder="Nombre de tu empresa">
@@ -1524,20 +1524,7 @@ function mostrarOnboarding() {
     texto.textContent = p.texto;
 
     var checkRow = null;
-    if (paso === 3) {
-      checkRow = document.createElement('div');
-      checkRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;';
-      var chk = document.createElement('input');
-      chk.type = 'checkbox';
-      chk.id = 'noMostrarOnboarding';
-      chk.style.cssText = 'width:18px;height:18px;cursor:pointer;accent-color:#e8c87a;';
-      var chkLabel = document.createElement('label');
-      chkLabel.htmlFor = 'noMostrarOnboarding';
-      chkLabel.style.cssText = 'color:#9a90b4;font-size:13px;cursor:pointer;';
-      chkLabel.textContent = 'No volver a mostrar';
-      checkRow.appendChild(chk);
-      checkRow.appendChild(chkLabel);
-    }
+
 
     var btnSiguiente = document.createElement('button');
     btnSiguiente.style.cssText = 'width:100%;background:#e8c87a;color:#1a1500;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;';
@@ -1547,11 +1534,8 @@ function mostrarOnboarding() {
         paso++;
         renderPaso();
       } else {
-        var noMostrar = document.getElementById('noMostrarOnboarding');
-        if (noMostrar && noMostrar.checked) {
-          fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
-          if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
-        }
+        fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
+        if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
         overlay.remove();
         window.uploadOpen = true;
         renderApp();
