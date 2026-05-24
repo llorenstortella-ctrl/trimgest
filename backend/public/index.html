@@ -1100,11 +1100,14 @@
         bannerHTML +
         '<div class="content">' +
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
-        '<div class="upload-title">Subir factura</div><div class="upload-sub">Primero indica que tipo es</div>' +
-        '<div class="tipo-selector"><div class="tipo-btn' + provClass + '" onclick="seleccionarTipo(\'proveedor\')">Proveedor</div><div class="tipo-btn' + cliClass + '" onclick="seleccionarTipo(\'cliente\')">Cliente</div></div>' +
-        '<div class="upload-btns" style="width:100%"><button class="btn-file" style="width:100%;font-size:16px;padding:16px;"' + btnDisabled + ' onclick="document.getElementById(\'fileInput\').click()">+ Subir factura</button></div>' +
-        '<button onclick="toggleManual()" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Introducir manual</button>' +
-        (window.tipoSel !== 'cliente' ? '<button id="btnImportEmail" style="width:100%;margin-top:10px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;" onclick=&quot;mostrarModalEmail()&quot;>&#128267; Importar por email</button>' : '') +
+        '<div class="upload-title">&#128203; ¿Qué quieres subir?</div>' +
+        '<div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">' +
+        '<button id="btnSubirProv" style="width:100%;background:#2a1a1a;border:1px solid #c06060;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">&#128196; Factura de proveedor</button>' +
+        '<button id="btnSubirCli" style="width:100%;background:#1a2a1a;border:1px solid #7ec47e;color:#7ec47e;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">&#129534; Factura de cliente</button>' +
+        '<button id="btnSubirNom" style="width:100%;background:#1a1a2a;border:1px solid #9a90b4;color:#9a90b4;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">&#128100; Nómina</button>' +
+        '<button id="btnImportEmail" style="width:100%;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">&#128267; Importar por email</button>' +
+        '<button id="btnIntroManual" style="width:100%;background:#1e1e28;border:1px solid #2a2a3a;color:#6a6070;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">&#9999;&#65039; Introducir manual</button>' +
+        '</div>' +
         '<div id="manualForm" style="display:none;flex-direction:column;gap:8px;margin-top:12px;">' +
         '<select id="manualTipo" class="manual-input"><option value="proveedor">Proveedor</option><option value="cliente">Cliente</option></select>' +
         '<input id="manualNombre" class="manual-input" placeholder="Nombre proveedor/cliente">' +
@@ -1124,6 +1127,14 @@
         botonesEnvio + listaHTML + botonesEnvio + '</div>';
       var btnEmail = document.getElementById('btnImportEmail');
       if (btnEmail) btnEmail.onclick = mostrarModalEmail;
+      var btnProv = document.getElementById('btnSubirProv');
+      if (btnProv) btnProv.onclick = function() { window.tipoSel = 'proveedor'; document.getElementById('fileInput').click(); };
+      var btnCli = document.getElementById('btnSubirCli');
+      if (btnCli) btnCli.onclick = function() { window.tipoSel = 'cliente'; document.getElementById('fileInput').click(); };
+      var btnNom = document.getElementById('btnSubirNom');
+      if (btnNom) btnNom.onclick = function() { subirNomina(); };
+      var btnManual = document.getElementById('btnIntroManual');
+      if (btnManual) btnManual.onclick = function() { toggleManual(); };
     }
 
     function seleccionarTipo(tipo) {
