@@ -283,6 +283,7 @@
       window.trimestreSel = getTrimestre();
       window.annoSel = String(new Date().getFullYear());
       renderApp();
+      setTimeout(mostrarOnboarding, 500);
     }
 
     function cerrarSesion() {
@@ -1462,6 +1463,100 @@ function copiarEmailModal(id) {
     setTimeout(function() { btn.textContent = orig; btn.style.background = '#e8c87a'; }, 2000);
   });
 }
+
+function mostrarOnboarding() {
+  if (localStorage.getItem('trimgest_onboarding') === 'done') return;
+
+  var paso = 1;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'onboardingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  function renderPaso() {
+    overlay.innerHTML = '';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#16161e;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;border:1px solid #2a2a3a;';
+
+    var pasos = [
+      {
+        emoji: '👋',
+        titulo: 'Bienvenido a TrimGest',
+        texto: 'Gestiona tus facturas y nóminas con IA. En menos de 2 minutos tendrás todo listo para tu primer trimestre.',
+        btn: 'Empezar →'
+      },
+      {
+        emoji: '📄',
+        titulo: 'Sube tu primera factura',
+        texto: 'Toca "+ Subir" y selecciona el tipo de documento. La IA extraerá todos los datos automáticamente. También puedes reenviar facturas por email.',
+        btn: 'Entendido →'
+      },
+      {
+        emoji: '🤝',
+        titulo: 'Conecta con tu gestoría',
+        texto: 'Invita a tu gestoría para que acceda a tus datos directamente desde su panel. Es gratis para ellos y te ahorra tiempo a ti.',
+        btn: '¡Listo, empezar!'
+      }
+    ];
+
+    var p = pasos[paso - 1];
+
+    var indicadores = document.createElement('div');
+    indicadores.style.cssText = 'display:flex;justify-content:center;gap:6px;margin-bottom:24px;';
+    for (var i = 1; i <= 3; i++) {
+      var dot = document.createElement('div');
+      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (i === paso ? '#e8c87a' : '#2a2a3a') + ';';
+      indicadores.appendChild(dot);
+    }
+
+    var emoji = document.createElement('div');
+    emoji.style.cssText = 'font-size:48px;text-align:center;margin-bottom:16px;';
+    emoji.textContent = p.emoji;
+
+    var titulo = document.createElement('div');
+    titulo.style.cssText = 'font-size:20px;color:#f0ede8;font-weight:700;text-align:center;margin-bottom:12px;';
+    titulo.textContent = p.titulo;
+
+    var texto = document.createElement('p');
+    texto.style.cssText = 'color:#9a90b4;font-size:14px;text-align:center;line-height:1.6;margin-bottom:28px;';
+    texto.textContent = p.texto;
+
+    var btnSiguiente = document.createElement('button');
+    btnSiguiente.style.cssText = 'width:100%;background:#e8c87a;color:#1a1500;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;';
+    btnSiguiente.textContent = p.btn;
+    btnSiguiente.onclick = function() {
+      if (paso < 3) {
+        paso++;
+        renderPaso();
+      } else {
+        localStorage.setItem('trimgest_onboarding', 'done');
+        overlay.remove();
+        window.uploadOpen = true;
+        renderApp();
+      }
+    };
+
+    var btnSaltar = document.createElement('button');
+    btnSaltar.style.cssText = 'width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;margin-top:12px;padding:8px;';
+    btnSaltar.textContent = 'Saltar introducción';
+    btnSaltar.onclick = function() {
+      localStorage.setItem('trimgest_onboarding', 'done');
+      overlay.remove();
+    };
+
+    box.appendChild(indicadores);
+    box.appendChild(emoji);
+    box.appendChild(titulo);
+    box.appendChild(texto);
+    box.appendChild(btnSiguiente);
+    box.appendChild(btnSaltar);
+    overlay.appendChild(box);
+  }
+
+  renderPaso();
+  document.body.appendChild(overlay);
+}
+
   </script>
 </body>
 </html>
