@@ -490,4 +490,21 @@ router.post('/cargar-demo', async (req, res) => {
   }
 });
 
+
+// Test recordatorio trimestral
+router.post('/test-recordatorio', async (req, res) => {
+  try {
+    const { enviarRecordatorioTrimestral } = require('../utils/email');
+    const email = req.body.email || 'feimcateva@gmail.com';
+    const nombre = req.body.nombre || 'FEIM CA TEVA SL';
+    const trimestre = req.body.trimestre || 2;
+    const anno = req.body.anno || 2026;
+    const numFacturas = req.body.numFacturas || 12;
+    await enviarRecordatorioTrimestral(email, nombre, trimestre, anno, numFacturas);
+    res.json({ ok: true, mensaje: 'Email enviado a ' + email });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
