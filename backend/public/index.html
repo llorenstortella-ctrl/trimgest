@@ -394,7 +394,7 @@
         '<div class="header-top"><div><div class="label">TrimGest</div><h1>Nominas ' + annoActual + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()" title="' + (window.estadoGestoria==='conectada'?window.nombreGestoria:'') + '" style="position:relative;">' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes(window.estadoGestoria!=='sin_gestoria'?'gestoria':undefined)" title="' + (window.estadoGestoria==='conectada'?window.nombreGestoria:(window.estadoGestoria==='pendiente'?'Solicitud pendiente':'')) + '" style="position:relative;">' +
         (window.estadoGestoria==='conectada' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#4caf7d;border:1px solid #0f0f13;"></span>' : '') +
         (window.estadoGestoria==='pendiente' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#e8c87a;border:1px solid #0f0f13;"></span>' : '') +
         '&#9881;</button>' +
@@ -739,7 +739,7 @@
       }
     }
 
-    async function mostrarAjustes() {
+    async function mostrarAjustes(tabInicial) {
       var res = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await res.json();
 
@@ -815,6 +815,7 @@
         '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">Volver</button>';
       document.body.appendChild(div);
       cargarGestoriasAjustes();
+      if (tabInicial === 'gestoria') { setTimeout(function() { var el = document.getElementById('ajGestoriasLista'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); }
     }
 
     async function solicitarBaja() {
@@ -1091,7 +1092,7 @@
         '<div class="header-top"><div><div class="label">' + (window.nombreEmpresa || 'TrimGest') + '</div><h1>' + (window.trimestreSel === 'TODOS' ? 'Año ' : window.trimestreSel + ' ') + window.annoSel + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()" title="' + (window.estadoGestoria==='conectada'?window.nombreGestoria:'') + '" style="position:relative;">' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes(window.estadoGestoria!=='sin_gestoria'?'gestoria':undefined)" title="' + (window.estadoGestoria==='conectada'?window.nombreGestoria:(window.estadoGestoria==='pendiente'?'Solicitud pendiente':'')) + '" style="position:relative;">' +
         (window.estadoGestoria==='conectada' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#4caf7d;border:1px solid #0f0f13;"></span>' : '') +
         (window.estadoGestoria==='pendiente' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#e8c87a;border:1px solid #0f0f13;"></span>' : '') +
         '&#9881;</button>' +
