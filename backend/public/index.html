@@ -1065,9 +1065,8 @@
         listaHTML += '</div>';
       }
 
-      var botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>';
-      botonesEnvio += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button></div>';
       var btnCompartirLabel = window.trimestreSel === 'TODOS' ? '🔗 Compartir año ' + window.annoSel + ' con gestoría' : '🔗 Compartir ' + window.trimestreSel + ' ' + window.annoSel + ' con gestoría';
+      var botonesEnvio = '<div style="display:flex;gap:6px;margin-top:8px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 4px;font-size:11px;cursor:pointer;">Excel Prov.</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 4px;font-size:11px;cursor:pointer;">Excel Cli.</button><button onclick="generarPDFs()" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 4px;font-size:11px;cursor:pointer;">PDFs</button></div>';
       botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">' + btnCompartirLabel + '</button>';
 
       var optsAno = anos.map(function(a) { return '<option value="' + a + '"' + (window.annoSel === a ? ' selected' : '') + '>' + a + '</option>'; }).join('');
@@ -1092,8 +1091,8 @@
         '<button onclick="window.filtroTipo=\'cliente\';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='cliente'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='cliente'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Clientes</button>' +
         '</div>' +
         '<div class="stats">' +
-        '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' pendientes</div></div>' +
-        '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' pendientes</div></div>' +
+        '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' facturas</div></div>' +
+        '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' facturas</div></div>' +
         '</div></div>' +
         bannerHTML +
         '<div class="content">' +
