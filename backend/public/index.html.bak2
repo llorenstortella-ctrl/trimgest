@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-LRLKFDTN1E"></script>
 <script>
@@ -16,7 +17,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #0f0f13; color: #f0ede8; font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; }
     .auth-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 20px; }
-    .auth-logo { font-size: 13px; letter-spacing: 4px; color: #6a6070; text-transform: uppercase; margin-bottom: 8px; }
+    .auth-logo { display: flex; justify-content: center; align-items: center; margin-bottom: 16px; width: 300px; margin-left: auto; margin-right: auto; }
     .auth-title { font-size: 28px; font-weight: 400; color: #e8c87a; margin-bottom: 40px; }
     .auth-form { width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 12px; }
     .auth-input { background: #16161e; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 14px; border-radius: 10px; font-size: 16px; width: 100%; }
@@ -108,7 +109,7 @@
 <body>
 
   <div class="auth-screen" id="loginScreen">
-    <div class="auth-logo">TrimGest</div>
+    <div class="auth-logo"><svg width="300" height="32" viewBox="0 0 300 32" xmlns="http://www.w3.org/2000/svg"><rect x="70" y="1" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="86" y="1" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="70" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="86" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="84.5" y1="1" x2="84.5" y2="31" stroke="#0f0f13" stroke-width="2"/><line x1="70" y1="16" x2="100" y2="16" stroke="#0f0f13" stroke-width="2"/><text x="108" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="300" fill="#f0ede8" letter-spacing="-0.5">Trim</text><text x="142" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="600" fill="#e8c87a" letter-spacing="-0.5">Gest</text></svg></div>
     <div class="auth-title">Bienvenido</div>
     <div class="auth-form">
       <input class="auth-input" id="loginEmail" type="email" placeholder="Email">
@@ -121,7 +122,7 @@
   </div>
 
   <div class="auth-screen" id="registroScreen" style="display:none;">
-    <div class="auth-logo">TrimGest</div>
+    <div class="auth-logo"><svg width="300" height="32" viewBox="0 0 300 32" xmlns="http://www.w3.org/2000/svg"><rect x="70" y="1" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="86" y="1" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="70" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="86" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="84.5" y1="1" x2="84.5" y2="31" stroke="#0f0f13" stroke-width="2"/><line x1="70" y1="16" x2="100" y2="16" stroke="#0f0f13" stroke-width="2"/><text x="108" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="300" fill="#f0ede8" letter-spacing="-0.5">Trim</text><text x="142" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="600" fill="#e8c87a" letter-spacing="-0.5">Gest</text></svg></div>
     <div class="auth-title">Crear cuenta</div>
     <div class="auth-form">
       <input class="auth-input" id="regEmpresa" type="text" placeholder="Nombre de tu empresa">
@@ -961,6 +962,8 @@
       var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await perfilRes.json();
       window.empresaId = perfil.empresaId || '';
+      window.perfilOnboarding = perfil;
+      if (!window.onboardingMostrado) { window.onboardingMostrado = true; mostrarOnboarding(); }
       var bannerHTML = '';
       if (!perfil.plan_gratuito) {
         var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
@@ -1462,6 +1465,104 @@ function copiarEmailModal(id) {
     setTimeout(function() { btn.textContent = orig; btn.style.background = '#e8c87a'; }, 2000);
   });
 }
+
+function mostrarOnboarding() {
+  if (window.perfilOnboarding && window.perfilOnboarding.onboarding_completado) return;
+
+  var paso = 1;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'onboardingOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  function renderPaso() {
+    overlay.innerHTML = '';
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#16161e;border-radius:20px;padding:32px 24px;max-width:420px;width:100%;border:1px solid #2a2a3a;';
+
+    var pasos = [
+      {
+        emoji: '👋',
+        titulo: 'Bienvenido a TrimGest',
+        texto: 'Gestiona tus facturas y nóminas con IA. En menos de 2 minutos tendrás todo listo para tu primer trimestre.',
+        btn: 'Empezar →'
+      },
+      {
+        emoji: '📄',
+        titulo: 'Sube tu primera factura',
+        texto: 'Toca "+ Subir" y selecciona el tipo de documento. La IA extraerá todos los datos automáticamente. También puedes reenviar facturas por email.',
+        btn: 'Entendido →'
+      },
+      {
+        emoji: '🤝',
+        titulo: 'Conecta con tu gestoría',
+        texto: 'Invita a tu gestoría para que acceda a tus datos directamente desde su panel. Es gratis para ellos y te ahorra tiempo a ti.',
+        btn: '¡Listo, empezar!'
+      }
+    ];
+
+    var p = pasos[paso - 1];
+
+    var indicadores = document.createElement('div');
+    indicadores.style.cssText = 'display:flex;justify-content:center;gap:6px;margin-bottom:24px;';
+    for (var i = 1; i <= 3; i++) {
+      var dot = document.createElement('div');
+      dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:' + (i === paso ? '#e8c87a' : '#2a2a3a') + ';';
+      indicadores.appendChild(dot);
+    }
+
+    var emoji = document.createElement('div');
+    emoji.style.cssText = 'font-size:48px;text-align:center;margin-bottom:16px;';
+    emoji.textContent = p.emoji;
+
+    var titulo = document.createElement('div');
+    titulo.style.cssText = 'font-size:20px;color:#f0ede8;font-weight:700;text-align:center;margin-bottom:12px;';
+    titulo.textContent = p.titulo;
+
+    var texto = document.createElement('p');
+    texto.style.cssText = 'color:#9a90b4;font-size:14px;text-align:center;line-height:1.6;margin-bottom:28px;';
+    texto.textContent = p.texto;
+
+    var checkRow = null;
+
+
+    var btnSiguiente = document.createElement('button');
+    btnSiguiente.style.cssText = 'width:100%;background:#e8c87a;color:#1a1500;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;';
+    btnSiguiente.textContent = p.btn;
+    btnSiguiente.onclick = function() {
+      if (paso < 3) {
+        paso++;
+        renderPaso();
+      } else {
+        fetch(API + '/usuarios/perfil', { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ onboarding_completado: true }) });
+        if (window.perfilOnboarding) window.perfilOnboarding.onboarding_completado = true;
+        overlay.remove();
+        window.uploadOpen = true;
+        renderApp();
+      }
+    };
+
+    var btnSaltar = document.createElement('button');
+    btnSaltar.style.cssText = 'width:100%;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;margin-top:12px;padding:8px;';
+    btnSaltar.textContent = 'Saltar introducción';
+    btnSaltar.onclick = function() {
+      overlay.remove();
+    };
+
+    box.appendChild(indicadores);
+    box.appendChild(emoji);
+    box.appendChild(titulo);
+    box.appendChild(texto);
+    if (checkRow) box.appendChild(checkRow);
+    box.appendChild(btnSiguiente);
+    box.appendChild(btnSaltar);
+    overlay.appendChild(box);
+  }
+
+  renderPaso();
+  document.body.appendChild(overlay);
+}
+
   </script>
 </body>
 </html>

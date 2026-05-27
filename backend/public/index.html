@@ -991,12 +991,10 @@
       var anos = Object.keys(anosSet).sort();
 
       var facturasT = facturas.filter(function(f) { return (window.trimestreSel === 'TODOS' || f.trimestre === window.trimestreSel) && String(f.anno) === window.annoSel; });
-      var pendientes = facturasT.filter(function(f) { return !f.enviado; });
-      var enviadas = facturasT.filter(function(f) { return f.enviado; });
-      var lista = window.tabSel === 'pendientes' ? pendientes : enviadas;
+      var lista = facturasT;
       if (window.filtroTipo) lista = lista.filter(function(f) { return f.tipo === window.filtroTipo; });
-      var provPend = pendientes.filter(function(f) { return f.tipo === 'proveedor'; });
-      var cliPend = pendientes.filter(function(f) { return f.tipo === 'cliente'; });
+      var provPend = facturasT.filter(function(f) { return f.tipo === 'proveedor'; });
+      var cliPend = facturasT.filter(function(f) { return f.tipo === 'cliente'; });
       var totalProv = facturasT.filter(function(f) { return f.tipo === 'proveedor'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
       var totalCli = facturasT.filter(function(f) { return f.tipo === 'cliente'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
 
@@ -1067,10 +1065,7 @@
         listaHTML += '</div>';
       }
 
-      var botonesEnvio = '';
-      if (window.tabSel === 'pendientes' && pendientes.length > 0) {
-        botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>';
-      }
+      var botonesEnvio = '<button class="btn-generar" onclick="generarPDFs()">Generar PDFs para gestoria</button>';
       botonesEnvio += '<div style="display:flex;gap:8px;margin-top:10px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Proveedores</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:10px;padding:12px;font-size:13px;cursor:pointer;">Excel Clientes</button></div>';
       var btnCompartirLabel = window.trimestreSel === 'TODOS' ? '🔗 Compartir año ' + window.annoSel + ' con gestoría' : '🔗 Compartir ' + window.trimestreSel + ' ' + window.annoSel + ' con gestoría';
       botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">' + btnCompartirLabel + '</button>';
@@ -1125,7 +1120,6 @@
         '<input type="file" id="fileInput" accept="application/pdf" onchange="procesarArchivo(this.files[0])" style="display:none">' +
         
         '<div id="uploadStatus"></div></div></div>' +
-        '<div class="tabs"><div class="tab' + (window.tabSel==='pendientes'?' active':'') + '" onclick="window.tabSel=\'pendientes\';renderApp()">Pendientes (' + pendientes.length + ')</div><div class="tab' + (window.tabSel==='enviadas'?' active':'') + '" onclick="window.tabSel=\'enviadas\';renderApp()">Enviadas (' + enviadas.length + ')</div></div>' +
         '<div class="section-title">Facturas del periodo</div>' +
         botonesEnvio + listaHTML + botonesEnvio + '</div>';
       var btnEmail = document.getElementById('btnImportEmail');
