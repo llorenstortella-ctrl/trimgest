@@ -394,7 +394,10 @@
         '<div class="header-top"><div><div class="label">TrimGest</div><h1>Nominas ' + annoActual + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()" title="' + (window.estadoGestoria==='conectada'?window.nombreGestoria:'') + '" style="position:relative;">' +
+        (window.estadoGestoria==='conectada' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#4caf7d;border:1px solid #0f0f13;"></span>' : '') +
+        (window.estadoGestoria==='pendiente' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#e8c87a;border:1px solid #0f0f13;"></span>' : '') +
+        '&#9881;</button>' +
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores"><select onchange="window.annoSel=this.value;renderNominas()">' + optsAno + '</select></div>' +
@@ -961,6 +964,13 @@
       var facturas = await cargarFacturas();
       var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await perfilRes.json();
+      try {
+        var gRes = await fetch(API + '/gestoria/solicitudes', { headers: getHeaders() });
+        var gData = await gRes.json();
+        if (gData.aprobadas && gData.aprobadas.length) { window.estadoGestoria = 'conectada'; window.nombreGestoria = gData.aprobadas[0].gestoriaNombre; }
+        else if (gData.solicitudes && gData.solicitudes.filter(function(s){return s.estado==='pendiente'||s.estado==='invitacion_pendiente';}).length) { window.estadoGestoria = 'pendiente'; }
+        else { window.estadoGestoria = 'sin_gestoria'; }
+      } catch(e) { window.estadoGestoria = 'sin_gestoria'; }
       window.empresaId = perfil.empresaId || '';
       window.perfilOnboarding = perfil;
       if (!window.onboardingMostrado) { window.onboardingMostrado = true; mostrarOnboarding(); }
@@ -1081,7 +1091,10 @@
         '<div class="header-top"><div><div class="label">' + (window.nombreEmpresa || 'TrimGest') + '</div><h1>' + (window.trimestreSel === 'TODOS' ? 'Año ' : window.trimestreSel + ' ') + window.annoSel + '</h1></div>' +
         '<div style="display:flex;gap:4px;align-items:center;">' +
         '<button class="btn-ajustes" onclick="mostrarAsesor()">&#129302;</button>' +
-        '<button class="btn-ajustes" onclick="mostrarAjustes()">&#9881;</button>' +
+        '<button class="btn-ajustes" onclick="mostrarAjustes()" title="' + (window.estadoGestoria==='conectada'?window.nombreGestoria:'') + '" style="position:relative;">' +
+        (window.estadoGestoria==='conectada' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#4caf7d;border:1px solid #0f0f13;"></span>' : '') +
+        (window.estadoGestoria==='pendiente' ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:#e8c87a;border:1px solid #0f0f13;"></span>' : '') +
+        '&#9881;</button>' +
         '<button class="btn-subir" onclick="toggleUpload()">+ Subir</button>' +
         '</div></div>' +
         '<div class="selectores"><select onchange="window.trimestreSel=this.value;renderApp()">' + optsTrim + '</select><select onchange="window.annoSel=this.value;renderApp()">' + optsAno + '</select></div>' +
