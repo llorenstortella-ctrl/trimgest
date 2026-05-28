@@ -234,18 +234,13 @@ router.post('/actualizar-paginas', auth, async (req, res) => {
     const nominas = getNominas(req.empresaId);
     let actualizadas = 0;
     for (let i = 0; i < nominas.length; i++) {
-      if (nominas[i].archivo) {
+      if (nominas[i].num_paginas === undefined && nominas[i].archivo) {
         try {
           const filepath = path.join(uploadsDir, nominas[i].archivo);
           if (fs.existsSync(filepath)) {
             const fileBuffer = fs.readFileSync(filepath);
             const pdfDoc = await PDFDocument.load(fileBuffer);
-            const infoDuplicado = await detectarDuplicadoPaginas(fileBuffer);
             nominas[i].num_paginas = pdfDoc.getPageCount();
-            if (infoDuplicado.duplicado && nominas[i].duplicado_detectado !== false) {
-              nominas[i].duplicado_detectado = true;
-              nominas[i].pagina_duplicada = infoDuplicado.paginaDuplicada || null;
-            }
             actualizadas++;
           }
         } catch(e) { nominas[i].num_paginas = 1; }
