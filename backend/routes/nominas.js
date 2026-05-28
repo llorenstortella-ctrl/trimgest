@@ -227,6 +227,32 @@ router.post('/conservar/:id', auth, (req, res) => {
   }
 });
 
+router.post('/actualizar-paginas', auth, async (req, res) => {
+  try {
+    const { PDFDocument } = require('pdf-lib');
+    const { uploadsDir } = getEmpresaDirs(req.empresaId);
+    const nominas = getNominas(req.empresaId);
+    let actualizadas = 0;
+    for (let i = 0; i < nominas.length; i++) {
+      if (nominas[i].num_paginas === undefined && nominas[i].archivo) {
+        try {
+          const filepath = path.join(uploadsDir, nominas[i].archivo);
+          if (fs.existsSync(filepath)) {
+            const fileBuffer = fs.readFileSync(filepath);
+            const pdfDoc = await PDFDocument.load(fileBuffer);
+            nominas[i].num_paginas = pdfDoc.getPageCount();
+            actualizadas++;
+          }
+        } catch(e) { nominas[i].num_paginas = 1; }
+      }
+    }
+    saveNominas(nominas, req.empresaId);
+    res.json({ ok: true, actualizadas });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 module.exports = router;
 
 router.get('/archivo/:filename', auth, (req, res) => {
