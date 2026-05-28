@@ -33,6 +33,44 @@ function saveNominas(nominas, empresaId) {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+function similitud(texto1, texto2) {
+  const palabras1 = texto1.toLowerCase().split(/\s+/).filter(p => p.length > 3);
+  const palabras2 = new Set(texto2.toLowerCase().split(/\s+/).filter(p => p.length > 3));
+  if (!palabras1.length) return 0;
+  const coinciden = palabras1.filter(p => palabras2.has(p)).length;
+  return coinciden / palabras1.length;
+}
+
+async function detectarDuplicadoPaginas(fileBuffer) {
+  try {
+    const pdfLib = require('pdf-lib');
+    const pdfDoc = await pdfLib.PDFDocument.load(fileBuffer);
+    const numPaginas = pdfDoc.getPageCount();
+    if (numPaginas < 2) return { duplicado: false, numPaginas };
+    const pdfParse = require('pdf-parse');
+    const textosPaginas = [];
+    for (let i = 0; i < Math.min(numPaginas, 4); i++) {
+      const pdfDocTemp = await pdfLib.PDFDocument.load(fileBuffer);
+      const pagina = await pdfLib.PDFDocument.create();
+      const [paginaCopied] = await pagina.copyPages(pdfDocTemp, [i]);
+      pagina.addPage(paginaCopied);
+      const paginaBytes = await pagina.save();
+      const parsed = await pdfParse(Buffer.from(paginaBytes));
+      textosPaginas.push(parsed.text);
+    }
+    for (let i = 0; i < textosPaginas.length - 1; i++) {
+      for (let j = i + 1; j < textosPaginas.length; j++) {
+        const sim = similitud(textosPaginas[i], textosPaginas[j]);
+        if (sim > 0.75) return { duplicado: true, numPaginas, paginaDuplicada: j + 1, similitudDetectada: Math.round(sim * 100) };
+      }
+    }
+    return { duplicado: false, numPaginas };
+  } catch(e) {
+    return { duplicado: false, numPaginas: 1 };
+  }
+}
+
+
 router.post('/subir', auth, upload.single('nomina'), async (req, res) => {
   try {
     const fileBuffer = req.file.buffer;
@@ -90,12 +128,16 @@ ${textoNomina}`
     const filepath = path.join(empUploads, filename);
     fs.writeFileSync(filepath, fileBuffer);
 
+    const infoDuplicado = await detectarDuplicadoPaginas(fileBuffer);
     const nominas = getNominas(req.empresaId);
     const nueva = {
       id: Date.now(),
       ...datos,
       archivo: filename,
-      fecha_subida: new Date().toISOString()
+      fecha_subida: new Date().toISOString(),
+      duplicado_detectado: infoDuplicado.duplicado,
+      num_paginas: infoDuplicado.numPaginas,
+      pagina_duplicada: infoDuplicado.paginaDuplicada || null
     };
     nominas.push(nueva);
     saveNominas(nominas, req.empresaId);
@@ -141,6 +183,44 @@ router.delete('/borrar/:id', auth, (req, res) => {
     try { fs.unlinkSync(path.join(uploadsDir, archivo)); } catch(e) {}
   }
   res.json({ ok: true });
+});
+
+router.post('/eliminar-pagina/:id', auth, async (req, res) => {
+  try {
+    const { pagina } = req.body;
+    const nominas = getNominas(req.empresaId);
+    const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
+    if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
+    const { uploadsDir } = getEmpresaDirs(req.empresaId);
+    const filepath = path.join(uploadsDir, nominas[idx].archivo);
+    const fileBuffer = fs.readFileSync(filepath);
+    const { PDFDocument } = require('pdf-lib');
+    const pdfDoc = await PDFDocument.load(fileBuffer);
+    pdfDoc.removePage(pagina - 1);
+    const pdfBytes = await pdfDoc.save();
+    fs.writeFileSync(filepath, pdfBytes);
+    nominas[idx].duplicado_detectado = false;
+    nominas[idx].num_paginas = pdfDoc.getPageCount();
+    nominas[idx].pagina_duplicada = null;
+    saveNominas(nominas, req.empresaId);
+    res.json({ ok: true });
+  } catch(e) {
+    console.error(e);
+    res.status(500).json({ error: 'Error eliminando pagina' });
+  }
+});
+
+router.post('/conservar/:id', auth, (req, res) => {
+  try {
+    const nominas = getNominas(req.empresaId);
+    const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
+    if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
+    nominas[idx].duplicado_detectado = false;
+    saveNominas(nominas, req.empresaId);
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: 'Error' });
+  }
 });
 
 module.exports = router;

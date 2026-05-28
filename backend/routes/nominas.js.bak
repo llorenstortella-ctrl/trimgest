@@ -44,14 +44,25 @@ router.post('/subir', auth, upload.single('nomina'), async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'Eres un experto en nominas espanolas. Extraes datos de nominas y devuelves solo JSON valido.'
+          content: 'Eres un experto en nominas espanolas. Extraes datos de nominas y devuelves solo JSON valido. IMPORTANTE: Para trabajadores mayores de 65 anos con contrato indefinido y al menos 38 anos y 6 meses cotizados (o mayores de 67 anos con 37 anos cotizados), la empresa tiene reduccion del 100% en cuota empresarial por contingencias comunes segun art. 152 LGSS. En estos casos la ss_empresa real es mucho menor de lo que indica la nomina en el apartado teorico, porque la bonificacion ya esta aplicada en el TC1. Extrae siempre los datos literales del documento sin recalcular.'
         },
         {
           role: 'user',
-          content: `Extrae los siguientes datos de esta nomina y devuelve SOLO este JSON sin texto adicional:
+          content: `Eres un experto en nominas espanolas. Extrae los datos de esta nomina con maxima precision y devuelve SOLO el JSON, sin texto adicional ni markdown.
+
+INSTRUCCIONES IMPORTANTES:
+- "neto" = liquido a percibir (lo que cobra el trabajador)
+- "devengado" = total devengado (suma de todos los conceptos positivos)
+- "deducciones" = total deducciones (suma de IRPF + SS trabajador + otras deducciones)
+- "irpf_importe" = importe en EUROS descontado por IRPF este mes. Busca el valor numerico en la columna DEDUCCION junto a la linea IRPF. NUNCA uses el porcentaje acumulado como importe.
+- "irpf_porcentaje" = porcentaje de retencion IRPF. En la linea BASE IRPF del PDF aparece: base, importe retenido y porcentaje. Extrae el porcentaje directamente.
+- "ss_trabajador" = cuota SS que paga el TRABAJADOR (contingencias comunes + desempleo + FP del trabajador)
+- "ss_empresa" = cuota SS que paga la EMPRESA (contingencias comunes empresa + AT/EP + desempleo empresa + FP empresa + FOGASA)
+- "coste_empresa" = devengado + ss_empresa (coste total para la empresa)
+
 {
   "trabajador": "nombre completo del trabajador",
-  "mes": "nombre del mes en español en minusculas (enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre)",
+  "mes": "nombre del mes en minusculas (enero, febrero...)",
   "anno": numero_del_anno,
   "devengado": numero,
   "deducciones": numero,
@@ -100,6 +111,26 @@ router.get('/listar', auth, (req, res) => {
   res.json({ nominas: getNominas(req.empresaId) });
 });
 
+router.put('/editar/:id', auth, (req, res) => {
+  const nominas = getNominas(req.empresaId);
+  const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error: 'No encontrada' });
+  const { trabajador, mes, anno, devengado, deducciones, neto, irpf_importe, irpf_porcentaje, ss_trabajador, ss_empresa, coste_empresa } = req.body;
+  if (trabajador !== undefined) nominas[idx].trabajador = trabajador;
+  if (mes !== undefined) nominas[idx].mes = mes;
+  if (anno !== undefined) nominas[idx].anno = anno;
+  if (devengado !== undefined) nominas[idx].devengado = parseFloat(devengado);
+  if (deducciones !== undefined) nominas[idx].deducciones = parseFloat(deducciones);
+  if (neto !== undefined) nominas[idx].neto = parseFloat(neto);
+  if (irpf_importe !== undefined) nominas[idx].irpf_importe = parseFloat(irpf_importe);
+  if (irpf_porcentaje !== undefined) nominas[idx].irpf_porcentaje = parseFloat(irpf_porcentaje);
+  if (ss_trabajador !== undefined) nominas[idx].ss_trabajador = parseFloat(ss_trabajador);
+  if (ss_empresa !== undefined) nominas[idx].ss_empresa = parseFloat(ss_empresa);
+  if (coste_empresa !== undefined) nominas[idx].coste_empresa = parseFloat(coste_empresa);
+  saveNominas(nominas, req.empresaId);
+  res.json({ ok: true, nomina: nominas[idx] });
+});
+
 router.delete('/borrar/:id', auth, (req, res) => {
   const nominas = getNominas(req.empresaId);
   const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
@@ -113,3 +144,12 @@ router.delete('/borrar/:id', auth, (req, res) => {
 });
 
 module.exports = router;
+
+router.get('/archivo/:filename', auth, (req, res) => {
+  const { uploadsDir } = getEmpresaDirs(req.empresaId);
+  const filePath = require('path').join(uploadsDir, req.params.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.sendFile(filePath);
+});
+
