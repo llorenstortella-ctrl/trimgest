@@ -139,10 +139,7 @@
     <div id="app"></div>
     <nav class="nav-bar">
       <button class="nav-btn active" id="nav-facturas" onclick="cambiarSeccion('facturas')">
-        <span class="nav-icon">&#128196;</span>Facturas
-      </button>
-      <button class="nav-btn inactive" id="nav-nominas" onclick="cambiarSeccion('nominas')">
-        <span class="nav-icon">&#128100;</span>Nominas
+        <span class="nav-icon">&#128196;</span>Documentos
       </button>
       <button class="nav-btn inactive" id="nav-resumen" onclick="cambiarSeccion('resumen')">
         <span class="nav-icon">&#128200;</span>Resumen
@@ -330,10 +327,8 @@
     function cambiarSeccion(seccion) {
       window.seccionActual = seccion;
       document.getElementById('nav-facturas').className = 'nav-btn ' + (seccion === 'facturas' ? 'active' : 'inactive');
-      document.getElementById('nav-nominas').className = 'nav-btn ' + (seccion === 'nominas' ? 'active' : 'inactive');
       document.getElementById('nav-resumen').className = 'nav-btn ' + (seccion === 'resumen' ? 'active' : 'inactive');
       if (seccion === 'facturas') renderApp();
-      if (seccion === 'nominas') renderNominas();
       if (seccion === 'resumen') renderResumen();
     }
 
@@ -996,6 +991,9 @@
 
     async function renderApp() {
       var facturas = await cargarFacturas();
+      var nominasRes = await fetch(API + '/nominas/listar', { headers: getHeaders() });
+      var nominasData = await nominasRes.json();
+      var todasNominas = nominasData.nominas || [];
       var perfilRes = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await perfilRes.json();
       try {
@@ -1041,6 +1039,15 @@
       var cliPend = facturasT.filter(function(f) { return f.tipo === 'cliente'; });
       var totalProv = facturasT.filter(function(f) { return f.tipo === 'proveedor'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
       var totalCli = facturasT.filter(function(f) { return f.tipo === 'cliente'; }).reduce(function(s, f) { return s + Number(f.total); }, 0);
+      var mesesTrimMap = { T1: ['01','02','03'], T2: ['04','05','06'], T3: ['07','08','09'], T4: ['10','11','12'] };
+      var mesesNombres = { enero:'01', febrero:'02', marzo:'03', abril:'04', mayo:'05', junio:'06', julio:'07', agosto:'08', septiembre:'09', octubre:'10', noviembre:'11', diciembre:'12' };
+      var nominasT = todasNominas.filter(function(n) {
+        if (String(n.anno) !== window.annoSel) return false;
+        if (window.trimestreSel === 'TODOS') return true;
+        var mesNum = mesesNombres[String(n.mes).toLowerCase()] || String(n.mes).padStart(2,'0');
+        return mesesTrimMap[window.trimestreSel] && mesesTrimMap[window.trimestreSel].indexOf(mesNum) !== -1;
+      });
+      var totalNom = nominasT.reduce(function(s, n) { return s + Number(n.neto || 0); }, 0);
 
       var listaHTML = '';
       // ordenar: proveedores agrupados por nombre y fecha, clientes solo por fecha
@@ -1063,8 +1070,11 @@
       }
       lista = ordenarListaEmpresa(lista);
 
-      if (lista.length === 0) {
-        listaHTML = '<div class="empty">No hay facturas en este apartado</div>';
+      var nominasLista = (window.filtroTipo === 'nomina' || !window.filtroTipo) ? nominasT : [];
+      if (window.filtroTipo && window.filtroTipo !== 'nomina') nominasLista = [];
+
+      if (lista.length === 0 && nominasLista.length === 0) {
+        listaHTML = '<div class="empty">No hay documentos en este periodo</div>';
       } else {
         listaHTML = '<div class="facturas-list">';
         var provActualEmp = null;
@@ -1109,6 +1119,24 @@
         listaHTML += '</div>';
       }
 
+      if (nominasLista.length > 0) {
+        listaHTML += '<div class="facturas-list" style="margin-top:8px;">';
+        listaHTML += '<div style="padding:8px 4px;font-size:11px;font-weight:600;color:#9a90b4;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #2a2a3a;margin-bottom:4px;">NÓMINAS</div>';
+        nominasLista.forEach(function(n) {
+          var btnPDF = n.archivo ? '<a href="/nominas/archivo/' + n.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
+          var contBadge = n.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
+          var dupBadge = n.duplicado_detectado ? '<span style="background:#2a1f00;border:1px solid #e8c87a;color:#e8c87a;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;" onclick="eliminarPaginaNomina(' + n.id + ',' + (n.pagina_duplicada||2) + ')">✂️ Duplicado</span>' : '';
+          listaHTML += '<div class="factura-card">';
+          listaHTML += '<div class="factura-header"><span class="factura-nombre">' + (n.trabajador || 'Sin nombre') + '</span>';
+          listaHTML += '<span class="factura-badge" style="background:#1a1a2a;border:1px solid #9a90b4;color:#9a90b4;">nómina</span></div>';
+          listaHTML += '<div class="factura-datos"><span>' + (n.mes || '') + ' ' + (n.anno || '') + '</span><span class="factura-total">' + formatEur(n.neto) + ' neto</span></div>';
+          listaHTML += '<div class="factura-desglose">Coste empresa ' + formatEur(n.coste_empresa) + ' · IRPF ' + (n.irpf_porcentaje||0) + '%</div>';
+          listaHTML += '<div class="factura-acciones">' + contBadge + dupBadge + btnPDF + '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ',' + (n.contabilizado?'true':'false') + ')">Borrar</button></div>';
+          listaHTML += '</div>';
+        });
+        listaHTML += '</div>';
+      }
+
       var btnCompartirLabel = window.trimestreSel === 'TODOS' ? '🔗 Compartir año ' + window.annoSel + ' con gestoría' : '🔗 Compartir ' + window.trimestreSel + ' ' + window.annoSel + ' con gestoría';
       var botonesEnvio = '<div style="display:flex;gap:6px;margin-top:8px;"><button onclick="exportarExcel(\'proveedor\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 4px;font-size:11px;cursor:pointer;">Excel Prov.</button><button onclick="exportarExcel(\'cliente\')" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 4px;font-size:11px;cursor:pointer;">Excel Cli.</button><button onclick="generarPDFs()" style="flex:1;background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 4px;font-size:11px;cursor:pointer;">PDFs</button></div>';
       botonesEnvio += '<button onclick="compartirTrimestre()" style="width:100%;margin-top:8px;background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">' + btnCompartirLabel + '</button>';
@@ -1136,10 +1164,12 @@
         '<button onclick="window.filtroTipo=null;renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (!window.filtroTipo?'#e8c87a':'#1e1e28') + ';color:' + (!window.filtroTipo?'#0f0f13':'#9a90b4') + ';font-weight:600;">Todos</button>' +
         '<button onclick="window.filtroTipo=\'proveedor\';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='proveedor'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='proveedor'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Proveedores</button>' +
         '<button onclick="window.filtroTipo=\'cliente\';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='cliente'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='cliente'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Clientes</button>' +
+        '<button onclick="window.filtroTipo=\'nomina\';renderApp()" style="flex:1;padding:7px;border-radius:8px;font-size:12px;cursor:pointer;border:1px solid #2a2a3a;background:' + (window.filtroTipo==='nomina'?'#e8c87a':'#1e1e28') + ';color:' + (window.filtroTipo==='nomina'?'#0f0f13':'#9a90b4') + ';font-weight:600;">Nóminas</button>' +
         '</div>' +
         '<div class="stats">' +
         '<div class="stat"><div class="stat-label">Proveedores</div><div class="stat-value">' + formatEur(totalProv) + '</div><div class="stat-count">' + provPend.length + ' facturas</div></div>' +
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' facturas</div></div>' +
+        '<div class="stat"><div class="stat-label">Nóminas</div><div class="stat-value" style="color:#9a90b4;">' + formatEur(totalNom) + '</div><div class="stat-count">' + nominasT.length + ' nóminas</div></div>' +
         '</div></div>' +
         bannerHTML +
         '<div class="content">' +
