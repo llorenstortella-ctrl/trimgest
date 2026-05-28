@@ -845,6 +845,12 @@
         '<button onclick="copiarEmail(' + "'facturas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>'+
         '</div></div>'+
         '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">'+
+        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Facturas de cliente</div>'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">clientes+' + perfil.empresaId + '@trimgest.es</div>'+
+        '<button onclick="navigator.clipboard.writeText(' + "'clientes+' + perfil.empresaId + '@trimgest.es')" + '" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>'+
+        '</div></div>'+
+        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">'+
         '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nóminas</div>'+
         '<div style="display:flex;align-items:center;gap:8px;">'+
         '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@trimgest.es</div>'+
