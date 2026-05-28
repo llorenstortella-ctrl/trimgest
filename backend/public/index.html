@@ -989,6 +989,10 @@
       return facturas;
     }
 
+    var MESES_NOMBRE = { '1':'enero','2':'febrero','3':'marzo','4':'abril','5':'mayo','6':'junio','7':'julio','8':'agosto','9':'septiembre','10':'octubre','11':'noviembre','12':'diciembre','01':'enero','02':'febrero','03':'marzo','04':'abril','05':'mayo','06':'junio','07':'agosto','08':'agosto','09':'septiembre','10':'octubre','11':'noviembre','12':'diciembre', 'enero':'enero','febrero':'febrero','marzo':'marzo','abril':'abril','mayo':'mayo','junio':'junio','julio':'julio','agosto':'agosto','septiembre':'septiembre','octubre':'octubre','noviembre':'noviembre','diciembre':'diciembre' };
+    function mesNombre(mes) { return MESES_NOMBRE[String(mes).toLowerCase()] || String(mes); }
+    function mesNumero(mes) { var n = {'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12}; return n[String(mes).toLowerCase()] || Number(mes) || 0; }
+
     async function renderApp() {
       var facturas = await cargarFacturas();
       var nominasRes = await fetch(API + '/nominas/listar', { headers: getHeaders() });
@@ -1087,7 +1091,7 @@
         var tb = (b.trabajador||'').trim().toLowerCase();
         if (ta !== tb) return ta.localeCompare(tb);
         if (String(a.anno) !== String(b.anno)) return Number(a.anno) - Number(b.anno);
-        return Number(a.mes) - Number(b.mes);
+        return mesNumero(a.mes) - mesNumero(b.mes);
       });
 
       if (lista.length === 0 && nominasLista.length === 0) {
@@ -1151,7 +1155,7 @@
           listaHTML += '<div class="factura-card">';
           listaHTML += '<div class="factura-header"><span class="factura-nombre">' + (n.trabajador || 'Sin nombre') + '</span>';
           listaHTML += '<span class="factura-badge" style="background:#1a1a2a;border:1px solid #9a90b4;color:#9a90b4;">nómina</span></div>';
-          listaHTML += '<div class="factura-datos"><span>' + (n.mes || '') + ' ' + (n.anno || '') + '</span><span class="factura-total">' + formatEur(n.neto) + ' neto</span></div>';
+          listaHTML += '<div class="factura-datos"><span>' + mesNombre(n.mes) + ' ' + (n.anno || '') + '</span><span class="factura-total">' + formatEur(n.neto) + ' neto</span></div>';
           listaHTML += '<div class="factura-desglose">Coste empresa ' + formatEur(n.coste_empresa) + ' · IRPF ' + (n.irpf_porcentaje||0) + '%</div>';
           var tijeras = (n.archivo && n.num_paginas > 1) ? '<button class="btn-accion" onclick="eliminarPaginaNomina(' + n.id + ',' + (n.pagina_duplicada||2) + ')" title="Dividir PDF">✂️</button>' : '';
           listaHTML += '<div class="factura-acciones">' + contBadge + dupBadge + btnPDF + tijeras + '<button class="btn-accion" onclick="editarNomina(' + n.id + ')">Editar</button><button class="btn-borrar" onclick="borrarNomina(' + n.id + ',' + (n.contabilizado?'true':'false') + ')">Borrar</button></div>';
