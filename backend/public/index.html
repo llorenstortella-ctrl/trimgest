@@ -1083,8 +1083,8 @@
       }
       // ordenar nominas por trabajador, luego anno y mes
       nominasLista.sort(function(a,b) {
-        var ta = (a.trabajador||'').toLowerCase();
-        var tb = (b.trabajador||'').toLowerCase();
+        var ta = (a.trabajador||'').trim().toLowerCase();
+        var tb = (b.trabajador||'').trim().toLowerCase();
         if (ta !== tb) return ta.localeCompare(tb);
         if (String(a.anno) !== String(b.anno)) return Number(a.anno) - Number(b.anno);
         return Number(a.mes) - Number(b.mes);
@@ -1140,9 +1140,10 @@
         listaHTML += '<div class="facturas-list" style="margin-top:8px;">';
         var trabajadorActual = null;
         nominasLista.forEach(function(n) {
-          if ((n.trabajador||'Sin nombre') !== trabajadorActual) {
-            trabajadorActual = n.trabajador || 'Sin nombre';
-            listaHTML += '<div style="padding:8px 4px;font-size:11px;font-weight:600;color:#9a90b4;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #2a2a3a;margin-bottom:4px;">' + trabajadorActual + '</div>';
+          var nomTrabNorm = (n.trabajador||'Sin nombre').trim().toLowerCase();
+          if (nomTrabNorm !== trabajadorActual) {
+            trabajadorActual = nomTrabNorm;
+            listaHTML += '<div style="padding:8px 4px;font-size:11px;font-weight:600;color:#9a90b4;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #2a2a3a;margin-bottom:4px;">' + (n.trabajador||'Sin nombre').trim() + '</div>';
           }
           var btnPDF = n.archivo ? '<a href="/nominas/archivo/' + n.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
           var contBadge = n.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
