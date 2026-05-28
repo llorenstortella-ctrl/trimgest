@@ -517,24 +517,8 @@
         });
         var data = await res.json();
         if (data.nomina) {
-          if (data.nomina.duplicado_detectado) {
-            if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
-            var eliminar = confirm('He detectado que esta nomina tiene 2 paginas casi identicas (copia empresa y copia empleado). ¿Elimino la pagina duplicada y conservo solo una?');
-            if (eliminar) {
-              var pagina = data.nomina.pagina_duplicada || 2;
-              await fetch(API + '/nominas/eliminar-pagina/' + data.nomina.id, {
-                method: 'POST',
-                headers: Object.assign({}, getHeaders(), {'Content-Type': 'application/json'}),
-                body: JSON.stringify({ pagina: pagina })
-              });
-            } else {
-              await fetch(API + '/nominas/conservar/' + data.nomina.id, { method: 'POST', headers: getHeaders() });
-            }
-            setTimeout(function() { renderNominas(); }, 500);
-          } else {
-            if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
-            setTimeout(function() { renderNominas(); }, 1000);
-          }
+          if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
+          setTimeout(function() { renderNominas(); }, 1000);
         } else {
           if (status) status.innerHTML = '<div class="error">Error al procesar la nomina</div>';
         }
