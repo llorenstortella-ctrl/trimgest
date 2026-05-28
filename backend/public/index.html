@@ -1082,13 +1082,12 @@
         nominasLista = nominasLista.filter(function(n) { return (n.trabajador||'').toLowerCase().indexOf(busqN) !== -1; });
       }
       // ordenar nominas por trabajador, luego anno y mes
-      var mesesOrden = { enero:1, febrero:2, marzo:3, abril:4, mayo:5, junio:6, julio:7, agosto:8, septiembre:9, octubre:10, noviembre:11, diciembre:12 };
       nominasLista.sort(function(a,b) {
         var ta = (a.trabajador||'').toLowerCase();
         var tb = (b.trabajador||'').toLowerCase();
         if (ta !== tb) return ta.localeCompare(tb);
-        if (String(a.anno) !== String(b.anno)) return String(a.anno).localeCompare(String(b.anno));
-        return (mesesOrden[String(a.mes).toLowerCase()]||0) - (mesesOrden[String(b.mes).toLowerCase()]||0);
+        if (String(a.anno) !== String(b.anno)) return Number(a.anno) - Number(b.anno);
+        return Number(a.mes) - Number(b.mes);
       });
 
       if (lista.length === 0 && nominasLista.length === 0) {
@@ -1219,7 +1218,7 @@
         
         '<div id="uploadStatus"></div></div></div>' +
         '<div class="section-title">Documentos del periodo</div>' +
-        '<div style="padding:0 16px 8px;"><input id="buscadorDoc" type="text" placeholder="Buscar proveedor, cliente o trabajador..." oninput="window.filtroBusqueda=this.value;renderApp()" value="' + (window.filtroBusqueda||'') + '" style="width:100%;box-sizing:border-box;background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:10px 12px;border-radius:10px;font-size:13px;"></div>' +
+        '<div style="padding:0 16px 8px;"><input id="buscadorDoc" type="text" placeholder="' + (window.filtroTipo==='proveedor'?'Buscar proveedor...':window.filtroTipo==='cliente'?'Buscar cliente...':window.filtroTipo==='nomina'?'Buscar trabajador...':'Buscar proveedor, cliente o trabajador...') + '" oninput="window.filtroBusqueda=this.value;renderApp()" value="' + (window.filtroBusqueda||'') + '" style="width:100%;box-sizing:border-box;background:#1e1e28;border:1px solid #2a2a3a;color:#e0d8cc;padding:10px 12px;border-radius:10px;font-size:13px;"></div>' +
         botonesEnvio + listaHTML + botonesEnvio + '</div>';
       var btnEmail = document.getElementById('btnImportEmail');
       if (btnEmail) btnEmail.onclick = mostrarModalEmail;
