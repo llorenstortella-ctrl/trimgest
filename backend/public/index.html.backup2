@@ -767,112 +767,83 @@
     function abrirAjustesGestoria() {
       if (window.estadoGestoria !== 'sin_gestoria') { mostrarAjustes('gestoria'); } else { mostrarAjustes(); }
     }
-    function ajustesTab(tab) {
-      ['tab-empresa','tab-gestoria','tab-plan'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.background = id === 'tab-'+tab ? '#e8c87a' : '#1e1e28';
-        if (el) el.style.color = id === 'tab-'+tab ? '#0f0f13' : '#9a90b4';
-      });
-      ['panel-empresa','panel-gestoria','panel-plan'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = id === 'panel-'+tab ? 'flex' : 'none';
-      });
-      window.ajustesTabActual = tab;
-    }
-
     async function mostrarAjustes(tabInicial) {
       var res = await fetch(API + '/usuarios/perfil', { headers: getHeaders() });
       var perfil = await res.json();
-      var tab = tabInicial || 'empresa';
 
       var div = document.createElement('div');
       div.id = 'ajustesPanel';
-      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;padding:24px 20px 40px;overflow-y:auto;';
+      div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#0f0f13;z-index:100;display:flex;flex-direction:column;align-items:center;padding:40px 20px;overflow-y:auto;';
       div.innerHTML =
-        '<div style="width:100%;max-width:360px;">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">'+
-        '<div style="font-size:20px;color:#f0ede8;font-weight:600;">Ajustes</div>'+
-        '<button onclick="cerrarAjustes()" style="background:#e8c87a;color:#0f0f13;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;">← Volver</button>'+
-        '</div>'+
-        '<div style="display:flex;gap:6px;margin-bottom:20px;">'+
-        '<button id="tab-empresa" onclick="ajustesTab(' + "'empresa'" + ')" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #2a2a3a;background:#e8c87a;color:#0f0f13;">Empresa</button>'+
-        '<button id="tab-gestoria" onclick="ajustesTab(' + "'gestoria'" + ')" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #2a2a3a;background:#1e1e28;color:#9a90b4;">Gestoría</button>'+
-        '<button id="tab-plan" onclick="ajustesTab(' + "'plan'" + ')" style="flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #2a2a3a;background:#1e1e28;color:#9a90b4;">Plan</button>'+
-        '</div>'+
-        '<div id="panel-empresa" style="display:flex;flex-direction:column;gap:12px;">'+
-        '<div style="font-size:12px;color:#6a6070;">Nombre empresa</div>'+
-        '<input id="ajNombre" class="manual-input" value="' + (perfil.nombre_empresa || '') + '" placeholder="Nombre empresa">'+
-        '<div style="font-size:12px;color:#6a6070;">NIF / CIF</div>'+
-        '<input id="ajNif" class="manual-input" value="' + (perfil.nif || '') + '" placeholder="B12345678">'+
-        '<div style="font-size:12px;color:#6a6070;">Dirección</div>'+
-        '<input id="ajDireccion" class="manual-input" value="' + (perfil.direccion || '') + '" placeholder="Calle y número">'+
-        '<div style="display:flex;gap:6px;">'+
-        '<input id="ajCp" class="manual-input" value="' + (perfil.cp || '') + '" placeholder="CP" style="flex:0.5;">'+
-        '<input id="ajCiudad" class="manual-input" value="' + (perfil.ciudad || '') + '" placeholder="Ciudad" style="flex:1;">'+
-        '</div>'+
-        '<input id="ajProvincia" class="manual-input" value="' + (perfil.provincia || '') + '" placeholder="Provincia">'+
-        '<div style="font-size:12px;color:#6a6070;">Teléfono WhatsApp</div>'+
-        '<input id="ajTelefono" class="manual-input" value="' + (perfil.telefono || '') + '" placeholder="Ej: 612345678 (sin +34)">'+
-        '<div style="font-size:11px;color:#6a6070;margin-top:-8px;">Tu gestoría podrá contactarte por WhatsApp</div>'+
-        '<div style="font-size:12px;color:#6a6070;">Trimestre fiscal</div>'+
-        '<select id="ajTrimestre" class="manual-input">'+
-        '<option value="T1"' + (perfil.trimestre_fiscal === 'T1' ? ' selected' : '') + '>T1 — Enero, Febrero, Marzo</option>'+
-        '<option value="T2"' + (perfil.trimestre_fiscal === 'T2' ? ' selected' : '') + '>T2 — Abril, Mayo, Junio</option>'+
-        '<option value="T3"' + (perfil.trimestre_fiscal === 'T3' ? ' selected' : '') + '>T3 — Julio, Agosto, Septiembre</option>'+
-        '<option value="T4"' + (perfil.trimestre_fiscal === 'T4' ? ' selected' : '') + '>T4 — Octubre, Noviembre, Diciembre</option>'+
-        '</select>'+
-        '<button onclick="guardarPerfil()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:4px;">Guardar datos</button>'+
-        '<div id="ajMsg" style="font-size:13px;text-align:center;"></div>'+
-        '</div>'+
-        '<div id="panel-gestoria" style="display:none;flex-direction:column;gap:12px;">'+
-        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:4px;">Mi gestoría</div>'+
-        '<div style="font-size:12px;color:#6a6070;margin-bottom:4px;">Gestoría con acceso a tus datos</div>'+
-        '<div id="ajGestoriasLista" style="margin-bottom:6px;"></div>'+
-        '<div style="display:flex;gap:8px;margin-bottom:4px;">'+
-        '<input id="ajEmailGestoria" class="manual-input" placeholder="Email de tu gestoría" style="flex:1;font-size:13px;">'+
-        '<button onclick="invitarGestoria()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">Invitar</button>'+
-        '</div>'+
-        '<div id="ajGestoriaMsg" style="font-size:12px;margin-bottom:4px;"></div>'+
-        '<div style="font-size:12px;color:#6a6070;margin-top:8px;">Solicitudes pendientes</div>'+
-        '<div id="ajSolicitudesLista" style="margin-bottom:8px;"></div>'+
-        '<div style="margin-top:16px;padding-top:16px;border-top:1px solid #22223a;">'+
-        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:8px;">📧 Importar por email</div>'+
-        '<div style="font-size:12px;color:#6a6070;margin-bottom:10px;">Reenvía facturas o nóminas a estas direcciones y la IA las procesará:</div>'+
-        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">'+
-        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Facturas de proveedor</div>'+
-        '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<div id="emailFacturasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">facturas+' + perfil.empresaId + '@trimgest.es</div>'+
-        '<button onclick="copiarEmail(' + "'facturas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>'+
-        '</div></div>'+
-        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">'+
-        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nóminas</div>'+
-        '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@trimgest.es</div>'+
-        '<button onclick="copiarEmail(' + "'nominas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>'+
-        '</div></div>'+
-        '<div style="font-size:11px;color:#6a6070;">Recibirás un email cuando se procesen.</div>'+
-        '</div>'+
-        '</div>'+
-        '<div id="panel-plan" style="display:none;flex-direction:column;gap:12px;">'+
-        '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:4px;">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'+
-        '<div style="font-size:14px;color:#e8c87a;font-weight:600;">' + (perfil.plan_gratuito ? 'Plan gratuito' : perfil.plan === 'estandar' ? 'Plan Estándar' : perfil.plan === 'basico' ? 'Plan Básico' : 'Plan Free') + '</div>'+
-        '<div style="font-size:12px;color:#6a6070;">' + (perfil.plan_gratuito ? 'Sin límites' : perfil.plan === 'estandar' ? '200 subidas/trimestre' : perfil.plan === 'basico' ? '100 subidas/trimestre' : '10 subidas/trimestre') + '</div>'+
-        '</div>'+
-        '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">Documentos subidos: ' + (perfil.facturas_mes || 0) + (perfil.plan_gratuito ? '' : ' / ' + (perfil.plan === 'estandar' ? '200' : perfil.plan === 'basico' ? '100' : '10')) + '</div>'+
-        (perfil.plan_gratuito ? '' : '<div style="background:#22223a;border-radius:6px;height:6px;overflow:hidden;"><div style="background:#e8c87a;height:100%;width:' + Math.min(100, Math.round((perfil.facturas_mes || 0) / (perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10) * 100)) + '%;border-radius:6px;"></div></div>') +
-        '<div style="font-size:12px;color:#6a6070;margin-top:10px;">Subidas extra disponibles: ' + (perfil.subidas_extra || 0) + '</div>'+
-        '</div>'+
-        '<button onclick="cerrarAjustes();mostrarPlanes()" style="background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Ver planes y precios</button>'+
-        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">'+
-        '<button onclick="cerrarSesion()" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cerrar sesión</button>'+
-        '<div style="margin-top:16px;text-align:center;"><button onclick="solicitarBaja()" style="background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;">Solicitar baja</button></div>'+
-        '</div>'+
-        '</div>'+
-        '</div>';
+        '<div style="font-size:11px;letter-spacing:3px;color:#6a6070;text-transform:uppercase;margin-bottom:8px;">TrimGest</div>' +
+        '<div style="font-size:22px;color:#f0ede8;margin-bottom:24px;">Datos de empresa</div>' +
+        '<div style="width:100%;max-width:300px;display:flex;flex-direction:column;gap:12px;">' +
+        '<div style="font-size:12px;color:#6a6070;">Nombre empresa</div>' +
+        '<input id="ajNombre" class="manual-input" value="' + (perfil.nombre_empresa || '') + '" placeholder="Nombre empresa">' +
+        '<div style="font-size:12px;color:#6a6070;">NIF / CIF</div>' +
+        '<input id="ajNif" class="manual-input" value="' + (perfil.nif || '') + '" placeholder="B12345678">' +
+        '<div style="font-size:12px;color:#6a6070;">Direccion</div>' +
+        '<input id="ajDireccion" class="manual-input" value="' + (perfil.direccion || '') + '" placeholder="Calle y numero">' +
+        '<div style="display:flex;gap:6px;">' +
+        '<input id="ajCp" class="manual-input" value="' + (perfil.cp || '') + '" placeholder="CP" style="flex:0.5;">' +
+        '<input id="ajCiudad" class="manual-input" value="' + (perfil.ciudad || '') + '" placeholder="Ciudad" style="flex:1;">' +
+        '</div>' +
+        '<input id="ajProvincia" class="manual-input" value="' + (perfil.provincia || '') + '" placeholder="Provincia">' +
+        '<div style="font-size:12px;color:#6a6070;">Teléfono WhatsApp</div>' +
+        '<input id="ajTelefono" class="manual-input" value="' + (perfil.telefono || '') + '" placeholder="Ej: 612345678 (sin +34)">' +
+        '<div style="font-size:11px;color:#6a6070;margin-top:-8px;">Tu gestoría podrá contactarte directamente por WhatsApp</div>' +
+        '<button onclick="guardarPerfil()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:4px;">Guardar datos</button>' +
+        '<div id="ajMsg" style="font-size:13px;text-align:center;"></div>' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:12px;">Mi gestoria</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:8px;">Gestoria con acceso a tus datos</div>' +
+        '<div id="ajGestoriasLista" style="margin-bottom:10px;"></div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px;">' +
+        '<input id="ajEmailGestoria" class="manual-input" placeholder="Email de tu gestoria" style="flex:1;font-size:13px;">' +
+        '<button onclick="invitarGestoria()" style="background:#e8c87a;color:#1a1500;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">Invitar</button>' +
+        '</div>' +
+        '<div id="ajGestoriaMsg" style="font-size:12px;margin-bottom:8px;"></div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;margin-top:12px;">Solicitudes pendientes</div>' +
+        '<div id="ajSolicitudesLista" style="margin-bottom:16px;"></div>' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:12px;">Mi plan</div>' +
+        '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:12px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+        '<div style="font-size:14px;color:#e8c87a;font-weight:600;">' + (perfil.plan_gratuito ? 'Plan gratuito' : perfil.plan === 'estandar' ? 'Plan Estándar' : perfil.plan === 'basico' ? 'Plan Básico' : 'Plan Free') + '</div>' +
+        '<div style="font-size:12px;color:#6a6070;">' + (perfil.plan_gratuito ? 'Sin límites' : perfil.plan === 'estandar' ? '200 subidas/trimestre' : perfil.plan === 'basico' ? '100 subidas/trimestre' : '10 subidas/trimestre') + '</div>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:6px;">Documentos subidos: ' + (perfil.facturas_mes || 0) + (perfil.plan_gratuito ? '' : ' / ' + (perfil.plan === 'estandar' ? '200' : perfil.plan === 'basico' ? '100' : '10')) + '</div>' +
+        (perfil.plan_gratuito ? '' :
+        '<div style="background:#22223a;border-radius:6px;height:6px;overflow:hidden;">' +
+        '<div style="background:#e8c87a;height:100%;width:' + Math.min(100, Math.round((perfil.facturas_mes || 0) / (perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10) * 100)) + '%;border-radius:6px;"></div>' +
+        '</div>') +
+        '</div>' +
+        '</div>' +
+        '<button onclick="cerrarAjustes();mostrarPlanes()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px;">Ver planes y precios</button>' +
+        '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">' +
+        '<div style="font-size:15px;color:#f0ede8;font-weight:600;margin-bottom:8px;">📧 Importar por email</div>' +
+        '<div style="font-size:12px;color:#6a6070;margin-bottom:12px;">Reenvía tus facturas de proveedor a esta dirección y la IA las procesará automáticamente:</div>' +
+        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
+        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Facturas de proveedor</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div id="emailFacturasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">facturas+' + perfil.empresaId + '@trimgest.es</div>' +
+        '<button onclick="copiarEmail(' + "'facturas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
+        '</div></div>' +
+        '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:12px;margin-bottom:8px;">' +
+        '<div style="font-size:11px;color:#6a6070;margin-bottom:4px;">Nominas</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div id="emailNominasInbound" style="font-size:12px;color:#e8c87a;font-family:monospace;flex:1;word-break:break-all;">nominas+' + perfil.empresaId + '@trimgest.es</div>' +
+        '<button onclick="copiarEmail(' + "'nominas'" + ')" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Copiar</button>' +
+        '</div></div>' +
+        '<div style="font-size:11px;color:#6a6070;">Recibirás un email de confirmación cuando se procesen.</div>' +
+        '</div>' +
+        '<button onclick="cerrarSesion()" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cerrar sesion</button>' +
+        '<div style="margin-top:40px;padding-top:24px;border-top:1px solid #22223a;text-align:center;"><button onclick="solicitarBaja()" style="background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;">Solicitar baja</button></div>' +
+        '</div></div>' +
+        '<button onclick="cerrarAjustes()" style="margin-top:30px;background:none;border:none;color:#6a6070;font-size:13px;cursor:pointer;text-decoration:underline;">Volver</button>';
       document.body.appendChild(div);
-      ajustesTab(tab);
       cargarGestoriasAjustes();
+      if (tabInicial === 'gestoria') { setTimeout(function() { var el = document.getElementById('ajGestoriasLista'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300); }
     }
 
     async function solicitarBaja() {
