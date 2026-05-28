@@ -188,6 +188,7 @@ router.delete('/borrar/:id', auth, (req, res) => {
 router.post('/eliminar-pagina/:id', auth, async (req, res) => {
   try {
     const pagina = parseInt(req.body.pagina);
+    console.log('ELIMINAR PAGINA body:', JSON.stringify(req.body), 'pagina:', pagina);
     const nominas = getNominas(req.empresaId);
     const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
     if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
