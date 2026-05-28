@@ -208,8 +208,8 @@ router.post('/eliminar-pagina/:id', auth, async (req, res) => {
     saveNominas(nominas, req.empresaId);
     res.json({ ok: true });
   } catch(e) {
-    console.error(e);
-    res.status(500).json({ error: 'Error eliminando pagina' });
+    console.error('ERROR ELIMINAR PAGINA:', e.message, e.stack);
+    res.status(500).json({ error: 'Error eliminando pagina: ' + e.message });
   }
 });
 
