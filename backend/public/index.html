@@ -561,7 +561,7 @@
 
     async function eliminarPaginaNomina(id, pagina) {
       if (!confirm('Se eliminara la pagina ' + pagina + ' del PDF. Continuar?')) return;
-      var r = await fetch(API + '/nominas/eliminar-pagina/' + id, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ pagina: pagina }) });
+      var r = await fetch(API + '/nominas/eliminar-pagina/' + id, { method: 'POST', headers: Object.assign({}, getHeaders(), {'Content-Type': 'application/json'}), body: JSON.stringify({ pagina: pagina }) });
       var d = await r.json();
       if (d.ok) { renderNominas(); } else { alert('Error eliminando pagina'); }
     }
