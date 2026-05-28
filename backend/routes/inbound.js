@@ -6,6 +6,7 @@ const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const { Resend } = require('resend');
 const { extraerDatosFactura } = require('../services/openai');
+const { detectarDuplicadoPaginas } = require('../utils/pdf');
 const OpenAI = require('openai');
 
 const baseDataDir = path.join(__dirname, '../data');
@@ -121,6 +122,7 @@ async function procesarPDFNomina(buffer, nombreArchivo, empresaId) {
   fs.writeFileSync(rutaFinal, buffer);
 
   const datos = await extraerDatosNominaBuffer(buffer);
+  const infoDuplicado = await detectarDuplicadoPaginas(buffer);
 
   const nominas = fs.existsSync(nominasPath) ? JSON.parse(fs.readFileSync(nominasPath)) : [];
   const nueva = {
@@ -139,7 +141,10 @@ async function procesarPDFNomina(buffer, nombreArchivo, empresaId) {
     coste_empresa: datos.coste_empresa,
     contabilizado: false,
     fecha_subida: new Date().toISOString(),
-    origen: 'email'
+    origen: 'email',
+    num_paginas: infoDuplicado.numPaginas,
+    duplicado_detectado: infoDuplicado.duplicado,
+    pagina_duplicada: infoDuplicado.paginaDuplicada || null
   };
 
   nominas.push(nueva);
