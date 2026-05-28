@@ -1152,7 +1152,14 @@
           listaHTML += '<span class="factura-badge" style="background:#1a1a2a;border:1px solid #9a90b4;color:#9a90b4;">nómina</span></div>';
           listaHTML += '<div class="factura-datos"><span>' + (n.mes || '') + ' ' + (n.anno || '') + '</span><span class="factura-total">' + formatEur(n.neto) + ' neto</span></div>';
           listaHTML += '<div class="factura-desglose">Coste empresa ' + formatEur(n.coste_empresa) + ' · IRPF ' + (n.irpf_porcentaje||0) + '%</div>';
-          listaHTML += '<div class="factura-acciones">' + contBadge + dupBadge + btnPDF + '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ',' + (n.contabilizado?'true':'false') + ')">Borrar</button></div>';
+          var tijeras = (n.archivo && n.num_paginas > 1) ? '<button class="btn-accion" onclick="eliminarPaginaNomina(' + n.id + ',' + (n.pagina_duplicada||2) + ')" title="Dividir PDF">✂️</button>' : '';
+          listaHTML += '<div class="factura-acciones">' + contBadge + dupBadge + btnPDF + tijeras + '<button class="btn-accion" onclick="editarNomina(' + n.id + ')">Editar</button><button class="btn-borrar" onclick="borrarNomina(' + n.id + ',' + (n.contabilizado?'true':'false') + ')">Borrar</button></div>';
+          listaHTML += '<div class="edit-form" id="edit-nomina-' + n.id + '">';
+          listaHTML += '<div class="edit-row"><input class="edit-input" id="en-trabajador-' + n.id + '" value="' + (n.trabajador||'') + '" placeholder="Trabajador"></div>';
+          listaHTML += '<div class="edit-row"><input class="edit-input" id="en-neto-' + n.id + '" value="' + (n.neto||'') + '" placeholder="Neto" style="width:48%"><input class="edit-input" id="en-coste-' + n.id + '" value="' + (n.coste_empresa||'') + '" placeholder="Coste empresa" style="width:48%"></div>';
+          listaHTML += '<div class="edit-row"><input class="edit-input" id="en-irpf-' + n.id + '" value="' + (n.irpf_importe||'') + '" placeholder="IRPF importe" style="width:48%"><input class="edit-input" id="en-ss-' + n.id + '" value="' + (n.ss_empresa||'') + '" placeholder="SS empresa" style="width:48%"></div>';
+          listaHTML += '<button class="btn-guardar" onclick="guardarNomina(' + n.id + ')">Guardar cambios</button>';
+          listaHTML += '</div>';
           listaHTML += '</div>';
         });
         listaHTML += '</div>';
