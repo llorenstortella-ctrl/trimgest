@@ -187,15 +187,18 @@ router.delete('/borrar/:id', auth, (req, res) => {
 
 router.post('/eliminar-pagina/:id', auth, async (req, res) => {
   try {
-    const { pagina } = req.body;
+    const pagina = parseInt(req.body.pagina);
     const nominas = getNominas(req.empresaId);
     const idx = nominas.findIndex(n => n.id === parseInt(req.params.id));
     if (idx === -1) return res.status(404).json({ error: 'Nomina no encontrada' });
+    if (!pagina || pagina < 1) return res.status(400).json({ error: 'Pagina invalida' });
     const { uploadsDir } = getEmpresaDirs(req.empresaId);
     const filepath = path.join(uploadsDir, nominas[idx].archivo);
+    if (!fs.existsSync(filepath)) return res.status(404).json({ error: 'PDF no encontrado' });
     const fileBuffer = fs.readFileSync(filepath);
     const { PDFDocument } = require('pdf-lib');
     const pdfDoc = await PDFDocument.load(fileBuffer);
+    if (pagina > pdfDoc.getPageCount()) return res.status(400).json({ error: 'Pagina no existe en el PDF' });
     pdfDoc.removePage(pagina - 1);
     const pdfBytes = await pdfDoc.save();
     fs.writeFileSync(filepath, pdfBytes);
