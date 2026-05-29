@@ -338,6 +338,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <button class="btn btn-primary" onclick="guardarAjustesGestoria()">Guardar</button>
           <div id="ajustes-msg" style="margin-top:10px;font-size:13px;"></div>
         </div>
+
+        <div class="card" style="max-width:500px;margin-top:16px;">
+          <div class="card-title">Invita y gana</div>
+          <p style="font-size:13px;color:#9a90b4;margin-bottom:12px;">Invita a empresas a usar TrimGest. Cuando se suscriban, ganas <strong style="color:#e8c87a;">5&euro;</strong> por cada una.</p>
+          <div style="font-size:11px;color:#6a6070;margin-bottom:6px;">Tu enlace de invitaci&oacute;n:</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <div id="gest-ref-enlace" style="flex:1;background:#22223a;border-radius:8px;padding:10px;font-size:11px;color:#9a90b4;word-break:break-all;"></div>
+            <button id="gest-ref-copiar" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:8px 12px;font-size:11px;cursor:pointer;white-space:nowrap;">Copiar</button>
+          </div>
+          <div style="font-size:11px;color:#6a6070;margin-bottom:6px;">Enviar invitaci&oacute;n por email:</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <input id="gest-ref-email" type="email" placeholder="email@empresa.com" style="flex:1;background:#22223a;border:1px solid #2a2a3a;border-radius:8px;padding:10px;font-size:13px;color:#f0ede8;">
+            <button id="gest-ref-enviar" class="btn btn-primary" style="white-space:nowrap;">Enviar</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;color:#9a90b4;">Saldo acumulado: <strong id="gest-ref-saldo" style="color:#e8c87a;">0&euro;</strong></div>
+            <button id="gest-ref-cobrar" style="display:none;" class="btn btn-secondary">Solicitar pago</button>
+          </div>
+        </div>
       </div>
 
       <div class="page" id="page-invitaciones">
@@ -475,7 +494,7 @@ function showPage(id, el) {
   document.getElementById('page-' + id).classList.add('active');
   if (el) el.classList.add('active');
   if (id === 'invitaciones') cargarInvitaciones();
-  if (id === 'ajustes') cargarAjustesGestoria();
+  if (id === 'ajustes') { cargarAjustesGestoria(); cargarReferidosGestoria(); }
 }
 
 async function cargarClientes() {
@@ -1221,6 +1240,64 @@ async function cargarAjustesGestoria() {
       document.getElementById('ajuste-telefono').value = d.telefono || '';
     }
   } catch(e) { console.error(e); }
+}
+
+
+async function cargarReferidosGestoria() {
+  try {
+    var r = await fetch(API + '/referidos/info', { headers: { 'Authorization': 'Bearer ' + token } });
+    var data = await r.json();
+    var elEnlace = document.getElementById('gest-ref-enlace');
+    var elSaldo = document.getElementById('gest-ref-saldo');
+    var elCobrar = document.getElementById('gest-ref-cobrar');
+    var elCopiar = document.getElementById('gest-ref-copiar');
+    var elEnviar = document.getElementById('gest-ref-enviar');
+    if (!elEnlace) return;
+    elEnlace.textContent = data.enlace || '';
+    elSaldo.textContent = (data.ref_saldo || 0) + '€';
+    if ((data.ref_saldo || 0) >= 15) elCobrar.style.display = 'inline-block';
+    elCopiar.onclick = function() {
+      navigator.clipboard.writeText(data.enlace || '');
+      elCopiar.textContent = 'Copiado!';
+      setTimeout(function() { elCopiar.textContent = 'Copiar'; }, 2000);
+    };
+    elEnviar.onclick = async function() {
+      var email = document.getElementById('gest-ref-email').value.trim();
+      if (!email) return;
+      elEnviar.disabled = true;
+      elEnviar.textContent = '...';
+      try {
+        var res = await fetch(API + '/referidos/invitar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ emailDestino: email })
+        });
+        var d = await res.json();
+        if (d.ok) {
+          document.getElementById('gest-ref-email').value = '';
+          elEnviar.textContent = 'Enviado!';
+          setTimeout(function() { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }, 2000);
+        } else {
+          elEnviar.textContent = 'Error';
+          setTimeout(function() { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }, 2000);
+        }
+      } catch(e) { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }
+    };
+    elCobrar.onclick = function() {
+      var iban = prompt('Introduce tu IBAN para recibir ' + (data.ref_saldo || 0) + '€:');
+      if (!iban) return;
+      var dni = prompt('Introduce tu DNI o NIF:');
+      if (!dni) return;
+      fetch(API + '/referidos/solicitar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ iban: iban, dni: dni })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) alert('Solicitud enviada. Te transferiremos ' + (data.ref_saldo || 0) + '€ en los proximos dias.');
+        else alert(d.error || 'Error al solicitar pago');
+      }).catch(function() { alert('Error de conexion'); });
+    };
+  } catch(e) { console.error('Error cargando referidos gestoria:', e); }
 }
 
 async function guardarAjustesGestoria() {

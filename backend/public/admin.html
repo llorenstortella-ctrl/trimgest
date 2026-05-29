@@ -89,6 +89,7 @@
         <button class="btn-backup" onclick="descargarBackup()">&#8595; Backup</button>
         <button class="btn-backup" onclick="restaurarBackup()" style="background:#2a1a2a;border-color:#6a2a6a;color:#c87ae8;">&#8593; Restaurar</button>
         <input type="file" id="inputRestore" accept=".json" style="display:none" onchange="procesarRestore(this)">
+        <button class="btn-backup" onclick="verReferidosPendientes()" style="background:#1a2a1a;border-color:#4a8a4a;color:#7ec47e;">&#128176; Referidos</button>
         <button class="btn-logout" onclick="logout()">Cerrar sesion</button>
       </div>
     </div>
@@ -110,6 +111,14 @@
       </table>
     </div>
     <div class="mobile-lista" id="mobileLista"></div>
+  </div>
+
+  <div id="referidosPanel" style="display:none;background:#16161e;border-radius:12px;padding:20px;margin:16px;max-width:900px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="color:#e8c87a;margin:0;">Solicitudes de pago referidos</h2>
+      <button onclick="document.getElementById('referidosPanel').style.display='none'" style="background:none;border:1px solid #3a3a4a;color:#9a90b4;border-radius:8px;padding:6px 12px;cursor:pointer;">Cerrar</button>
+    </div>
+    <div id="referidosLista" style="font-size:13px;color:#9a90b4;">Cargando...</div>
   </div>
 
   <div class="ficha" id="fichaPanel">
@@ -327,6 +336,49 @@
           a.click();
           URL.revokeObjectURL(url);
         });
+    }
+
+    async function verReferidosPendientes() {
+      var panel = document.getElementById('referidosPanel');
+      var lista = document.getElementById('referidosLista');
+      panel.style.display = 'block';
+      lista.innerHTML = 'Cargando...';
+      try {
+        var r = await fetch(API + '/referidos/admin/pendientes', { headers: { 'x-admin-password': adminPassword } });
+        var data = await r.json();
+        if (!data.length) { lista.innerHTML = '<p style="color:#6a6070;">No hay solicitudes pendientes.</p>'; return; }
+        lista.innerHTML = data.map(function(s) {
+          return '<div style="background:#1e1e28;border-radius:10px;padding:14px;margin-bottom:10px;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">' +
+            '<div>' +
+            '<div style="color:#e0d8cc;font-weight:600;">' + s.nombre + ' <span style="color:#6a6070;font-size:11px;">(' + (s.tipo === 'gestoria' ? 'Gestoria' : 'Empresa') + ')</span></div>' +
+            '<div style="color:#9a90b4;font-size:12px;">' + s.email + '</div>' +
+            '<div style="color:#9a90b4;font-size:12px;margin-top:6px;">IBAN: <span style="color:#e0d8cc;">' + s.iban + '</span></div>' +
+            '<div style="color:#9a90b4;font-size:12px;">DNI: <span style="color:#e0d8cc;">' + s.dni + '</span></div>' +
+            '<div style="color:#9a90b4;font-size:12px;">Fecha: ' + new Date(s.fecha).toLocaleDateString('es-ES') + '</div>' +
+            '</div>' +
+            '<div style="text-align:right;">' +
+            '<div style="font-size:20px;font-weight:700;color:#e8c87a;margin-bottom:8px;">' + s.importe + '€</div>' +
+            '<button onclick="marcarReferidoPagado('' + s.empresaId + '')" style="background:#1a2a1a;border:1px solid #4a8a4a;color:#7ec47e;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Marcar pagado</button>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+        }).join('');
+      } catch(e) { lista.innerHTML = '<p style="color:#c06060;">Error al cargar.</p>'; }
+    }
+
+    async function marcarReferidoPagado(empresaId) {
+      if (!confirm('Marcar como pagado y resetear saldo a 0?')) return;
+      try {
+        var r = await fetch(API + '/referidos/admin/marcar-pagado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+          body: JSON.stringify({ empresaId: empresaId })
+        });
+        var d = await r.json();
+        if (d.ok) verReferidosPendientes();
+        else alert(d.error || 'Error');
+      } catch(e) { alert('Error de conexion'); }
     }
 
     function logout() {
