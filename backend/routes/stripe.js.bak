@@ -41,7 +41,8 @@ router.post('/checkout', auth, async (req, res) => {
       }],
       success_url: 'https://trimgest.es/app?pago=ok&plan=' + plan,
       cancel_url: 'https://trimgest.es/app?pago=cancelado',
-      metadata: { empresaId: req.empresaId, plan: plan }
+      metadata: { empresaId: req.empresaId, plan: plan },
+      allow_promotion_codes: true
     });
 
     res.json({ url: session.url });
@@ -71,7 +72,8 @@ router.post('/comprar-subidas', auth, async (req, res) => {
       }],
       success_url: 'https://trimgest.es/app?subidas=ok&paquete=' + paquete,
       cancel_url: 'https://trimgest.es/app?subidas=cancelado',
-      metadata: { empresaId: req.empresaId, tipo: 'subidas_extra', paquete: paquete, subidas: p.subidas }
+      metadata: { empresaId: req.empresaId, tipo: 'subidas_extra', paquete: paquete, subidas: p.subidas },
+      allow_promotion_codes: true
     });
 
     res.json({ url: session.url });

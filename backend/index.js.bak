@@ -84,6 +84,10 @@ const { ejecutarBackup } = require('./services/backup');
 ejecutarBackup(); // Ejecutar al arrancar
 setInterval(ejecutarBackup, 24 * 60 * 60 * 1000); // Cada 24h
 
+const { ejecutarRecordatorios } = require('./services/recordatorio');
+ejecutarRecordatorios(); // Ejecutar al arrancar
+setInterval(ejecutarRecordatorios, 24 * 60 * 60 * 1000); // Cada 24h
+
 app.listen(PORT, () => {
   console.log(`Servidor TrimGest corriendo en puerto ${PORT}`);
 });

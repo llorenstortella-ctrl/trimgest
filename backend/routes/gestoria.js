@@ -33,7 +33,7 @@ function getUserFromToken(req) {
 // POST /gestoria/registro — registro como gestoria
 router.post('/registro', async (req, res) => {
   try {
-    const { email, password, nombre_empresa } = req.body;
+    const { email, password, nombre_empresa, ref_referido_por } = req.body;
     if (!email || !password || !nombre_empresa) {
       return res.status(400).json({ error: 'Faltan datos' });
     }
@@ -56,7 +56,10 @@ router.post('/registro', async (req, res) => {
       plan: 'basico',
       fecha_registro: new Date().toISOString(),
       verificado: false,
-      ver_token: verToken
+      ver_token: verToken,
+      ref_codigo: Math.random().toString(36).substring(2, 8).toUpperCase(),
+      ref_referido_por: ref_referido_por || null,
+      ref_saldo: 0
     };
     usuarios.push(nuevo);
     saveUsuarios(usuarios);

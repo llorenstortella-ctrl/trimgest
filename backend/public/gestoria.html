@@ -447,7 +447,7 @@ async function doRegistro() {
   if (!nombre || !email || !pass) return showAuthMsg('Completa todos los campos', true);
   if (pass.length < 6) return showAuthMsg('La contrasena debe tener al menos 6 caracteres', true);
   try {
-    var r = await fetch(API + '/gestoria/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pass, nombre_empresa: nombre }) });
+    var r = await fetch(API + '/gestoria/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pass, nombre_empresa: nombre, ref_referido_por: new URLSearchParams(window.location.search).get('ref') || null }) });
     var d = await r.json();
     if (!d.ok) return showAuthMsg(d.error || 'Error al registrarse', true);
     showAuthMsg('Cuenta creada. Revisa tu email para verificar la cuenta antes de entrar.', false);
@@ -1239,6 +1239,8 @@ async function guardarAjustesGestoria() {
   } catch(e) { msg.style.color = '#c06060'; msg.textContent = 'Error de conexion'; }
 }
 
+var _refCodigo = new URLSearchParams(window.location.search).get('ref');
+if (_refCodigo) sessionStorage.setItem('ref_codigo', _refCodigo);
 if (window.location.hash === '#registro') switchAuthTab('registro');
 if (token) {
   fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + token } })

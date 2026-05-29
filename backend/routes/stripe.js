@@ -107,6 +107,15 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         usuarios[idx].stripe_customer = session.customer;
         usuarios[idx].stripe_subscription = session.subscription;
       }
+      // Sistema referidos — sumar 5€ al referidor si es primer pago de suscripcion
+      if (tipo !== 'subidas_extra' && usuarios[idx].ref_referido_por && !usuarios[idx].ref_primer_pago) {
+        usuarios[idx].ref_primer_pago = true;
+        const idxRef = usuarios.findIndex(u => u.ref_codigo === usuarios[idx].ref_referido_por);
+        if (idxRef !== -1) {
+          usuarios[idxRef].ref_saldo = (usuarios[idxRef].ref_saldo || 0) + 5;
+          console.log('[Referidos] +5 euros a', usuarios[idxRef].email, 'por referir a', usuarios[idx].email);
+        }
+      }
       saveUsuarios(usuarios);
     }
   }

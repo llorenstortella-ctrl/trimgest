@@ -870,7 +870,7 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
     const gestoria = getUserFromToken(req);
     if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
     const { empresaId } = req.params;
-    const { ids, tipo } = req.body;
+    const { ids, tipo, trimestre, anno, todas, conAdjuntos } = req.body;
     const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
     if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
     const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
@@ -879,7 +879,18 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
     const nombreEmpresa = empresa ? empresa.nombre_empresa : empresaId;
     const facturasPath = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
     const todasFacturas = fs.existsSync(facturasPath) ? JSON.parse(fs.readFileSync(facturasPath)) : [];
-    const lista = todasFacturas.filter(f => ids.includes(String(f.id)));
+    let lista;
+    if (todas) {
+      lista = todasFacturas.filter(f => {
+        if (f.tipo !== tipo) return false;
+        if (String(f.anno) !== String(anno)) return false;
+        if (trimestre && f.trimestre !== trimestre) return false;
+        return true;
+      });
+    } else {
+      lista = todasFacturas.filter(f => ids.includes(String(f.id)));
+    }
+    // conAdjuntos ya viene del destructuring
 
     const pdfDoc = await PDFDocument.create();
     const bold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -927,17 +938,19 @@ router.post('/cliente/:empresaId/pdf/facturas-seleccionadas', async (req, res) =
       y -= 18;
     });
 
-    // Adjuntar PDFs originales
-    for (const f of lista) {
-      if (!f.archivo) continue;
-      const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', f.archivo);
-      if (!fs.existsSync(archivoPath)) continue;
-      try {
-        const pdfBytes = fs.readFileSync(archivoPath);
-        const facturaPdf = await PDFDocument.load(pdfBytes);
-        const pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
-        pages.forEach(p => pdfDoc.addPage(p));
-      } catch(e) { console.error('Error adjuntando factura:', e.message); }
+    // Adjuntar PDFs originales solo si conAdjuntos=true
+    if (conAdjuntos) {
+      for (const f of lista) {
+        if (!f.archivo) continue;
+        const archivoPath = path.join(dataDir, 'empresas', empresaId, 'uploads', f.archivo);
+        if (!fs.existsSync(archivoPath)) continue;
+        try {
+          const pdfBytes = fs.readFileSync(archivoPath);
+          const facturaPdf = await PDFDocument.load(pdfBytes);
+          const pages = await pdfDoc.copyPages(facturaPdf, facturaPdf.getPageIndices());
+          pages.forEach(p => pdfDoc.addPage(p));
+        } catch(e) { console.error('Error adjuntando factura:', e.message); }
+      }
     }
 
     const pdfBytes = await pdfDoc.save();
