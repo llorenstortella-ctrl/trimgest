@@ -359,11 +359,14 @@
             '</div>' +
             '<div style="text-align:right;">' +
             '<div style="font-size:20px;font-weight:700;color:#e8c87a;margin-bottom:8px;">' + s.importe + '€</div>' +
-            '<button onclick="marcarReferidoPagado('' + s.empresaId + '')" style="background:#1a2a1a;border:1px solid #4a8a4a;color:#7ec47e;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Marcar pagado</button>' +
+            '<button data-id="' + s.empresaId + '" class="btn-marcar-pagado" style="background:#1a2a1a;border:1px solid #4a8a4a;color:#7ec47e;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Marcar pagado</button>' +
             '</div>' +
             '</div>' +
             '</div>';
         }).join('');
+      document.querySelectorAll('.btn-marcar-pagado').forEach(function(btn) {
+        btn.addEventListener('click', function() { marcarReferidoPagado(this.dataset.id); });
+      });
       } catch(e) { lista.innerHTML = '<p style="color:#c06060;">Error al cargar.</p>'; }
     }
 
