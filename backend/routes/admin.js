@@ -490,5 +490,28 @@ router.post('/cargar-demo', async (req, res) => {
   }
 });
 
+router.post('/generar-ref-codigos', (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const usuarios = getUsuarios();
+    let actualizados = 0;
+    usuarios.forEach(function(u) {
+      if (!u.ref_codigo) {
+        u.ref_codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+        u.ref_saldo = u.ref_saldo || 0;
+        u.ref_referido_por = u.ref_referido_por || null;
+        actualizados++;
+      }
+    });
+    saveUsuarios(usuarios);
+    res.json({ ok: true, actualizados });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 module.exports = router;
