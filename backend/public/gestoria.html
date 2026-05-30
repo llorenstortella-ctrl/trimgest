@@ -511,10 +511,13 @@ async function cargarClientes() {
       return;
     }
     lista.innerHTML = d.clientes.map(function(c) {
+      var badgeDemo = c.es_demo ? '<span style="background:#2a2010;border:1px solid #e8c87a;color:#e8c87a;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;letter-spacing:1px;">DEMO</span>' : '';
+      var btnQuitarDemo = c.es_demo ? '<button class="btn-quitar-demo" onclick="event.stopPropagation();quitarDemo()" style="background:#2a1a1a;border:1px solid #5a3a3a;color:#c06060;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Quitar demo</button>' : '';
       return '<div class="cliente-card" data-id="' + c.empresaId + '" data-nombre="' + c.empresaNombre.replace(/"/g, '&quot;') + '">' +
-        '<div class="cliente-info"><h3>' + c.empresaNombre + '</h3><p>' + c.empresaEmail + '</p></div>' +
-        '<div style="display:flex;gap:8px;align-items:center;">' +
+        '<div class="cliente-info"><h3>' + c.empresaNombre + ' ' + badgeDemo + '</h3><p>' + c.empresaEmail + '</p></div>' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
         (c.telefono ? '<a href="https://wa.me/34' + c.telefono.replace(/\D/g,'') + '" target="_blank" onclick="event.stopPropagation()" style="background:#25d366;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;text-decoration:none;">WhatsApp</a>' : '') +
+        btnQuitarDemo +
         '<button class="btn btn-secondary btn-sm">Ver datos &rarr;</button>' +
         '</div>' +
         '</div>';
@@ -523,6 +526,16 @@ async function cargarClientes() {
       card.addEventListener('click', function() { verCliente(this.dataset.id, this.dataset.nombre); });
     });
   } catch(e) { console.error(e); }
+}
+
+async function quitarDemo() {
+  if (!confirm('¿Quieres quitar la empresa de demostración de tu lista de clientes?')) return;
+  try {
+    var r = await fetch(API + '/gestoria/quitar-demo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    if (d.ok) cargarClientes();
+    else alert(d.error || 'Error');
+  } catch(e) { alert('Error de conexion'); }
 }
 
 async function verCliente(empresaId, nombre) {
