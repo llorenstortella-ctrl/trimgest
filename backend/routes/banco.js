@@ -110,6 +110,7 @@ router.post('/subir', auth, upload.single('extracto'), (req, res) => {
         fecha: fecha.toISOString(),
         fecha_display: fechaRaw,
         importe,
+        estado: facturaMatch ? 'conciliado' : 'pendiente',
         conciliado: !!facturaMatch,
         factura_id: facturaMatch ? facturaMatch.id : null,
         factura_nombre: facturaMatch ? facturaMatch.nombre : null,
