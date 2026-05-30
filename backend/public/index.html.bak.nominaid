@@ -1171,7 +1171,6 @@ if (window.location.hash === '#registro') {
         var r = await fetch(API + '/banco/movimientos', { headers: getHeaders() });
         var data = await r.json();
         var todosMovs = data.movimientos || [];
-        window.bancoMovs = todosMovs;
         var ultimaFecha = data.ultima_fecha;
 
         var mesesTrim = { T1: [0,1,2], T2: [3,4,5], T3: [6,7,8], T4: [9,10,11] };
@@ -1332,9 +1331,7 @@ if (window.location.hash === '#registro') {
       var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var data = await r.json();
       var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'proveedor'; });
-      var facturasAsignadas = (window.bancoMovs || []).filter(function(m) { return m.factura_id; }).map(function(m) { return m.factura_id; });
-      facturas = facturas.filter(function(f) { return !facturasAsignadas.includes(f.id); });
-      if (facturas.length === 0) { alert('No tienes facturas de proveedor pendientes de asignar'); return; }
+      if (facturas.length === 0) { alert('No tienes facturas de proveedor en TrimGest'); return; }
       var items = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + formatEur(f.total), subtitulo: f.fecha + (f.numero_factura ? ' · N ' + f.numero_factura : '') }; });
       mostrarModalBanco('Selecciona la factura', items, async function(idx) {
         var factura = facturas[idx];
@@ -1412,9 +1409,7 @@ if (window.location.hash === '#registro') {
       var r = await fetch(API + '/nominas/listar', { headers: getHeaders() });
       var data = await r.json();
       var nominas = data.nominas || [];
-      var nominasAsignadas = (window.bancoMovs || []).filter(function(m) { return m.nomina_id; }).map(function(m) { return m.nomina_id; });
-      nominas = nominas.filter(function(n) { return !nominasAsignadas.includes(n.id); });
-      if (nominas.length === 0) { alert('No tienes nominas pendientes de asignar'); return; }
+      if (nominas.length === 0) { alert('No tienes nominas en TrimGest'); return; }
       var mesesNombres = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
       var items = nominas.map(function(n) { var mesStr = mesesNombres[n.mes] || n.mes || ''; return { titulo: n.trabajador + ' — ' + formatEur(n.neto), subtitulo: mesStr + ' ' + (n.anno||'') }; });
       mostrarModalBanco('Selecciona la nomina', items, async function(idx) {
@@ -1422,7 +1417,7 @@ if (window.location.hash === '#registro') {
         await fetch(API + '/banco/actualizar-movimiento', {
           method: 'POST',
           headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ movimiento_id: id, estado: 'conciliado', factura_id: null, nomina_id: nomina.id, factura_nombre: 'Nomina: ' + nomina.trabajador + ' ' + (mesesNombres[nomina.mes] || nomina.mes || '') + ' ' + (nomina.anno||''), factura_total: nomina.neto })
+          body: JSON.stringify({ movimiento_id: id, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: ' + nomina.trabajador + ' ' + (mesesNombres[nomina.mes] || nomina.mes || '') + ' ' + (nomina.anno||''), factura_total: nomina.neto })
         });
         renderBanco();
       });

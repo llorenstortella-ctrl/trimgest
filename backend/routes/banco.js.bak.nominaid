@@ -154,7 +154,7 @@ router.get('/movimientos', auth, (req, res) => {
 
 // POST /banco/actualizar-movimiento — actualiza estado de un movimiento
 router.post('/actualizar-movimiento', auth, (req, res) => {
-  const { movimiento_id, estado, factura_id, factura_nombre, factura_total, motivo, nomina_id } = req.body;
+  const { movimiento_id, estado, factura_id, factura_nombre, factura_total, motivo } = req.body;
   if (!movimiento_id) return res.status(400).json({ error: 'Falta movimiento_id' });
   const empresaId = req.empresaId;
   const banco = getBanco(empresaId);
@@ -165,7 +165,6 @@ router.post('/actualizar-movimiento', auth, (req, res) => {
   banco.movimientos[idx].factura_nombre = factura_nombre || null;
   banco.movimientos[idx].factura_total = factura_total || null;
   banco.movimientos[idx].motivo = motivo || null;
-  banco.movimientos[idx].nomina_id = nomina_id || null;
   banco.movimientos[idx].conciliado = estado === 'conciliado';
   saveBanco(empresaId, banco);
   res.json({ ok: true });
