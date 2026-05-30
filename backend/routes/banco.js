@@ -56,11 +56,7 @@ function cruzarConFacturas(movimiento, facturas) {
   const fecha = new Date(movimiento.fecha);
   const candidatos = facturas.filter(function(f) {
     const totalF = Math.abs(parseFloat(f.total));
-    if (Math.abs(totalF - imp) > 0.02) return false;
-    const fechaF = f.fecha ? parsearFecha(f.fecha) : null;
-    if (!fechaF) return false;
-    const difDias = Math.abs((fecha - fechaF) / (1000*60*60*24));
-    return difDias <= 60;
+    return Math.abs(totalF - imp) <= 0.02;
   });
   return candidatos.length > 0 ? candidatos[0] : null;
 }
