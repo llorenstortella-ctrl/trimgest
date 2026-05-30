@@ -1197,11 +1197,7 @@ if (window.location.hash === '#registro') {
         html += '</div>';
 
         if (movs.length > 0) {
-          html += '<div id="banco-seleccion-bar" style="display:none;background:#1e1a0a;border-radius:10px;padding:12px;margin-bottom:8px;align-items:center;gap:8px;">';
-          html += '<span id="banco-sel-count" style="font-size:13px;color:#e8c87a;flex:1;">0 seleccionados</span>';
-          html += '<button id="btn-agrupar-asignar" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;">Asignar factura</button>';
-          html += '<button onclick="cancelarSeleccion()" style="background:#2a2a3a;border:none;color:#9a90b4;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;">Cancelar</button>';
-          html += '</div>';
+
 
           html += '<div style="display:flex;flex-direction:column;gap:6px;" id="banco-lista">';
           var movsOrdenados = movs.slice().sort(function(a,b) { return new Date(b.fecha) - new Date(a.fecha); });
@@ -1215,7 +1211,7 @@ if (window.location.hash === '#registro') {
 
             html += '<div class="banco-mov" data-id="' + m.id + '" style="background:#16161e;border-radius:10px;padding:12px 14px;border:1px solid #22223a;">';
             html += '<div style="display:flex;align-items:flex-start;gap:10px;">';
-            html += '<input type="checkbox" class="banco-check" data-id="' + m.id + '" style="margin-top:4px;accent-color:#e8c87a;">';
+            
             html += '<div style="flex:1;">';
             html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
             html += '<div style="font-size:13px;color:#e0d8cc;font-weight:600;">' + m.concepto + '</div>';
@@ -1228,6 +1224,7 @@ if (window.location.hash === '#registro') {
             if (estado === 'pendiente') {
               html += '<div style="display:flex;gap:6px;">';
               html += '<button class="btn-asignar-factura" data-id="' + m.id + '" style="flex:1;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">+ Asignar factura</button>';
+              html += '<button class="btn-agrupar" data-id="' + m.id + '" title="Agrupa varios movimientos del banco que corresponden a una misma factura" style="background:#1a1a2a;border:1px solid #3a3a5a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Agrupar</button>';
               html += '<button class="btn-sin-factura" data-id="' + m.id + '" style="flex:1;background:#1e1e28;border:1px solid #3a3a4a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Sin factura</button>';
               html += '</div>';
             } else {
@@ -1268,23 +1265,34 @@ if (window.location.hash === '#registro') {
       }
 
       window.bancoSeleccion = [];
-      document.querySelectorAll('.banco-check').forEach(function(chk) {
-        chk.addEventListener('change', function() {
+
+      document.querySelectorAll('.btn-agrupar').forEach(function(btn) {
+        btn.addEventListener('click', function() {
           var id = parseInt(this.dataset.id);
-          if (this.checked) window.bancoSeleccion.push(id);
-          else window.bancoSeleccion = window.bancoSeleccion.filter(function(x) { return x !== id; });
-          var bar = document.getElementById('banco-seleccion-bar');
-          var cnt = document.getElementById('banco-sel-count');
-          if (bar) bar.style.display = window.bancoSeleccion.length > 0 ? 'flex' : 'none';
-          if (cnt) cnt.textContent = window.bancoSeleccion.length + ' seleccionados';
+          if (window.bancoSeleccion.includes(id)) {
+            window.bancoSeleccion = window.bancoSeleccion.filter(function(x) { return x !== id; });
+            this.style.background = '#1a1a2a';
+            this.style.color = '#9a90b4';
+            this.textContent = 'Agrupar';
+          } else {
+            window.bancoSeleccion.push(id);
+            this.style.background = '#2a2a1a';
+            this.style.color = '#e8c87a';
+            this.style.borderColor = '#e8c87a';
+            this.textContent = 'Agrupado (' + window.bancoSeleccion.length + ')';
+            if (window.bancoSeleccion.length === 1) {
+              alert('Marca otros movimientos con "Agrupar" y luego pulsa "Asignar factura" en cualquiera de ellos para asignarlos todos a la misma factura.');
+            }
+          }
         });
       });
 
-      var btnAgrupar = document.getElementById('btn-agrupar-asignar');
-      if (btnAgrupar) btnAgrupar.onclick = function() { mostrarSelectorFacturaBanco(window.bancoSeleccion); };
-
       document.querySelectorAll('.btn-asignar-factura').forEach(function(btn) {
-        btn.addEventListener('click', function() { mostrarSelectorFacturaBanco([parseInt(this.dataset.id)]); });
+        btn.addEventListener('click', function() {
+          var id = parseInt(this.dataset.id);
+          var ids = window.bancoSeleccion.length > 0 ? window.bancoSeleccion : [id];
+          mostrarSelectorFacturaBanco(ids);
+        });
       });
       document.querySelectorAll('.btn-sin-factura').forEach(function(btn) {
         btn.addEventListener('click', function() { marcarSinFactura(parseInt(this.dataset.id)); });
