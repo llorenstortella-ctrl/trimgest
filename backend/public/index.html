@@ -1337,28 +1337,46 @@ if (window.location.hash === '#registro') {
     function mostrarModalBanco(titulo, items, onSelect) {
       var existing = document.getElementById('banco-modal');
       if (existing) existing.remove();
+      
+      var isMobile = window.innerWidth <= 600;
+      
       var overlay = document.createElement('div');
       overlay.id = 'banco-modal';
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;' + (isMobile ? 'align-items:flex-end;justify-content:center;' : 'align-items:center;justify-content:center;');
+      
       var modal = document.createElement('div');
-      modal.style.cssText = 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;';
-      var header = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;">';
-      header += '<div style="font-size:15px;font-weight:600;color:#f0ede8;">' + titulo + '</div>';
-      header += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:20px;cursor:pointer;">×</button>';
-      header += '</div>';
-      var lista = '<div style="overflow-y:auto;flex:1;padding:8px 0;">';
+      if (isMobile) {
+        modal.style.cssText = 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;';
+      } else {
+        modal.style.cssText = 'background:#1e1e28;border-radius:16px;width:400px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+      }
+      
+      var html = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
+      html += '<div style="font-size:15px;font-weight:600;color:#f0ede8;">' + titulo + '</div>';
+      html += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;">×</button>';
+      html += '</div>';
+      html += '<div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;">';
       items.forEach(function(item, i) {
-        lista += '<div class="banco-modal-item" data-idx="' + i + '" style="padding:14px 20px;border-bottom:1px solid #22223a;cursor:pointer;">';
-        lista += '<div style="font-size:13px;color:#e0d8cc;font-weight:600;">' + item.titulo + '</div>';
-        if (item.subtitulo) lista += '<div style="font-size:11px;color:#6a6070;margin-top:2px;">' + item.subtitulo + '</div>';
-        lista += '</div>';
+        html += '<div class="banco-modal-item" data-idx="' + i + '" style="padding:16px 20px;border-bottom:1px solid #22223a;cursor:pointer;transition:background 0.1s;">';
+        html += '<div style="font-size:14px;color:#e0d8cc;font-weight:500;">' + item.titulo + '</div>';
+        if (item.subtitulo) html += '<div style="font-size:11px;color:#6a6070;margin-top:3px;">' + item.subtitulo + '</div>';
+        html += '</div>';
       });
-      lista += '</div>';
-      modal.innerHTML = header + lista;
+      html += '</div>';
+      html += '<div style="padding:12px 20px;border-top:1px solid #2a2a3a;flex-shrink:0;">';
+      html += '<button id="banco-modal-cancel" style="width:100%;background:#2a2a3a;border:none;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Cancelar</button>';
+      html += '</div>';
+      
+      modal.innerHTML = html;
       overlay.appendChild(modal);
       document.body.appendChild(overlay);
+      
       document.getElementById('banco-modal-close').onclick = function() { overlay.remove(); };
+      document.getElementById('banco-modal-cancel').onclick = function() { overlay.remove(); };
       overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+      
+      modal.onclick = function(e) { e.stopPropagation(); };
+      
       document.querySelectorAll('.banco-modal-item').forEach(function(el) {
         el.addEventListener('click', function() {
           overlay.remove();
