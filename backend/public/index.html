@@ -1150,59 +1150,94 @@ if (window.location.hash === '#registro') {
 
     async function renderBanco() {
       window.seccionActual = 'banco';
-      var html = '<div class="header"><div class="header-top"><div><div class="label">TrimGest</div><h1>Banco</h1></div></div></div>';
+      if (!window.bancoTrim) window.bancoTrim = getTrimestre();
+      if (!window.bancoAnno) window.bancoAnno = new Date().getFullYear();
+
+      var trims = ['T1','T2','T3','T4'];
+      var annos = [];
+      for (var y = new Date().getFullYear(); y >= 2024; y--) annos.push(y);
+
+      var html = '<div class="header"><div class="header-top"><div><div class="label">TrimGest</div><h1>Banco</h1></div></div>';
+      html += '<div class="selectores">';
+      html += '<select id="bancoTrimSel" onchange="window.bancoTrim=this.value;renderBanco()">';
+      trims.forEach(function(t) { html += '<option value="' + t + '"' + (t === window.bancoTrim ? ' selected' : '') + '>' + t + '</option>'; });
+      html += '</select>';
+      html += '<select id="bancoAnnoSel" onchange="window.bancoAnno=parseInt(this.value);renderBanco()">';
+      annos.forEach(function(y) { html += '<option value="' + y + '"' + (y === window.bancoAnno ? ' selected' : '') + '>' + y + '</option>'; });
+      html += '</select></div></div>';
       html += '<div class="content" style="padding:16px;">';
 
       try {
         var r = await fetch(API + '/banco/movimientos', { headers: getHeaders() });
         var data = await r.json();
-        var movs = data.movimientos || [];
+        var todosMovs = data.movimientos || [];
         var ultimaFecha = data.ultima_fecha;
 
-        // Stats
-        var conciliados = movs.filter(function(m) { return m.conciliado; }).length;
-        var sinCruzar = movs.filter(function(m) { return !m.conciliado; }).length;
-        var totalGastos = movs.filter(function(m) { return m.importe < 0; }).reduce(function(s,m) { return s + Math.abs(m.importe); }, 0);
+        var mesesTrim = { T1: [0,1,2], T2: [3,4,5], T3: [6,7,8], T4: [9,10,11] };
+        var meses = mesesTrim[window.bancoTrim] || [];
+        var movs = todosMovs.filter(function(m) {
+          var d = new Date(m.fecha);
+          return meses.includes(d.getMonth()) && d.getFullYear() === window.bancoAnno;
+        });
+
+        var conciliados = movs.filter(function(m) { return m.estado === 'conciliado'; }).length;
+        var sinFactura = movs.filter(function(m) { return m.estado === 'sin_factura'; }).length;
+        var pendientes = movs.filter(function(m) { return !m.estado || m.estado === 'pendiente'; }).length;
 
         html += '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:16px;">';
-        if (ultimaFecha) {
-          html += '<div style="font-size:12px;color:#9a90b4;margin-bottom:12px;">Conciliado hasta el <strong style="color:#e8c87a;">' + ultimaFecha + '</strong></div>';
-        } else {
-          html += '<div style="font-size:12px;color:#6a6070;margin-bottom:12px;">Sin movimientos importados todavía</div>';
-        }
-        html += '<div style="display:flex;gap:12px;margin-bottom:16px;">';
-        html += '<div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:700;color:#4caf7d;">' + conciliados + '</div><div style="font-size:11px;color:#6a6070;">Conciliados</div></div>';
-        html += '<div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:700;color:#e8c87a;">' + sinCruzar + '</div><div style="font-size:11px;color:#6a6070;">Sin cruzar</div></div>';
-        html += '<div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:700;color:#f0ede8;">' + formatEur(totalGastos) + '</div><div style="font-size:11px;color:#6a6070;">Total gastos</div></div>';
+        if (ultimaFecha) html += '<div style="font-size:12px;color:#9a90b4;margin-bottom:12px;">Conciliado hasta el <strong style="color:#e8c87a;">' + ultimaFecha + '</strong></div>';
+        html += '<div style="display:flex;gap:8px;margin-bottom:16px;">';
+        html += '<div style="flex:1;text-align:center;background:#0d2b1a;border-radius:8px;padding:10px;"><div style="font-size:20px;font-weight:700;color:#4caf7d;">' + conciliados + '</div><div style="font-size:10px;color:#6a6070;">Con factura</div></div>';
+        html += '<div style="flex:1;text-align:center;background:#1e1e28;border-radius:8px;padding:10px;"><div style="font-size:20px;font-weight:700;color:#9a90b4;">' + sinFactura + '</div><div style="font-size:10px;color:#6a6070;">Sin factura OK</div></div>';
+        html += '<div style="flex:1;text-align:center;background:#2a2010;border-radius:8px;padding:10px;"><div style="font-size:20px;font-weight:700;color:#e8c87a;">' + pendientes + '</div><div style="font-size:10px;color:#6a6070;">Pendientes</div></div>';
         html += '</div>';
-        html += '<label style="display:block;background:#e8c87a;color:#1a1500;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;width:100%;box-sizing:border-box;">&#128196; Subir extracto CSV<input type="file" id="inputBanco" accept=".csv" style="display:none"></label>';
+        html += '<label style="display:block;background:#e8c87a;color:#1a1500;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;width:100%;box-sizing:border-box;">Subir extracto CSV<input type="file" id="inputBanco" accept=".csv" style="display:none"></label>';
         html += '<div id="bancoBusyMsg" style="margin-top:8px;font-size:12px;color:#9a90b4;text-align:center;"></div>';
-        if (movs.length > 0) {
-          html += '<button onclick="resetearBanco()" style="margin-top:8px;background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;width:100%;">Resetear historial bancario</button>';
-        }
+        if (todosMovs.length > 0) html += '<button onclick="resetearBanco()" style="margin-top:8px;background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;width:100%;">Resetear historial bancario</button>';
         html += '</div>';
 
-        // Lista movimientos
         if (movs.length > 0) {
-          html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+          html += '<div id="banco-seleccion-bar" style="display:none;background:#1e1a0a;border-radius:10px;padding:12px;margin-bottom:8px;align-items:center;gap:8px;">';
+          html += '<span id="banco-sel-count" style="font-size:13px;color:#e8c87a;flex:1;">0 seleccionados</span>';
+          html += '<button id="btn-agrupar-asignar" style="background:#e8c87a;color:#1a1500;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;">Asignar factura</button>';
+          html += '<button onclick="cancelarSeleccion()" style="background:#2a2a3a;border:none;color:#9a90b4;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;">Cancelar</button>';
+          html += '</div>';
+
+          html += '<div style="display:flex;flex-direction:column;gap:6px;" id="banco-lista">';
           var movsOrdenados = movs.slice().sort(function(a,b) { return new Date(b.fecha) - new Date(a.fecha); });
           movsOrdenados.forEach(function(m) {
-            var color = m.importe >= 0 ? '#4caf7d' : '#f0ede8';
-            var badge = m.conciliado
-              ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:6px;padding:3px 8px;font-size:10px;">✓ ' + (m.factura_nombre || 'Conciliado') + '</span>'
-              : '<span style="background:#2a2010;border:1px solid #3a3010;color:#e8c87a;border-radius:6px;padding:3px 8px;font-size:10px;">⚠ Sin cruzar</span>';
-            html += '<div style="background:#16161e;border-radius:10px;padding:12px 14px;">';
-            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">';
-            html += '<div style="font-size:13px;color:#e0d8cc;font-weight:600;flex:1;margin-right:8px;">' + m.concepto + '</div>';
-            html += '<div style="font-size:14px;font-weight:700;color:' + color + ';white-space:nowrap;">' + (m.importe >= 0 ? '+' : '') + formatEur(m.importe) + '</div>';
+            var estado = m.estado || 'pendiente';
+            var colorImp = m.importe >= 0 ? '#4caf7d' : '#f0ede8';
+            var badge = '';
+            if (estado === 'conciliado') badge = '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:6px;padding:3px 8px;font-size:10px;">Con factura: ' + (m.factura_nombre || '') + '</span>';
+            else if (estado === 'sin_factura') badge = '<span style="background:#1e1e28;border:1px solid #3a3a4a;color:#9a90b4;border-radius:6px;padding:3px 8px;font-size:10px;">Sin factura: ' + (m.motivo || '') + '</span>';
+            else badge = '<span style="background:#2a2010;border:1px solid #3a3010;color:#e8c87a;border-radius:6px;padding:3px 8px;font-size:10px;">Pendiente</span>';
+
+            html += '<div class="banco-mov" data-id="' + m.id + '" style="background:#16161e;border-radius:10px;padding:12px 14px;border:1px solid #22223a;">';
+            html += '<div style="display:flex;align-items:flex-start;gap:10px;">';
+            html += '<input type="checkbox" class="banco-check" data-id="' + m.id + '" style="margin-top:4px;accent-color:#e8c87a;">';
+            html += '<div style="flex:1;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">';
+            html += '<div style="font-size:13px;color:#e0d8cc;font-weight:600;">' + m.concepto + '</div>';
+            html += '<div style="font-size:14px;font-weight:700;color:' + colorImp + ';white-space:nowrap;margin-left:8px;">' + (m.importe >= 0 ? '+' : '') + formatEur(m.importe) + '</div>';
             html += '</div>';
-            html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px;">';
             html += '<div style="font-size:11px;color:#6a6070;">' + m.fecha_display + '</div>';
             html += badge;
             html += '</div>';
-            html += '</div>';
+            if (estado === 'pendiente') {
+              html += '<div style="display:flex;gap:6px;">';
+              html += '<button class="btn-asignar-factura" data-id="' + m.id + '" style="flex:1;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">+ Asignar factura</button>';
+              html += '<button class="btn-sin-factura" data-id="' + m.id + '" style="flex:1;background:#1e1e28;border:1px solid #3a3a4a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Sin factura</button>';
+              html += '</div>';
+            } else {
+              html += '<button class="btn-deshacer" data-id="' + m.id + '" style="background:none;border:none;color:#5a5060;font-size:10px;cursor:pointer;text-decoration:underline;">Deshacer</button>';
+            }
+            html += '</div></div></div>';
           });
           html += '</div>';
+        } else if (todosMovs.length > 0) {
+          html += '<div style="text-align:center;color:#6a6070;padding:40px 20px;font-size:14px;">Sin movimientos en ' + window.bancoTrim + ' ' + window.bancoAnno + '</div>';
         } else {
           html += '<div style="text-align:center;color:#6a6070;padding:40px 20px;font-size:14px;">Sube el extracto CSV de tu banco para empezar</div>';
         }
@@ -1214,7 +1249,6 @@ if (window.location.hash === '#registro') {
       html += '</div>';
       document.getElementById('app').innerHTML = html;
 
-      // Asignar evento al input de archivo
       var inputBanco = document.getElementById('inputBanco');
       if (inputBanco) {
         inputBanco.onchange = async function() {
@@ -1225,28 +1259,100 @@ if (window.location.hash === '#registro') {
           var formData = new FormData();
           formData.append('extracto', file);
           try {
-            var r = await fetch(API + '/banco/subir', {
-              method: 'POST',
-              headers: { 'Authorization': 'Bearer ' + window.token },
-              body: formData
-            });
+            var r = await fetch(API + '/banco/subir', { method: 'POST', headers: { 'Authorization': 'Bearer ' + window.token }, body: formData });
             var d = await r.json();
-            if (d.ok) {
-              msg.textContent = d.nuevos + ' movimientos nuevos — ' + d.conciliados + ' conciliados automáticamente';
-              setTimeout(function() { renderBanco(); }, 1500);
-            } else {
-              msg.textContent = d.error || 'Error procesando extracto';
-            }
+            if (d.ok) { msg.textContent = d.nuevos + ' movimientos nuevos — ' + d.conciliados + ' conciliados'; setTimeout(function() { renderBanco(); }, 1500); }
+            else msg.textContent = d.error || 'Error';
           } catch(e) { msg.textContent = 'Error de conexion'; }
         };
       }
+
+      window.bancoSeleccion = [];
+      document.querySelectorAll('.banco-check').forEach(function(chk) {
+        chk.addEventListener('change', function() {
+          var id = parseInt(this.dataset.id);
+          if (this.checked) window.bancoSeleccion.push(id);
+          else window.bancoSeleccion = window.bancoSeleccion.filter(function(x) { return x !== id; });
+          var bar = document.getElementById('banco-seleccion-bar');
+          var cnt = document.getElementById('banco-sel-count');
+          if (bar) bar.style.display = window.bancoSeleccion.length > 0 ? 'flex' : 'none';
+          if (cnt) cnt.textContent = window.bancoSeleccion.length + ' seleccionados';
+        });
+      });
+
+      var btnAgrupar = document.getElementById('btn-agrupar-asignar');
+      if (btnAgrupar) btnAgrupar.onclick = function() { mostrarSelectorFacturaBanco(window.bancoSeleccion); };
+
+      document.querySelectorAll('.btn-asignar-factura').forEach(function(btn) {
+        btn.addEventListener('click', function() { mostrarSelectorFacturaBanco([parseInt(this.dataset.id)]); });
+      });
+      document.querySelectorAll('.btn-sin-factura').forEach(function(btn) {
+        btn.addEventListener('click', function() { marcarSinFactura(parseInt(this.dataset.id)); });
+      });
+      document.querySelectorAll('.btn-deshacer').forEach(function(btn) {
+        btn.addEventListener('click', function() { deshacerConciliacion(parseInt(this.dataset.id)); });
+      });
+    }
+
+    function cancelarSeleccion() {
+      window.bancoSeleccion = [];
+      document.querySelectorAll('.banco-check').forEach(function(c) { c.checked = false; });
+      var bar = document.getElementById('banco-seleccion-bar');
+      if (bar) bar.style.display = 'none';
+    }
+
+    async function mostrarSelectorFacturaBanco(ids) {
+      if (!ids || ids.length === 0) return;
+      var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
+      var data = await r.json();
+      var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'proveedor'; });
+      if (facturas.length === 0) { alert('No tienes facturas de proveedor en TrimGest'); return; }
+      var lista = facturas.map(function(f,i) { return (i+1) + '. ' + f.nombre + ' ' + formatEur(f.total) + ' ' + f.fecha; }).join('\n');
+      var sel = prompt('Selecciona la factura (introduce el numero):\n' + lista);
+      if (!sel) return;
+      var idx = parseInt(sel) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= facturas.length) { alert('Numero no valido'); return; }
+      var factura = facturas[idx];
+      for (var i = 0; i < ids.length; i++) {
+        await fetch(API + '/banco/actualizar-movimiento', {
+          method: 'POST',
+          headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ movimiento_id: ids[i], estado: 'conciliado', factura_id: factura.id, factura_nombre: factura.nombre, factura_total: factura.total })
+        });
+      }
+      window.bancoSeleccion = [];
+      renderBanco();
+    }
+
+    async function marcarSinFactura(id) {
+      var motivos = ['TGSS / Seguridad Social', 'Comision bancaria', 'Gasto personal', 'Transferencia interna', 'Otro'];
+      var sel = prompt('Por que no necesita factura?\n' + motivos.map(function(m,i) { return (i+1) + '. ' + m; }).join('\n'));
+      if (!sel) return;
+      var idx = parseInt(sel) - 1;
+      var motivo = (idx >= 0 && idx < motivos.length) ? motivos[idx] : 'Otro';
+      await fetch(API + '/banco/actualizar-movimiento', {
+        method: 'POST',
+        headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ movimiento_id: id, estado: 'sin_factura', motivo: motivo })
+      });
+      renderBanco();
+    }
+
+    async function deshacerConciliacion(id) {
+      await fetch(API + '/banco/actualizar-movimiento', {
+        method: 'POST',
+        headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ movimiento_id: id, estado: 'pendiente', factura_id: null, factura_nombre: null, motivo: null })
+      });
+      renderBanco();
     }
 
     async function resetearBanco() {
-      if (!confirm('¿Seguro que quieres borrar todo el historial bancario? Esta acción no se puede deshacer.')) return;
+      if (!confirm('Seguro que quieres borrar todo el historial bancario?')) return;
       await fetch(API + '/banco/resetear', { method: 'POST', headers: getHeaders() });
       renderBanco();
     }
+
 
     async function renderApp() {
       var facturas = await cargarFacturas();

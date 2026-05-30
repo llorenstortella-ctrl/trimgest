@@ -151,6 +151,25 @@ router.get('/movimientos', auth, (req, res) => {
   });
 });
 
+
+// POST /banco/actualizar-movimiento — actualiza estado de un movimiento
+router.post('/actualizar-movimiento', auth, (req, res) => {
+  const { movimiento_id, estado, factura_id, factura_nombre, factura_total, motivo } = req.body;
+  if (!movimiento_id) return res.status(400).json({ error: 'Falta movimiento_id' });
+  const empresaId = req.empresaId;
+  const banco = getBanco(empresaId);
+  const idx = banco.movimientos.findIndex(function(m) { return m.id === parseInt(movimiento_id); });
+  if (idx === -1) return res.status(404).json({ error: 'Movimiento no encontrado' });
+  banco.movimientos[idx].estado = estado || 'pendiente';
+  banco.movimientos[idx].factura_id = factura_id || null;
+  banco.movimientos[idx].factura_nombre = factura_nombre || null;
+  banco.movimientos[idx].factura_total = factura_total || null;
+  banco.movimientos[idx].motivo = motivo || null;
+  banco.movimientos[idx].conciliado = estado === 'conciliado';
+  saveBanco(empresaId, banco);
+  res.json({ ok: true });
+});
+
 // POST /banco/conciliar-manual — conciliar manualmente un movimiento con una factura
 router.post('/conciliar-manual', auth, (req, res) => {
   const { movimiento_id, factura_id } = req.body;
