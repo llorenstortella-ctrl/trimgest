@@ -528,10 +528,10 @@ if (window.location.hash === '#registro') {
             } else {
               await fetch(API + '/nominas/conservar/' + data.nomina.id, { method: 'POST', headers: getHeaders() });
             }
-            setTimeout(function() { renderNominas(); }, 500);
+            setTimeout(function() { renderApp(); }, 500);
           } else {
             if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
-            setTimeout(function() { renderNominas(); }, 1000);
+            setTimeout(function() { renderApp(); }, 1000);
           }
         } else {
           if (status) status.innerHTML = '<div class="error">Error al procesar la nomina</div>';
@@ -562,7 +562,7 @@ if (window.location.hash === '#registro') {
           body: JSON.stringify(datos)
         });
         var d = await r.json();
-        if (d.ok) { renderNominas(); }
+        if (d.ok) { renderApp(); }
         else alert(d.error || 'Error al guardar');
       } catch(e) { alert('Error de conexion'); }
     }
@@ -570,19 +570,19 @@ if (window.location.hash === '#registro') {
     async function borrarNomina(id) {
       if (!confirm('Seguro que quieres borrar esta nomina?')) return;
       await fetch(API + '/nominas/borrar/' + id, { method: 'DELETE', headers: getHeaders() });
-      renderNominas();
+      renderApp();
     }
 
     async function eliminarPaginaNomina(id, pagina) {
       if (!confirm('Se eliminara la pagina ' + pagina + ' del PDF. Continuar?')) return;
       var r = await fetch(API + '/nominas/eliminar-pagina/' + id, { method: 'POST', headers: Object.assign({}, getHeaders(), {'Content-Type': 'application/json'}), body: JSON.stringify({ pagina: pagina }) });
       var d = await r.json();
-      if (d.ok) { renderNominas(); } else { alert('Error eliminando pagina'); }
+      if (d.ok) { renderApp(); } else { alert('Error eliminando pagina'); }
     }
 
     async function conservarNomina(id) {
       await fetch(API + '/nominas/conservar/' + id, { method: 'POST', headers: getHeaders() });
-      renderNominas();
+      renderApp();
     }
 
     function toggleManual() {
