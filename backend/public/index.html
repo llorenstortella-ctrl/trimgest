@@ -1384,16 +1384,18 @@ if (window.location.hash === '#registro') {
       modal.innerHTML = html;
       overlay.appendChild(modal);
       document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
       
-      document.getElementById('banco-modal-close').onclick = function() { overlay.remove(); };
-      document.getElementById('banco-modal-cancel').onclick = function() { overlay.remove(); };
-      overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+      document.getElementById('banco-modal-close').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
+      document.getElementById('banco-modal-cancel').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
+      overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; } };
       
       modal.onclick = function(e) { e.stopPropagation(); };
       
       document.querySelectorAll('.banco-modal-item').forEach(function(el) {
         el.addEventListener('click', function() {
           overlay.remove();
+          document.body.style.overflow = '';
           onSelect(parseInt(this.dataset.idx));
         });
         el.addEventListener('mouseover', function() { this.style.background = '#2a2a3a'; });
