@@ -5,36 +5,42 @@ const path = require('path');
 const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const auth = require('../middleware/auth');
 
-const dbPath = process.env.DATA_PATH || path.join(__dirname, '../data/facturas.json');
-const configPath = process.env.DATA_PATH
-  ? path.join(path.dirname(process.env.DATA_PATH), 'config.json')
-  : path.join(__dirname, '../data/config.json');
-const pygPath = process.env.DATA_PATH
-  ? path.join(path.dirname(process.env.DATA_PATH), 'pyg.json')
-  : path.join(__dirname, '../data/pyg.json');
+const baseDataDir = path.join(__dirname, '../data');
 
-const getFacturas = () => {
-  if (!fs.existsSync(dbPath)) return [];
-  return JSON.parse(fs.readFileSync(dbPath));
-};
+function getFacturasEmpresa(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'facturas.json');
+  if (!fs.existsSync(p)) return [];
+  return JSON.parse(fs.readFileSync(p));
+}
 
-const getConfig = () => {
-  if (!fs.existsSync(configPath)) return { pin: '1234', objetivo_trimestre: null };
-  return JSON.parse(fs.readFileSync(configPath));
-};
+function getConfigEmpresa(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'config.json');
+  if (!fs.existsSync(p)) return { objetivo_trimestre: null };
+  return JSON.parse(fs.readFileSync(p));
+}
 
-const saveConfig = (config) => {
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-};
+function saveConfigEmpresa(empresaId, config) {
+  const dir = path.join(baseDataDir, 'empresas', empresaId);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(config, null, 2));
+}
 
-const getPyG = () => {
-  if (!fs.existsSync(pygPath)) return null;
-  return JSON.parse(fs.readFileSync(pygPath));
-};
+function getPyGEmpresa(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'pyg.json');
+  if (!fs.existsSync(p)) return null;
+  return JSON.parse(fs.readFileSync(p));
+}
 
-function getResumenFinanciero(trimestre, anno) {
-  const facturas = getFacturas();
+function getNominasEmpresa(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'nominas.json');
+  if (!fs.existsSync(p)) return [];
+  return JSON.parse(fs.readFileSync(p));
+}
+
+function getResumenFinanciero(trimestre, anno, empresaId) {
+  const facturas = getFacturasEmpresa(empresaId);
   const del_periodo = facturas.filter(f =>
     f.trimestre === trimestre && String(f.anno) === String(anno)
   );
@@ -44,36 +50,56 @@ function getResumenFinanciero(trimestre, anno) {
 
   const totalGastos = proveedores.reduce((s, f) => s + Number(f.total), 0);
   const totalIngresos = clientes.reduce((s, f) => s + Number(f.total), 0);
-  const beneficioEstimado = totalIngresos - totalGastos;
-  const pyg = getPyG();
+
+  const nominas = getNominasEmpresa(empresaId);
+  const nominasPeriodo = nominas.filter(n => {
+    if (!n.fecha) return false;
+    const d = new Date(n.fecha);
+    const t = Math.ceil((d.getMonth() + 1) / 3);
+    return String(t) === String(trimestre).replace('Q','') && String(d.getFullYear()) === String(anno);
+  });
+  const totalNominas = nominasPeriodo.reduce((s, n) => s + Number(n.coste_empresa || n.salario_bruto || 0), 0);
+
+  const beneficioEstimado = totalIngresos - totalGastos - totalNominas;
+  const pyg = getPyGEmpresa(empresaId);
 
   return {
     trimestre,
     anno,
     num_facturas_proveedor: proveedores.length,
     num_facturas_cliente: clientes.length,
+    num_nominas: nominasPeriodo.length,
     total_gastos: totalGastos.toFixed(2),
     total_ingresos: totalIngresos.toFixed(2),
+    total_nominas: totalNominas.toFixed(2),
     beneficio_estimado: beneficioEstimado.toFixed(2),
-    objetivo_trimestre: getConfig().objetivo_trimestre || null,
+    objetivo_trimestre: getConfigEmpresa(empresaId).objetivo_trimestre || null,
     proveedores_detalle: proveedores.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
     clientes_detalle: clientes.map(f => ({ nombre: f.nombre, total: f.total, fecha: f.fecha })),
+    nominas_detalle: nominasPeriodo.map(n => ({ empleado: n.empleado || n.nombre || 'Empleado', coste: n.coste_empresa || n.salario_bruto || 0, mes: n.mes || n.fecha })),
     pyg_actual: pyg ? pyg.ejercicio_actual : null,
-    pyg_anterior: pyg ? pyg.ejercicio_anterior : null
+    pyg_anterior: pyg ? pyg.ejercicio_anterior : null,
+    empresaId
   };
 }
 
-router.post('/objetivo', (req, res) => {
+router.post('/objetivo', auth, (req, res) => {
   const { objetivo } = req.body;
-  const config = getConfig();
+  const empresaId = req.empresaId || req.body.empresaId;
+  const config = getConfigEmpresa(empresaId);
   config.objetivo_trimestre = parseFloat(objetivo);
-  saveConfig(config);
+  saveConfigEmpresa(empresaId, config);
   res.json({ ok: true });
 });
 
-router.post('/chat', async (req, res) => {
+router.post('/chat', auth, async (req, res) => {
   const { mensaje, trimestre, anno, historial } = req.body;
-  const resumen = getResumenFinanciero(trimestre, anno);
+  const empresaId = req.empresaId || req.body.empresaId;
+  const usuariosPath = path.join(baseDataDir, 'usuarios.json');
+  const usuarios = JSON.parse(fs.readFileSync(usuariosPath));
+  const usuario = usuarios.find(u => u.empresaId === empresaId);
+  const nombreEmpresa = usuario ? usuario.nombre_empresa : 'tu empresa';
+  const resumen = getResumenFinanciero(trimestre, anno, empresaId);
 
   const pygActualTexto = resumen.pyg_actual ? `
 DATOS P&G AÑO ACTUAL (${resumen.pyg_actual.anno}):
@@ -94,14 +120,15 @@ DATOS P&G AÑO ANTERIOR (${resumen.pyg_anterior.anno}):
   const messages = [
     {
       role: 'system',
-      content: `Eres el asesor financiero personal de FEIM CA TEVA S.L., una pequeña empresa española.
+      content: `Eres el asesor financiero personal de ${nombreEmpresa}, una pequeña empresa española.
 
 Tu rol es orientar al propietario sobre su situación financiera de forma clara, en lenguaje simple y sin jerga contable. Eres como un amigo que sabe de números.
 
-DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno} (facturas subidas en TrimGest):
+DATOS ACTUALES DEL ${resumen.trimestre} ${resumen.anno}:
 - Facturas de proveedores: ${resumen.num_facturas_proveedor} facturas, total gastos: ${resumen.total_gastos}€
 - Facturas de clientes: ${resumen.num_facturas_cliente} facturas, total ingresos: ${resumen.total_ingresos}€
-- Beneficio estimado (solo facturas): ${resumen.beneficio_estimado}€
+- Nominas: ${resumen.num_nominas} nominas, coste total: ${resumen.total_nominas}€
+- Beneficio estimado (ingresos - gastos - nominas): ${resumen.beneficio_estimado}€
 ${resumen.objetivo_trimestre ? `- Objetivo de beneficio este trimestre: ${resumen.objetivo_trimestre}€` : '- Sin objetivo de beneficio definido'}
 
 ${pygActualTexto}
