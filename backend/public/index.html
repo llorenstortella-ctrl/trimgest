@@ -1350,7 +1350,7 @@ if (window.location.hash === '#registro') {
       overlay.id = 'banco-modal';
       overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
       var modal = document.createElement('div');
-      modal.style.cssText = 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:70vh;display:flex;flex-direction:column;';
+      modal.style.cssText = 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;';
       var header = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;">';
       header += '<div style="font-size:15px;font-weight:600;color:#f0ede8;">' + titulo + '</div>';
       header += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:20px;cursor:pointer;">×</button>';
@@ -1383,13 +1383,14 @@ if (window.location.hash === '#registro') {
       var data = await r.json();
       var nominas = data.nominas || [];
       if (nominas.length === 0) { alert('No tienes nominas en TrimGest'); return; }
-      var items = nominas.map(function(n) { return { titulo: n.trabajador + ' — ' + formatEur(n.neto), subtitulo: (n.mes||'') + ' ' + (n.anno||'') }; });
+      var mesesNombres = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+      var items = nominas.map(function(n) { var mesStr = mesesNombres[n.mes] || n.mes || ''; return { titulo: n.trabajador + ' — ' + formatEur(n.neto), subtitulo: mesStr + ' ' + (n.anno||'') }; });
       mostrarModalBanco('Selecciona la nomina', items, async function(idx) {
         var nomina = nominas[idx];
         await fetch(API + '/banco/actualizar-movimiento', {
           method: 'POST',
           headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ movimiento_id: id, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: ' + nomina.trabajador + ' ' + (nomina.mes||'') + ' ' + (nomina.anno||''), factura_total: nomina.neto })
+          body: JSON.stringify({ movimiento_id: id, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: ' + nomina.trabajador + ' ' + (mesesNombres[nomina.mes] || nomina.mes || '') + ' ' + (nomina.anno||''), factura_total: nomina.neto })
         });
         renderBanco();
       });
