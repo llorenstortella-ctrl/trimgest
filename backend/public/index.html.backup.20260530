@@ -9,7 +9,6 @@
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-LRLKFDTN1E');
-  gtag('config', 'AW-18198602025');
 </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -269,7 +268,6 @@
           window.nombreEmpresa = data.nombre_empresa;
           localStorage.setItem('trimgest_token', data.token);
           localStorage.setItem('trimgest_empresa', data.nombre_empresa);
-          gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
           mostrarApp();
         } else {
           err.textContent = data.error || 'Error al registrarse';
