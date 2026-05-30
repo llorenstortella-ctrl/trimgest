@@ -1165,7 +1165,7 @@ if (window.location.hash === '#registro') {
       html += '<select id="bancoAnnoSel" onchange="window.bancoAnno=parseInt(this.value);renderBanco()">';
       annos.forEach(function(y) { html += '<option value="' + y + '"' + (y === window.bancoAnno ? ' selected' : '') + '>' + y + '</option>'; });
       html += '</select></div></div>';
-      html += '<div class="content" style="padding:16px;">';
+      html += '<div class="content" style="padding:16px;padding-bottom:80px;">';
 
       try {
         var r = await fetch(API + '/banco/movimientos', { headers: getHeaders() });
