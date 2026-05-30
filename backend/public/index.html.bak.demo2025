@@ -283,16 +283,6 @@
       document.getElementById('mainApp').style.display = 'block';
       window.trimestreSel = getTrimestre();
       window.annoSel = String(new Date().getFullYear());
-      try {
-        var _token = localStorage.getItem('trimgest_token');
-        if (_token) {
-          var _payload = JSON.parse(atob(_token.split('.')[1]));
-          if (_payload.empresaId === 'emp_demo_construcciones') {
-            window.annoSel = '2025';
-            window.trimestreSel = 'T1';
-          }
-        }
-      } catch(e) {}
       renderApp();
     }
 
