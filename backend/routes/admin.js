@@ -514,4 +514,36 @@ router.post('/generar-ref-codigos', (req, res) => {
 });
 
 
+router.post('/añadir-demo-gestorias', (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const usuarios = getUsuarios();
+    let actualizados = 0;
+    usuarios.forEach(function(u) {
+      if (u.tipo === 'gestoria' && u.empresaId !== 'gest_demo_001') {
+        if (!u.clientesGestoria) u.clientesGestoria = [];
+        const yaDemo = u.clientesGestoria.find(c => c.empresaId === 'emp_demo_construcciones');
+        if (!yaDemo) {
+          u.clientesGestoria.unshift({
+            empresaId: 'emp_demo_construcciones',
+            empresaEmail: 'demo@construccionesbalear.es',
+            empresaNombre: 'Construcciones Balear SL',
+            fecha: new Date().toISOString(),
+            es_demo: true
+          });
+          actualizados++;
+        }
+      }
+    });
+    saveUsuarios(usuarios);
+    res.json({ ok: true, actualizados });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 module.exports = router;
