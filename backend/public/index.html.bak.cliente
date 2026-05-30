@@ -1305,15 +1305,13 @@ if (window.location.hash === '#registro') {
           var id = parseInt(this.dataset.id);
           var opciones = [
             { titulo: '📄 Factura de proveedor' },
-            { titulo: '🧾 Factura de cliente' },
             { titulo: '👤 Nomina trabajador' },
             { titulo: '⊘  Sin factura (TGSS, banco, personal...)' }
           ];
           mostrarModalBanco('¿Qué es este movimiento?', opciones, function(idx) {
             if (idx === 0) mostrarSelectorFacturaBanco([id]);
-            else if (idx === 1) mostrarSelectorFacturaClienteBanco([id]);
-            else if (idx === 2) asignarNominaBanco(id);
-            else if (idx === 3) marcarSinFactura(id);
+            else if (idx === 1) asignarNominaBanco(id);
+            else if (idx === 2) marcarSinFactura(id);
           });
         });
       });
@@ -1407,29 +1405,6 @@ if (window.location.hash === '#registro') {
         });
         el.addEventListener('mouseover', function() { this.style.background = '#2a2a3a'; });
         el.addEventListener('mouseout', function() { this.style.background = ''; });
-      });
-    }
-
-    async function mostrarSelectorFacturaClienteBanco(ids) {
-      if (!ids || ids.length === 0) return;
-      var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
-      var data = await r.json();
-      var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'cliente'; });
-      var facturasAsignadas = (window.bancoMovs || []).filter(function(m) { return m.factura_id; }).map(function(m) { return m.factura_id; });
-      facturas = facturas.filter(function(f) { return !facturasAsignadas.includes(f.id); });
-      if (facturas.length === 0) { alert('No tienes facturas de cliente pendientes de asignar'); return; }
-      var items = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + formatEur(f.total), subtitulo: f.fecha + (f.numero_factura ? ' · N ' + f.numero_factura : '') }; });
-      mostrarModalBanco('Selecciona la factura de cliente', items, async function(idx) {
-        var factura = facturas[idx];
-        for (var i = 0; i < ids.length; i++) {
-          await fetch(API + '/banco/actualizar-movimiento', {
-            method: 'POST',
-            headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ movimiento_id: ids[i], estado: 'conciliado', factura_id: factura.id, factura_nombre: factura.nombre, factura_total: factura.total })
-          });
-        }
-        window.bancoSeleccion = [];
-        renderBanco();
       });
     }
 
