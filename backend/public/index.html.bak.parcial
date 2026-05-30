@@ -1334,10 +1334,8 @@ if (window.location.hash === '#registro') {
       var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var data = await r.json();
       var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'proveedor'; });
-      facturas = facturas.filter(function(f) {
-        var pagado = (window.bancoMovs || []).filter(function(m) { return m.factura_id === f.id; }).reduce(function(acc, m) { return acc + Math.abs(m.importe || 0); }, 0);
-        return pagado < (f.total || 0);
-      });
+      var facturasAsignadas = (window.bancoMovs || []).filter(function(m) { return m.factura_id; }).map(function(m) { return m.factura_id; });
+      facturas = facturas.filter(function(f) { return !facturasAsignadas.includes(f.id); });
       if (facturas.length === 0) { alert('No tienes facturas de proveedor pendientes de asignar'); return; }
       var items = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + formatEur(f.total), subtitulo: f.fecha + (f.numero_factura ? ' · N ' + f.numero_factura : '') }; });
       mostrarModalBanco('Selecciona la factura', items, async function(idx) {
@@ -1417,10 +1415,8 @@ if (window.location.hash === '#registro') {
       var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var data = await r.json();
       var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'cliente'; });
-      facturas = facturas.filter(function(f) {
-        var cobrado = (window.bancoMovs || []).filter(function(m) { return m.factura_id === f.id; }).reduce(function(acc, m) { return acc + Math.abs(m.importe || 0); }, 0);
-        return cobrado < (f.total || 0);
-      });
+      var facturasAsignadas = (window.bancoMovs || []).filter(function(m) { return m.factura_id; }).map(function(m) { return m.factura_id; });
+      facturas = facturas.filter(function(f) { return !facturasAsignadas.includes(f.id); });
       if (facturas.length === 0) { alert('No tienes facturas de cliente pendientes de asignar'); return; }
       var items = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + formatEur(f.total), subtitulo: f.fecha + (f.numero_factura ? ' · N ' + f.numero_factura : '') }; });
       mostrarModalBanco('Selecciona la factura de cliente', items, async function(idx) {
@@ -1441,10 +1437,8 @@ if (window.location.hash === '#registro') {
       var r = await fetch(API + '/nominas/listar', { headers: getHeaders() });
       var data = await r.json();
       var nominas = data.nominas || [];
-      nominas = nominas.filter(function(n) {
-        var pagado = (window.bancoMovs || []).filter(function(m) { return m.nomina_id === n.id; }).reduce(function(acc, m) { return acc + Math.abs(m.importe || 0); }, 0);
-        return pagado < (n.neto || 0);
-      });
+      var nominasAsignadas = (window.bancoMovs || []).filter(function(m) { return m.nomina_id; }).map(function(m) { return m.nomina_id; });
+      nominas = nominas.filter(function(n) { return !nominasAsignadas.includes(n.id); });
       if (nominas.length === 0) { alert('No tienes nominas pendientes de asignar'); return; }
       var mesesNombres = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
       var items = nominas.map(function(n) { var mesStr = mesesNombres[n.mes] || n.mes || ''; return { titulo: n.trabajador + ' — ' + formatEur(n.neto), subtitulo: mesStr + ' ' + (n.anno||'') }; });
