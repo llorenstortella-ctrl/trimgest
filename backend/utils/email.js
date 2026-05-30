@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -48,20 +49,28 @@ async function enviarRecordatorioTrimestral(email, nombreEmpresa, trimestre, ann
 
 
 async function enviarInvitacionReferidoEmpresa(emailDestino, nombreRemitente, enlaceReferido) {
+  const templatePath = require('path').join(__dirname, 'trimgest-email-invitacion-empresa.html');
+  let html = fs.readFileSync(templatePath, 'utf8');
+  html = html.replace(/{{NOMBRE_REMITENTE}}/g, nombreRemitente);
+  html = html.replace(/{{ENLACE_REFERIDO}}/g, enlaceReferido);
   await resend.emails.send({
     from: FROM,
     to: emailDestino,
-    subject: nombreRemitente + ' te invita a TrimGest',
-    html: '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 20px;background:#0f0f13;color:#f0ede8;"><div style="font-size:24px;color:#e8c87a;font-weight:600;margin-bottom:8px;">TrimGest</div><p style="color:#9a90b4;margin-bottom:8px;"><strong style="color:#e0d8cc;">' + nombreRemitente + '</strong> te ha invitado a TrimGest.</p><p style="color:#9a90b4;margin-bottom:24px;">Organiza tus facturas y nominas con IA. Registrate con su enlace y empieza hoy.</p><a href="' + enlaceReferido + '" style="display:inline-block;background:#e8c87a;color:#0f0f13;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;">Registrarme en TrimGest</a><p style="color:#6a6070;font-size:12px;margin-top:32px;">TrimGest · info@trimgest.es · trimgest.es</p></div>'
+    subject: nombreRemitente + ' usa TrimGest y quiere compartirlo contigo',
+    html: html
   });
 }
 
 async function enviarInvitacionReferidoGestoria(emailDestino, nombreGestoria, enlaceReferido) {
+  const templatePath = require('path').join(__dirname, 'trimgest-email-invitacion-gestoria.html');
+  let html = fs.readFileSync(templatePath, 'utf8');
+  html = html.replace(/{{NOMBRE_GESTORIA}}/g, nombreGestoria);
+  html = html.replace(/{{ENLACE_REFERIDO}}/g, enlaceReferido);
   await resend.emails.send({
     from: FROM,
     to: emailDestino,
-    subject: nombreGestoria + ' te recomienda TrimGest',
-    html: '<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:40px 20px;background:#0f0f13;color:#f0ede8;"><div style="font-size:24px;color:#e8c87a;font-weight:600;margin-bottom:8px;">TrimGest</div><p style="color:#9a90b4;margin-bottom:8px;"><strong style="color:#e0d8cc;">' + nombreGestoria + '</strong> te recomienda TrimGest para gestionar las facturas de tu empresa.</p><p style="color:#9a90b4;margin-bottom:24px;">Sube tus facturas y nominas, la IA extrae los datos automaticamente y tu gestoria lo tiene todo en orden.</p><a href="' + enlaceReferido + '" style="display:inline-block;background:#e8c87a;color:#0f0f13;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;">Registrarme en TrimGest</a><p style="color:#6a6070;font-size:12px;margin-top:32px;">TrimGest · info@trimgest.es · trimgest.es</p></div>'
+    subject: nombreGestoria + ' le recomienda TrimGest para organizar su contabilidad',
+    html: html
   });
 }
 
