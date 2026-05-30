@@ -144,6 +144,9 @@
       <button class="nav-btn inactive" id="nav-resumen" onclick="cambiarSeccion('resumen')">
         <span class="nav-icon">&#128200;</span>Resumen
       </button>
+      <button class="nav-btn inactive" id="nav-banco" onclick="cambiarSeccion('banco')">
+        <span class="nav-icon">&#127981;</span>Banco
+      </button>
     </nav>
   </div>
 
@@ -330,8 +333,10 @@ if (window.location.hash === '#registro') {
       window.seccionActual = seccion;
       document.getElementById('nav-facturas').className = 'nav-btn ' + (seccion === 'facturas' ? 'active' : 'inactive');
       document.getElementById('nav-resumen').className = 'nav-btn ' + (seccion === 'resumen' ? 'active' : 'inactive');
+      document.getElementById('nav-banco').className = 'nav-btn ' + (seccion === 'banco' ? 'active' : 'inactive');
       if (seccion === 'facturas') renderApp();
       if (seccion === 'resumen') renderResumen();
+      if (seccion === 'banco') renderBanco();
     }
 
     async function renderNominas() {
@@ -1141,6 +1146,106 @@ if (window.location.hash === '#registro') {
         } catch(e) { alert('Error de conexion'); btn.textContent = 'Reemplazar PDF'; btn.disabled = false; }
       };
       input.click();
+    }
+
+    async function renderBanco() {
+      window.seccionActual = 'banco';
+      var html = '<div class="header"><div class="header-top"><div><div class="label">TrimGest</div><h1>Banco</h1></div></div></div>';
+      html += '<div class="content" style="padding:16px;">';
+
+      try {
+        var r = await fetch(API + '/banco/movimientos', { headers: getHeaders() });
+        var data = await r.json();
+        var movs = data.movimientos || [];
+        var ultimaFecha = data.ultima_fecha;
+
+        // Stats
+        var conciliados = movs.filter(function(m) { return m.conciliado; }).length;
+        var sinCruzar = movs.filter(function(m) { return !m.conciliado; }).length;
+        var totalGastos = movs.filter(function(m) { return m.importe < 0; }).reduce(function(s,m) { return s + Math.abs(m.importe); }, 0);
+
+        html += '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:16px;">';
+        if (ultimaFecha) {
+          html += '<div style="font-size:12px;color:#9a90b4;margin-bottom:12px;">Conciliado hasta el <strong style="color:#e8c87a;">' + ultimaFecha + '</strong></div>';
+        } else {
+          html += '<div style="font-size:12px;color:#6a6070;margin-bottom:12px;">Sin movimientos importados todavía</div>';
+        }
+        html += '<div style="display:flex;gap:12px;margin-bottom:16px;">';
+        html += '<div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:700;color:#4caf7d;">' + conciliados + '</div><div style="font-size:11px;color:#6a6070;">Conciliados</div></div>';
+        html += '<div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:700;color:#e8c87a;">' + sinCruzar + '</div><div style="font-size:11px;color:#6a6070;">Sin cruzar</div></div>';
+        html += '<div style="flex:1;text-align:center;"><div style="font-size:20px;font-weight:700;color:#f0ede8;">' + formatEur(totalGastos) + '</div><div style="font-size:11px;color:#6a6070;">Total gastos</div></div>';
+        html += '</div>';
+        html += '<label style="display:block;background:#e8c87a;color:#1a1500;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;width:100%;box-sizing:border-box;">&#128196; Subir extracto CSV<input type="file" id="inputBanco" accept=".csv" style="display:none"></label>';
+        html += '<div id="bancoBusyMsg" style="margin-top:8px;font-size:12px;color:#9a90b4;text-align:center;"></div>';
+        if (movs.length > 0) {
+          html += '<button onclick="resetearBanco()" style="margin-top:8px;background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;width:100%;">Resetear historial bancario</button>';
+        }
+        html += '</div>';
+
+        // Lista movimientos
+        if (movs.length > 0) {
+          html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+          var movsOrdenados = movs.slice().sort(function(a,b) { return new Date(b.fecha) - new Date(a.fecha); });
+          movsOrdenados.forEach(function(m) {
+            var color = m.importe >= 0 ? '#4caf7d' : '#f0ede8';
+            var badge = m.conciliado
+              ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:6px;padding:3px 8px;font-size:10px;">✓ ' + (m.factura_nombre || 'Conciliado') + '</span>'
+              : '<span style="background:#2a2010;border:1px solid #3a3010;color:#e8c87a;border-radius:6px;padding:3px 8px;font-size:10px;">⚠ Sin cruzar</span>';
+            html += '<div style="background:#16161e;border-radius:10px;padding:12px 14px;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">';
+            html += '<div style="font-size:13px;color:#e0d8cc;font-weight:600;flex:1;margin-right:8px;">' + m.concepto + '</div>';
+            html += '<div style="font-size:14px;font-weight:700;color:' + color + ';white-space:nowrap;">' + (m.importe >= 0 ? '+' : '') + formatEur(m.importe) + '</div>';
+            html += '</div>';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div style="font-size:11px;color:#6a6070;">' + m.fecha_display + '</div>';
+            html += badge;
+            html += '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        } else {
+          html += '<div style="text-align:center;color:#6a6070;padding:40px 20px;font-size:14px;">Sube el extracto CSV de tu banco para empezar</div>';
+        }
+
+      } catch(e) {
+        html += '<div style="color:#c06060;padding:20px;">Error cargando movimientos</div>';
+      }
+
+      html += '</div>';
+      document.getElementById('app').innerHTML = html;
+
+      // Asignar evento al input de archivo
+      var inputBanco = document.getElementById('inputBanco');
+      if (inputBanco) {
+        inputBanco.onchange = async function() {
+          var file = inputBanco.files[0];
+          if (!file) return;
+          var msg = document.getElementById('bancoBusyMsg');
+          msg.textContent = 'Procesando extracto...';
+          var formData = new FormData();
+          formData.append('extracto', file);
+          try {
+            var r = await fetch(API + '/banco/subir', {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + window.token },
+              body: formData
+            });
+            var d = await r.json();
+            if (d.ok) {
+              msg.textContent = d.nuevos + ' movimientos nuevos — ' + d.conciliados + ' conciliados automáticamente';
+              setTimeout(function() { renderBanco(); }, 1500);
+            } else {
+              msg.textContent = d.error || 'Error procesando extracto';
+            }
+          } catch(e) { msg.textContent = 'Error de conexion'; }
+        };
+      }
+    }
+
+    async function resetearBanco() {
+      if (!confirm('¿Seguro que quieres borrar todo el historial bancario? Esta acción no se puede deshacer.')) return;
+      await fetch(API + '/banco/resetear', { method: 'POST', headers: getHeaders() });
+      renderBanco();
     }
 
     async function renderApp() {

@@ -21,6 +21,7 @@ const gestoriaRouter = require('./routes/gestoria');
 const compartirRouter = require('./routes/compartir');
 const inboundRouter = require('./routes/inbound');
 const referidosRouter = require('./routes/referidos');
+const bancoRouter = require('./routes/banco');
 app.use(cors());
 app.use(express.json());
 
@@ -38,6 +39,7 @@ app.use('/stripe', stripeRouter);
 app.use('/gestoria', gestoriaRouter);
 app.use('/api/compartir', compartirRouter);
 app.use('/referidos', referidosRouter);
+app.use('/banco', bancoRouter);
 
 
 app.get('/', (req, res) => {
