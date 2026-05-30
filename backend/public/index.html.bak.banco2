@@ -1153,7 +1153,7 @@ if (window.location.hash === '#registro') {
       if (!window.bancoTrim) window.bancoTrim = getTrimestre();
       if (!window.bancoAnno) window.bancoAnno = new Date().getFullYear();
 
-      var trims = ['Año completo','T1','T2','T3','T4'];
+      var trims = ['T1','T2','T3','T4'];
       var annos = [];
       for (var y = new Date().getFullYear(); y >= 2024; y--) annos.push(y);
 
@@ -1178,7 +1178,6 @@ if (window.location.hash === '#registro') {
         var meses = mesesTrim[window.bancoTrim] || [];
         var movs = todosMovs.filter(function(m) {
           var d = new Date(m.fecha);
-          if (window.bancoTrim === 'Año completo') return d.getFullYear() === window.bancoAnno;
           return meses.includes(d.getMonth()) && d.getFullYear() === window.bancoAnno;
         });
 
@@ -1204,7 +1203,6 @@ if (window.location.hash === '#registro') {
         if (movs.length > 0) {
 
 
-          html += '<input id="bancoBuscador" type="text" placeholder="Buscar movimiento..." oninput="filtrarBanco(this.value)" style="width:100%;box-sizing:border-box;background:#1e1e28;border:1px solid #2a2a3a;border-radius:10px;padding:10px 14px;font-size:14px;color:#e0d8cc;margin-bottom:12px;outline:none;">';
           html += '<div style="display:flex;flex-direction:column;gap:6px;" id="banco-lista">';
           var movsOrdenados = movs.slice().sort(function(a,b) {
           var pa = (!a.estado || a.estado === 'pendiente') ? 0 : 1;
@@ -1321,14 +1319,6 @@ if (window.location.hash === '#registro') {
       });
       document.querySelectorAll('.btn-deshacer').forEach(function(btn) {
         btn.addEventListener('click', function() { deshacerConciliacion(parseInt(this.dataset.id)); });
-      });
-    }
-
-    function filtrarBanco(texto) {
-      var t = texto.toLowerCase().trim();
-      document.querySelectorAll('.banco-mov').forEach(function(el) {
-        var contenido = el.textContent.toLowerCase();
-        el.style.display = (!t || contenido.includes(t)) ? '' : 'none';
       });
     }
 
@@ -1474,11 +1464,6 @@ if (window.location.hash === '#registro') {
       var items = motivos.map(function(m) { return { titulo: m }; });
       mostrarModalBanco('Sin factura — motivo', items, async function(idx) {
         var motivo = motivos[idx];
-        if (motivo === 'Otro') {
-          var custom = prompt('Escribe el motivo:');
-          if (!custom || !custom.trim()) return;
-          motivo = custom.trim();
-        }
         await fetch(API + '/banco/actualizar-movimiento', {
           method: 'POST',
           headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
