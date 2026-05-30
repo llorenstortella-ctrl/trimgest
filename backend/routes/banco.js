@@ -30,7 +30,10 @@ function getFacturas(empresaId) {
 // Parsear importe CaixaBank: "-92,40EUR" → -92.40
 function parsearImporte(str) {
   if (!str) return 0;
-  return parseFloat(str.replace('EUR','').replace(',','.').replace('+','').trim());
+  var s = str.replace('EUR','').replace('+','').trim();
+  // Formato español: punto=miles, coma=decimal
+  s = s.replace(/\./g,'').replace(',','.');
+  return parseFloat(s);
 }
 
 // Parsear fecha CaixaBank: "29/05/2026" → Date
