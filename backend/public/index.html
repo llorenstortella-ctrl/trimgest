@@ -1231,10 +1231,7 @@ if (window.location.hash === '#registro') {
             html += '</div>';
             if (estado === 'pendiente') {
               html += '<div style="display:flex;gap:6px;">';
-              html += '<button class="btn-asignar-factura" data-id="' + m.id + '" style="flex:1;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">+ Asignar factura</button>';
-              html += '<button class="btn-agrupar" data-id="' + m.id + '" title="Agrupa varios movimientos del banco que corresponden a una misma factura" style="background:#1a1a2a;border:1px solid #3a3a5a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Agrupar</button>';
-              html += '<button class="btn-asignar-nomina" data-id="' + m.id + '" style="flex:1;background:#1a1a2a;border:1px solid #3a3a5a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Nomina</button>';
-              html += '<button class="btn-sin-factura" data-id="' + m.id + '" style="flex:1;background:#1e1e28;border:1px solid #3a3a4a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Sin factura</button>';
+              html += '<button class="btn-asignar" data-id="' + m.id + '" style="width:100%;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:6px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Asignar</button>';
               html += '</div>';
             } else {
               html += '<button class="btn-deshacer" data-id="' + m.id + '" style="background:none;border:none;color:#5a5060;font-size:10px;cursor:pointer;text-decoration:underline;">Deshacer</button>';
@@ -1275,39 +1272,33 @@ if (window.location.hash === '#registro') {
 
       window.bancoSeleccion = [];
 
-      document.querySelectorAll('.btn-agrupar').forEach(function(btn) {
+      document.querySelectorAll('.btn-asignar').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var id = parseInt(this.dataset.id);
-          if (window.bancoSeleccion.includes(id)) {
-            window.bancoSeleccion = window.bancoSeleccion.filter(function(x) { return x !== id; });
-            this.style.background = '#1a1a2a';
-            this.style.color = '#9a90b4';
-            this.textContent = 'Agrupar';
-          } else {
-            window.bancoSeleccion.push(id);
-            this.style.background = '#2a2a1a';
-            this.style.color = '#e8c87a';
-            this.style.borderColor = '#e8c87a';
-            this.textContent = 'Agrupado (' + window.bancoSeleccion.length + ')';
-            if (window.bancoSeleccion.length === 1) {
-              alert('Marca otros movimientos con "Agrupar" y luego pulsa "Asignar factura" en cualquiera de ellos para asignarlos todos a la misma factura.');
+          var opciones = [
+            { titulo: '+ Asignar factura de proveedor' },
+            { titulo: 'Asignar nomina' },
+            { titulo: 'Sin factura (TGSS, banco, personal...)' },
+            { titulo: 'Agrupar con otros movimientos' }
+          ];
+          mostrarModalBanco('¿Qué es este movimiento?', opciones, function(idx) {
+            if (idx === 0) mostrarSelectorFacturaBanco([id]);
+            else if (idx === 1) asignarNominaBanco(id);
+            else if (idx === 2) marcarSinFactura(id);
+            else if (idx === 3) {
+              if (window.bancoSeleccion.includes(id)) {
+                window.bancoSeleccion = window.bancoSeleccion.filter(function(x) { return x !== id; });
+              } else {
+                window.bancoSeleccion.push(id);
+                if (window.bancoSeleccion.length > 1) {
+                  mostrarSelectorFacturaBanco(window.bancoSeleccion);
+                } else {
+                  alert('Ahora pulsa "Asignar" en otro movimiento y elige "Agrupar" para unirlos a la misma factura.');
+                }
+              }
             }
-          }
+          });
         });
-      });
-
-      document.querySelectorAll('.btn-asignar-factura').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var id = parseInt(this.dataset.id);
-          var ids = window.bancoSeleccion.length > 0 ? window.bancoSeleccion : [id];
-          mostrarSelectorFacturaBanco(ids);
-        });
-      });
-      document.querySelectorAll('.btn-asignar-nomina').forEach(function(btn) {
-        btn.addEventListener('click', function() { asignarNominaBanco(parseInt(this.dataset.id)); });
-      });
-      document.querySelectorAll('.btn-sin-factura').forEach(function(btn) {
-        btn.addEventListener('click', function() { marcarSinFactura(parseInt(this.dataset.id)); });
       });
       document.querySelectorAll('.btn-deshacer').forEach(function(btn) {
         btn.addEventListener('click', function() { deshacerConciliacion(parseInt(this.dataset.id)); });
