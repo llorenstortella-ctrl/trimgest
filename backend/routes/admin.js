@@ -514,7 +514,7 @@ router.post('/generar-ref-codigos', (req, res) => {
 });
 
 
-router.post('/añadir-demo-gestorias', (req, res) => {
+router.post('/anadir-demo-gestorias', (req, res) => {
   const adminPassword = req.headers['x-admin-password'];
   if (adminPassword !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
     return res.status(401).json({ error: 'No autorizado' });
