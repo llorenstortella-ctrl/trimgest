@@ -1362,14 +1362,14 @@ if (window.location.hash === '#registro') {
       if (isMobile) {
         modal.style.cssText = 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;';
       } else {
-        modal.style.cssText = 'background:#1e1e28;border-radius:16px;width:400px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+        modal.style.cssText = 'background:#1e1e28;border-radius:16px;width:400px;height:500px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
       }
       
       var html = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
       html += '<div style="font-size:15px;font-weight:600;color:#f0ede8;">' + titulo + '</div>';
       html += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:22px;cursor:pointer;line-height:1;padding:0 4px;">×</button>';
       html += '</div>';
-      html += '<div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;min-height:0;">';
+      html += '<div style="overflow-y:scroll;flex:1;-webkit-overflow-scrolling:touch;min-height:0;scrollbar-width:thin;scrollbar-color:#3a3a5a #1e1e28;">';
       items.forEach(function(item, i) {
         html += '<div class="banco-modal-item" data-idx="' + i + '" style="padding:16px 20px;border-bottom:1px solid #22223a;cursor:pointer;transition:background 0.1s;">';
         html += '<div style="font-size:14px;color:#e0d8cc;font-weight:500;">' + item.titulo + '</div>';
