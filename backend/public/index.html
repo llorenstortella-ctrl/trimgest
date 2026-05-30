@@ -1233,6 +1233,7 @@ if (window.location.hash === '#registro') {
               html += '<div style="display:flex;gap:6px;">';
               html += '<button class="btn-asignar-factura" data-id="' + m.id + '" style="flex:1;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">+ Asignar factura</button>';
               html += '<button class="btn-agrupar" data-id="' + m.id + '" title="Agrupa varios movimientos del banco que corresponden a una misma factura" style="background:#1a1a2a;border:1px solid #3a3a5a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Agrupar</button>';
+              html += '<button class="btn-asignar-nomina" data-id="' + m.id + '" style="flex:1;background:#1a1a2a;border:1px solid #3a3a5a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Nomina</button>';
               html += '<button class="btn-sin-factura" data-id="' + m.id + '" style="flex:1;background:#1e1e28;border:1px solid #3a3a4a;color:#9a90b4;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;">Sin factura</button>';
               html += '</div>';
             } else {
@@ -1302,6 +1303,9 @@ if (window.location.hash === '#registro') {
           mostrarSelectorFacturaBanco(ids);
         });
       });
+      document.querySelectorAll('.btn-asignar-nomina').forEach(function(btn) {
+        btn.addEventListener('click', function() { asignarNominaBanco(parseInt(this.dataset.id)); });
+      });
       document.querySelectorAll('.btn-sin-factura').forEach(function(btn) {
         btn.addEventListener('click', function() { marcarSinFactura(parseInt(this.dataset.id)); });
       });
@@ -1337,6 +1341,25 @@ if (window.location.hash === '#registro') {
         });
       }
       window.bancoSeleccion = [];
+      renderBanco();
+    }
+
+    async function asignarNominaBanco(id) {
+      var r = await fetch(API + '/nominas/listar', { headers: getHeaders() });
+      var data = await r.json();
+      var nominas = data.nominas || [];
+      if (nominas.length === 0) { alert('No tienes nominas en TrimGest'); return; }
+      var lista = nominas.map(function(n,i) { return (i+1) + '. ' + n.trabajador + ' — ' + (n.mes||'') + ' ' + (n.anno||'') + ' — ' + formatEur(n.neto); }).join('\n');
+      var sel = prompt('Selecciona la nomina (introduce el numero):\n' + lista);
+      if (!sel) return;
+      var idx = parseInt(sel) - 1;
+      if (isNaN(idx) || idx < 0 || idx >= nominas.length) { alert('Numero no valido'); return; }
+      var nomina = nominas[idx];
+      await fetch(API + '/banco/actualizar-movimiento', {
+        method: 'POST',
+        headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ movimiento_id: id, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: ' + nomina.trabajador + ' ' + (nomina.mes||'') + ' ' + (nomina.anno||''), factura_total: nomina.neto })
+      });
       renderBanco();
     }
 
