@@ -483,31 +483,6 @@ router.post('/cargar-demo', async (req, res) => {
     }
     fs.writeFileSync(path.join(empDir, 'nominas.json'), JSON.stringify(nominas, null, 2));
 
-    // Datos bancarios demo
-    const bancoDemoPath = path.join(empDir, 'banco.json');
-    const movimientosDemo = {
-      ultima_fecha: '2025-03-31',
-      movimientos: [
-        { id: 1, fecha: '2025-01-05', fecha_display: '05/01/2025', concepto: 'FERROS MALLORCA SL FACTURA MAT', importe: -1452.80, estado: 'conciliado', factura_id: 1001, factura_nombre: 'Ferros Mallorca S.L.', factura_total: 1452.80, nomina_id: null, motivo: null, conciliado: true },
-        { id: 2, fecha: '2025-01-10', fecha_display: '10/01/2025', concepto: 'CIMENTS BALEAR SA MATERIAL OBRA', importe: -3280.50, estado: 'conciliado', factura_id: 1002, factura_nombre: 'Ciments Balear S.A.', factura_total: 3280.50, nomina_id: null, motivo: null, conciliado: true },
-        { id: 3, fecha: '2025-01-15', fecha_display: '15/01/2025', concepto: 'COBRO CERTIFICACION OBRA HOTEL', importe: 18500.00, estado: 'conciliado', factura_id: 2001, factura_nombre: 'Hotel Playa Alcudia S.L.', factura_total: 18500.00, nomina_id: null, motivo: null, conciliado: true },
-        { id: 4, fecha: '2025-01-28', fecha_display: '28/01/2025', concepto: 'NOMINA ENERO PEDRO MARTINEZ', importe: -1850.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Pedro Martinez Enero 2025', factura_total: 1850.00, nomina_id: 3001, motivo: null, conciliado: true },
-        { id: 5, fecha: '2025-01-28', fecha_display: '28/01/2025', concepto: 'NOMINA ENERO MARIA GARCIA', importe: -1620.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Maria Garcia Enero 2025', factura_total: 1620.00, nomina_id: 3002, motivo: null, conciliado: true },
-        { id: 6, fecha: '2025-02-03', fecha_display: '03/02/2025', concepto: 'ELECTRICA BALEAR SL INSTALACION', importe: -2180.00, estado: 'conciliado', factura_id: 1003, factura_nombre: 'Electrica Balear S.L.', factura_total: 2180.00, nomina_id: null, motivo: null, conciliado: true },
-        { id: 7, fecha: '2025-02-10', fecha_display: '10/02/2025', concepto: 'TGSS FEBRERO CUOTA AUTONOMOS', importe: -1200.00, estado: 'sin_factura', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: 'TGSS / Seguridad Social', conciliado: false },
-        { id: 8, fecha: '2025-02-14', fecha_display: '14/02/2025', concepto: 'COBRO REFORMA OFICINAS PALMA', importe: 9800.00, estado: 'conciliado', factura_id: 2002, factura_nombre: 'Oficinas Palma Center S.L.', factura_total: 9800.00, nomina_id: null, motivo: null, conciliado: true },
-        { id: 9, fecha: '2025-02-28', fecha_display: '28/02/2025', concepto: 'NOMINA FEBRERO PEDRO MARTINEZ', importe: -1850.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Pedro Martinez Febrero 2025', factura_total: 1850.00, nomina_id: 3003, motivo: null, conciliado: true },
-        { id: 10, fecha: '2025-02-28', fecha_display: '28/02/2025', concepto: 'NOMINA FEBRERO MARIA GARCIA', importe: -1620.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Maria Garcia Febrero 2025', factura_total: 1620.00, nomina_id: 3004, motivo: null, conciliado: true },
-        { id: 11, fecha: '2025-03-05', fecha_display: '05/03/2025', concepto: 'GRUES I MAQUINARIA SA ALQUILER', importe: -4200.00, estado: 'conciliado', factura_id: 1004, factura_nombre: 'Grues i Maquinaria S.A.', factura_total: 4200.00, nomina_id: null, motivo: null, conciliado: true },
-        { id: 12, fecha: '2025-03-12', fecha_display: '12/03/2025', concepto: 'COMISION MANTENIMIENTO CUENTA', importe: -18.50, estado: 'sin_factura', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: 'Comision bancaria', conciliado: false },
-        { id: 13, fecha: '2025-03-18', fecha_display: '18/03/2025', concepto: 'COBRO CERTIFICACION 2 HOTEL', importe: 22000.00, estado: 'conciliado', factura_id: 2003, factura_nombre: 'Hotel Playa Alcudia S.L.', factura_total: 22000.00, nomina_id: null, motivo: null, conciliado: true },
-        { id: 14, fecha: '2025-03-20', fecha_display: '20/03/2025', concepto: 'FONTANERIA ISERN SL FACTURA', importe: -980.00, estado: 'pendiente', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: null, conciliado: false },
-        { id: 15, fecha: '2025-03-28', fecha_display: '28/03/2025', concepto: 'NOMINA MARZO PEDRO MARTINEZ', importe: -1850.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Pedro Martinez Marzo 2025', factura_total: 1850.00, nomina_id: 3005, motivo: null, conciliado: true },
-        { id: 16, fecha: '2025-03-28', fecha_display: '28/03/2025', concepto: 'NOMINA MARZO MARIA GARCIA', importe: -1620.00, estado: 'pendiente', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: null, conciliado: false }
-      ]
-    };
-    fs.writeFileSync(bancoDemoPath, JSON.stringify(movimientosDemo, null, 2));
-
     res.json({ ok: true, mensaje: 'Demo cargada', facturas: facturas.length, nominas: nominas.length });
   } catch(e) {
     console.error(e);
