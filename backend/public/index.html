@@ -1092,6 +1092,57 @@ if (window.location.hash === '#registro') {
     function mesNombre(mes) { return MESES_NOMBRE[String(mes).toLowerCase()] || String(mes); }
     function mesNumero(mes) { var n = {'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12}; return n[String(mes).toLowerCase()] || Number(mes) || 0; }
 
+    function iniciarReplazarPDF(id) {
+      var input = document.getElementById('input-reemplazar-' + id);
+      if (!input) return;
+      input.onchange = async function() {
+        var file = input.files[0];
+        if (!file) return;
+        var btn = document.getElementById('btn-reemplazar-' + id);
+        btn.textContent = 'Procesando...';
+        btn.disabled = true;
+        var formData = new FormData();
+        formData.append('factura', file);
+        try {
+          var r = await fetch(API + '/facturas/reemplazar-pdf/' + id, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + window.token },
+            body: formData
+          });
+          var d = await r.json();
+          if (!d.ok) { alert(d.error || 'Error'); btn.textContent = 'Reemplazar PDF'; btn.disabled = false; return; }
+          var difs = d.diferencias || {};
+          var hayDifs = Object.keys(difs).length > 0;
+          if (hayDifs) {
+            var msg = 'El nuevo PDF tiene datos diferentes:\n';
+            if (difs.nombre) msg += '- Proveedor: "' + difs.nombre.anterior + '" → "' + difs.nombre.nuevo + '"\n';
+            if (difs.total) msg += '- Total: ' + difs.total.anterior + '€ → ' + difs.total.nuevo + '€\n';
+            if (difs.base_imponible) msg += '- Base: ' + difs.base_imponible.anterior + '€ → ' + difs.base_imponible.nuevo + '€\n';
+            msg += '\n¿Quieres actualizar también los datos de la factura?';
+            if (confirm(msg)) {
+              var datos = d.datos_nuevos;
+              await fetch(API + '/facturas/editar/' + id, {
+                method: 'PUT',
+                headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                  nombre: datos.nombre || '',
+                  cif: datos.cif || '',
+                  numero_factura: datos.numero_factura || '',
+                  fecha: datos.fecha || '',
+                  base_imponible: datos.base_imponible || 0,
+                  iva_porcentaje: datos.iva_porcentaje || 0,
+                  iva_importe: datos.iva_importe || 0,
+                  total: datos.total || 0
+                })
+              });
+            }
+          }
+          renderApp();
+        } catch(e) { alert('Error de conexion'); btn.textContent = 'Reemplazar PDF'; btn.disabled = false; }
+      };
+      input.click();
+    }
+
     async function renderApp() {
       var facturas = await cargarFacturas();
       var nominasRes = await fetch(API + '/nominas/listar', { headers: getHeaders() });
@@ -1224,7 +1275,8 @@ if (window.location.hash === '#registro') {
           if (f.nota) listaHTML += '<div style="font-size:12px;color:#9a90b4;margin-top:6px;padding:6px 8px;background:#1a1a24;border-radius:6px;border-left:2px solid #3a3a5a;">📝 ' + f.nota + '</div>';
           var contBadge = f.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
           var btnPDF = f.archivo ? '<a href="/facturas/archivo/' + f.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
-          listaHTML += '<div class="factura-acciones">' + contBadge + btnPDF + '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button><button class="btn-borrar" onclick="borrarFactura(' + f.id + ',' + (f.contabilizado ? 'true' : 'false') + ')">Borrar</button></div>';
+          var btnReemplazar = '<button class="btn-accion" id="btn-reemplazar-' + f.id + '">Reemplazar PDF</button><input type="file" id="input-reemplazar-' + f.id + '" accept=".pdf" style="display:none">';
+          listaHTML += '<div class="factura-acciones">' + contBadge + btnPDF + btnReemplazar + '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button><button class="btn-borrar" onclick="borrarFactura(' + f.id + ',' + (f.contabilizado ? 'true' : 'false') + ')">Borrar</button></div>';
           listaHTML += '<div class="edit-form" id="edit-' + f.id + '">';
           listaHTML += '<div class="edit-row"><select id="tipo-' + f.id + '"><option value="proveedor"' + (f.tipo==='proveedor'?' selected':'') + '>Proveedor</option><option value="cliente"' + (f.tipo==='cliente'?' selected':'') + '>Cliente</option></select>';
           listaHTML += '<select id="trim-' + f.id + '"><option value="T1"' + (f.trimestre==='T1'?' selected':'') + '>T1</option><option value="T2"' + (f.trimestre==='T2'?' selected':'') + '>T2</option><option value="T3"' + (f.trimestre==='T3'?' selected':'') + '>T3</option><option value="T4"' + (f.trimestre==='T4'?' selected':'') + '>T4</option></select>';
@@ -1344,6 +1396,10 @@ if (window.location.hash === '#registro') {
       if (btnNom) btnNom.onclick = function() { subirNomina(); };
       var btnManual = document.getElementById('btnIntroManual');
       if (btnManual) btnManual.onclick = function() { toggleManual(); };
+      document.querySelectorAll('[id^="btn-reemplazar-"]').forEach(function(btn) {
+        var id = btn.id.replace('btn-reemplazar-', '');
+        btn.onclick = function() { iniciarReplazarPDF(id); };
+      });
     }
 
     function seleccionarTipo(tipo) {

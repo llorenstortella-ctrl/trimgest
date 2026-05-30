@@ -289,6 +289,49 @@ router.put('/marcar-enviado', auth, (req, res) => {
   res.json({ mensaje: 'Marcadas como enviadas' });
 });
 
+
+// POST /facturas/reemplazar-pdf/:id — reemplaza el PDF de una factura existente
+router.post('/reemplazar-pdf/:id', auth, upload.single('factura'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
+  try {
+    const empresaId = req.empresaId;
+    const id = parseInt(req.params.id);
+    const facturasPath = path.join(__dirname, '../data/empresas/' + empresaId + '/facturas.json');
+    const facturas = JSON.parse(fs.readFileSync(facturasPath));
+    const idx = facturas.findIndex(function(f) { return f.id === id; });
+    if (idx === -1) return res.status(404).json({ error: 'Factura no encontrada' });
+    const factura = facturas[idx];
+
+    // Borrar archivo anterior si existe
+    if (factura.archivo) {
+      const rutaAnterior = path.join(__dirname, '../data/empresas/' + empresaId + '/uploads/' + factura.archivo);
+      try { fs.unlinkSync(rutaAnterior); } catch(e) {}
+    }
+
+    // Guardar nuevo archivo
+    const nuevoArchivo = req.file.filename;
+    const rutaNueva = path.join(__dirname, '../data/empresas/' + empresaId + '/uploads/' + nuevoArchivo);
+
+    // Extraer datos con IA del nuevo PDF
+    const datosnuevos = await extraerDatosFactura(rutaNueva);
+
+    // Comparar datos relevantes
+    const diferencias = {};
+    if (datosnuevos.total && Math.abs(datosnuevos.total - factura.total) > 0.01) diferencias.total = { anterior: factura.total, nuevo: datosnuevos.total };
+    if (datosnuevos.nombre && datosnuevos.nombre !== factura.nombre) diferencias.nombre = { anterior: factura.nombre, nuevo: datosnuevos.nombre };
+    if (datosnuevos.base_imponible && Math.abs(datosnuevos.base_imponible - factura.base_imponible) > 0.01) diferencias.base_imponible = { anterior: factura.base_imponible, nuevo: datosnuevos.base_imponible };
+
+    // Actualizar solo el archivo por ahora
+    facturas[idx].archivo = nuevoArchivo;
+    fs.writeFileSync(facturasPath, JSON.stringify(facturas, null, 2));
+
+    res.json({ ok: true, diferencias, datos_nuevos: datosnuevos, archivo: nuevoArchivo });
+  } catch(e) {
+    console.error('Error reemplazando PDF:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/manual', auth, (req, res) => {
   const facturas = getFacturas(req.empresaId);
   const { tipo, nombre, cif, numero_factura, fecha, base_imponible, iva_porcentaje, iva_importe, total, trimestre, anno } = req.body;

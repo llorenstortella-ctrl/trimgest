@@ -251,7 +251,7 @@
         var res = await fetch(API + '/usuarios/registro', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, nombre_empresa: empresa })
+          body: JSON.stringify({ email, password, nombre_empresa: empresa, ref_referido_por: new URLSearchParams(window.location.search).get('ref') || null })
         });
         var data = await res.json();
         if (data.ok) {
@@ -319,7 +319,9 @@
     init();
 
     // Detectar #registro en la URL
-    if (window.location.hash === '#registro') {
+    var _refCodigo = new URLSearchParams(window.location.search).get('ref');
+if (_refCodigo) sessionStorage.setItem('ref_codigo', _refCodigo);
+if (window.location.hash === '#registro') {
       history.replaceState(null, '', '/app');
       mostrarRegistro();
     }
@@ -526,10 +528,10 @@
             } else {
               await fetch(API + '/nominas/conservar/' + data.nomina.id, { method: 'POST', headers: getHeaders() });
             }
-            setTimeout(function() { renderNominas(); }, 500);
+            setTimeout(function() { renderApp(); }, 500);
           } else {
             if (status) status.innerHTML = '<div class="success">Nomina guardada correctamente</div>';
-            setTimeout(function() { renderNominas(); }, 1000);
+            setTimeout(function() { renderApp(); }, 1000);
           }
         } else {
           if (status) status.innerHTML = '<div class="error">Error al procesar la nomina</div>';
@@ -560,7 +562,7 @@
           body: JSON.stringify(datos)
         });
         var d = await r.json();
-        if (d.ok) { renderNominas(); }
+        if (d.ok) { renderApp(); }
         else alert(d.error || 'Error al guardar');
       } catch(e) { alert('Error de conexion'); }
     }
@@ -568,19 +570,19 @@
     async function borrarNomina(id) {
       if (!confirm('Seguro que quieres borrar esta nomina?')) return;
       await fetch(API + '/nominas/borrar/' + id, { method: 'DELETE', headers: getHeaders() });
-      renderNominas();
+      renderApp();
     }
 
     async function eliminarPaginaNomina(id, pagina) {
       if (!confirm('Se eliminara la pagina ' + pagina + ' del PDF. Continuar?')) return;
       var r = await fetch(API + '/nominas/eliminar-pagina/' + id, { method: 'POST', headers: Object.assign({}, getHeaders(), {'Content-Type': 'application/json'}), body: JSON.stringify({ pagina: pagina }) });
       var d = await r.json();
-      if (d.ok) { renderNominas(); } else { alert('Error eliminando pagina'); }
+      if (d.ok) { renderApp(); } else { alert('Error eliminando pagina'); }
     }
 
     async function conservarNomina(id) {
       await fetch(API + '/nominas/conservar/' + id, { method: 'POST', headers: getHeaders() });
-      renderNominas();
+      renderApp();
     }
 
     function toggleManual() {
@@ -870,6 +872,7 @@
         (perfil.plan_gratuito ? '' : '<div style="background:#22223a;border-radius:6px;height:6px;overflow:hidden;"><div style="background:#e8c87a;height:100%;width:' + Math.min(100, Math.round((perfil.facturas_mes || 0) / (perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10) * 100)) + '%;border-radius:6px;"></div></div>') +
         '<div style="font-size:12px;color:#6a6070;margin-top:10px;">Subidas extra disponibles: ' + (perfil.subidas_extra || 0) + '</div>'+
         '</div>'+
+        '<div style="background:#16161e;border-radius:12px;padding:16px;margin-bottom:4px;"><div style="font-size:14px;color:#e8c87a;font-weight:600;margin-bottom:12px;">Invita y gana</div><div style="font-size:13px;color:#9a90b4;margin-bottom:12px;">Invita a un amigo o empresa. Cuando se suscriba, ganas <strong style="color:#e8c87a;">5€</strong>.</div><div style="font-size:11px;color:#6a6070;margin-bottom:6px;">Tu enlace de invitación:</div><div style="display:flex;gap:8px;margin-bottom:16px;"><div id="ref-enlace" style="flex:1;background:#22223a;border-radius:8px;padding:10px;font-size:11px;color:#9a90b4;word-break:break-all;"></div><button id="ref-copiar-btn" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:8px 12px;font-size:11px;cursor:pointer;white-space:nowrap;">Copiar</button></div><div style="font-size:11px;color:#6a6070;margin-bottom:6px;">Enviar invitación por email:</div><div style="display:flex;gap:8px;margin-bottom:16px;"><input id="ref-email-input" type="email" placeholder="email@empresa.com" style="flex:1;background:#22223a;border:1px solid #2a2a3a;border-radius:8px;padding:10px;font-size:13px;color:#f0ede8;"/><button id="ref-enviar-btn" style="background:#e8c87a;border:none;color:#1a1500;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;">Enviar</button></div><div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:13px;color:#9a90b4;">Saldo acumulado: <strong id="ref-saldo" style="color:#e8c87a;">0€</strong></div><button id="ref-cobrar-btn" style="display:none;background:#22223a;border:1px solid #e8c87a;color:#e8c87a;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;">Solicitar pago</button></div></div>'+
         '<button onclick="cerrarAjustes();mostrarPlanes()" style="background:#1e1e28;border:1px solid #e8c87a;color:#e8c87a;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Ver planes y precios</button>'+
         '<div style="margin-top:24px;padding-top:24px;border-top:1px solid #22223a;">'+
         '<button onclick="cerrarSesion()" style="background:#2a1a1a;border:1px solid #3a1a1a;color:#c06060;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;width:100%;">Cerrar sesión</button>'+
@@ -880,6 +883,66 @@
       document.body.appendChild(div);
       ajustesTab(tab);
       cargarGestoriasAjustes();
+      cargarReferidosAjustes();
+    }
+
+    async function cargarReferidosAjustes() {
+      try {
+        var res = await fetch(API + '/referidos/info', { headers: getHeaders() });
+        var data = await res.json();
+        var elEnlace = document.getElementById('ref-enlace');
+        var elSaldo = document.getElementById('ref-saldo');
+        var elCobrar = document.getElementById('ref-cobrar-btn');
+        var elCopiar = document.getElementById('ref-copiar-btn');
+        var elEnviar = document.getElementById('ref-enviar-btn');
+        if (!elEnlace) return;
+        elEnlace.textContent = data.enlace || '';
+        elSaldo.textContent = (data.ref_saldo || 0) + '€';
+        if ((data.ref_saldo || 0) >= 15) elCobrar.style.display = 'block';
+        elCopiar.onclick = function() {
+          navigator.clipboard.writeText(data.enlace || '');
+          elCopiar.textContent = 'Copiado!';
+          setTimeout(function() { elCopiar.textContent = 'Copiar'; }, 2000);
+        };
+        elEnviar.onclick = async function() {
+          var email = document.getElementById('ref-email-input').value.trim();
+          if (!email) return;
+          elEnviar.disabled = true;
+          elEnviar.textContent = '...';
+          try {
+            var r = await fetch(API + '/referidos/invitar', {
+              method: 'POST',
+              headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+              body: JSON.stringify({ emailDestino: email })
+            });
+            var d = await r.json();
+            if (d.ok) {
+              document.getElementById('ref-email-input').value = '';
+              elEnviar.textContent = 'Enviado!';
+              setTimeout(function() { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }, 2000);
+            } else {
+              elEnviar.textContent = 'Error';
+              setTimeout(function() { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }, 2000);
+            }
+          } catch(e) { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }
+        };
+        elCobrar.onclick = function() { mostrarFormularioPago(data.ref_saldo || 0); };
+      } catch(e) { console.error('Error cargando referidos:', e); }
+    }
+
+    function mostrarFormularioPago(saldo) {
+      var iban = prompt('Introduce tu IBAN para recibir ' + saldo + '€:');
+      if (!iban) return;
+      var dni = prompt('Introduce tu DNI o NIF:');
+      if (!dni) return;
+      fetch(API + '/referidos/solicitar-pago', {
+        method: 'POST',
+        headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ iban: iban, dni: dni })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) alert('Solicitud enviada. Te transferiremos ' + saldo + '€ en los proximos dias.');
+        else alert(d.error || 'Error al solicitar pago');
+      }).catch(function() { alert('Error de conexion'); });
     }
 
     async function solicitarBaja() {
@@ -1047,6 +1110,7 @@
       window.perfilOnboarding = perfil;
       if (!window.onboardingMostrado) { window.onboardingMostrado = true; mostrarOnboarding(); }
       var bannerHTML = '';
+      var refBannerHTML = '<div onclick="mostrarAjustes(\'plan\')" style="background:#1e1a0a;border-bottom:1px solid #3a3010;padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;"><span style="font-size:13px;">&#127873;</span><span style="font-size:12px;color:#e8c87a;font-weight:600;">Invita a un amigo y gana 5&euro; por cada suscripci&oacute;n</span><span style="font-size:11px;color:#9a7a30;">Ver c&oacute;mo &rarr;</span></div>';
       if (!perfil.plan_gratuito) {
         var limite = perfil.plan === 'estandar' ? 200 : perfil.plan === 'basico' ? 100 : 10;
         var usadas = perfil.facturas_mes || 0;
@@ -1241,6 +1305,7 @@
         '<div class="stat"><div class="stat-label">Clientes</div><div class="stat-value verde">' + formatEur(totalCli) + '</div><div class="stat-count">' + cliPend.length + ' facturas</div></div>' +
         '<div class="stat"><div class="stat-label">Nóminas</div><div class="stat-value" style="color:#9a90b4;">' + formatEur(totalNom) + '</div><div class="stat-count">' + nominasT.length + ' nóminas</div></div>' +
         '</div></div>' +
+        refBannerHTML +
         bannerHTML +
         '<div class="content">' +
         '<div class="upload-area" id="uploadArea" style="display:' + uploadDisplay + '"><div class="upload-box">' +
