@@ -1162,6 +1162,16 @@ if (window.location.hash === '#registro') {
       window.seccionActual = 'banco';
       if (!window.bancoTrim) window.bancoTrim = getTrimestre();
       if (!window.bancoAnno) window.bancoAnno = new Date().getFullYear();
+      try {
+        var _bt = localStorage.getItem('trimgest_token');
+        if (_bt) {
+          var _bp = JSON.parse(atob(_bt.split('.')[1]));
+          if (_bp.empresaId === 'emp_demo_construcciones') {
+            window.bancoAnno = 2025;
+            window.bancoTrim = 'T1';
+          }
+        }
+      } catch(e) {}
 
       var trims = ['Año completo','T1','T2','T3','T4'];
       var annos = [];
