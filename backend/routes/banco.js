@@ -190,6 +190,34 @@ router.post('/conciliar-manual', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+
+// POST /banco/reconciliar — re-cruza solo los movimientos pendientes
+router.post('/reconciliar', auth, (req, res) => {
+  try {
+    const empresaId = req.empresaId;
+    const banco = getBanco(empresaId);
+    const facturas = getFacturas(empresaId);
+    let actualizados = 0;
+    banco.movimientos.forEach(function(m) {
+      if (m.estado && m.estado !== 'pendiente') return; // no tocar los ya procesados
+      const fecha = new Date(m.fecha);
+      const match = cruzarConFacturas({ importe: m.importe, fecha }, facturas);
+      if (match) {
+        m.estado = 'conciliado';
+        m.conciliado = true;
+        m.factura_id = match.id;
+        m.factura_nombre = match.nombre;
+        m.factura_total = match.total;
+        actualizados++;
+      }
+    });
+    saveBanco(empresaId, banco);
+    res.json({ ok: true, actualizados });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // POST /banco/resetear — borra todo el historial bancario
 router.post('/resetear', auth, (req, res) => {
   const empresaId = req.empresaId;

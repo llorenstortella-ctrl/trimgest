@@ -1193,7 +1193,10 @@ if (window.location.hash === '#registro') {
         html += '</div>';
         html += '<label style="display:block;background:#e8c87a;color:#1a1500;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;width:100%;box-sizing:border-box;">Subir extracto CSV<input type="file" id="inputBanco" accept=".csv" style="display:none"></label>';
         html += '<div id="bancoBusyMsg" style="margin-top:8px;font-size:12px;color:#9a90b4;text-align:center;"></div>';
-        if (todosMovs.length > 0) html += '<button onclick="resetearBanco()" style="margin-top:8px;background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;width:100%;">Resetear historial bancario</button>';
+        if (todosMovs.length > 0) {
+          html += '<button onclick="reconciliarBanco()" style="margin-top:8px;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;">Re-conciliar automaticamente</button>';
+          html += '<button onclick="resetearBanco()" style="margin-top:6px;background:none;border:none;color:#5a5060;font-size:11px;cursor:pointer;text-decoration:underline;width:100%;">Resetear historial bancario</button>';
+        }
         html += '</div>';
 
         if (movs.length > 0) {
@@ -1358,6 +1361,21 @@ if (window.location.hash === '#registro') {
         body: JSON.stringify({ movimiento_id: id, estado: 'pendiente', factura_id: null, factura_nombre: null, motivo: null })
       });
       renderBanco();
+    }
+
+    async function reconciliarBanco() {
+      var msg = document.getElementById('bancoBusyMsg');
+      if (msg) msg.textContent = 'Re-conciliando...';
+      try {
+        var r = await fetch(API + '/banco/reconciliar', { method: 'POST', headers: getHeaders() });
+        var d = await r.json();
+        if (d.ok) {
+          if (msg) msg.textContent = d.actualizados + ' movimientos conciliados nuevos';
+          setTimeout(function() { renderBanco(); }, 1000);
+        } else {
+          if (msg) msg.textContent = d.error || 'Error';
+        }
+      } catch(e) { if (msg) msg.textContent = 'Error de conexion'; }
     }
 
     async function resetearBanco() {
