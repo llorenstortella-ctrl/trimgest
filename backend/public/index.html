@@ -1200,7 +1200,12 @@ if (window.location.hash === '#registro') {
 
 
           html += '<div style="display:flex;flex-direction:column;gap:6px;" id="banco-lista">';
-          var movsOrdenados = movs.slice().sort(function(a,b) { return new Date(b.fecha) - new Date(a.fecha); });
+          var movsOrdenados = movs.slice().sort(function(a,b) {
+          var pa = (!a.estado || a.estado === 'pendiente') ? 0 : 1;
+          var pb = (!b.estado || b.estado === 'pendiente') ? 0 : 1;
+          if (pa !== pb) return pa - pb;
+          return new Date(b.fecha) - new Date(a.fecha);
+        });
           movsOrdenados.forEach(function(m) {
             var estado = m.estado || 'pendiente';
             var colorImp = m.importe >= 0 ? '#4caf7d' : '#f0ede8';
