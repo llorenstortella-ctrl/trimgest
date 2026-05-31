@@ -1317,8 +1317,20 @@ if (window.location.hash === '#registro') {
             self.style.borderColor = '#e8c87a';
             self.textContent = 'Agrup. (' + window.bancoSeleccion.length + ')';
             if (window.bancoSeleccion.length >= 2) {
-              mostrarSelectorFacturaBanco(window.bancoSeleccion.slice());
+              var idsAgrupados = window.bancoSeleccion.slice();
               window.bancoSeleccion = [];
+              var opciones = [
+                { titulo: '📄 Factura de proveedor' },
+                { titulo: '🧾 Factura de cliente' },
+                { titulo: '👤 Nomina trabajador' },
+                { titulo: '⊘  Sin factura (TGSS, banco, personal...)' }
+              ];
+              mostrarModalBanco('¿Qué es este movimiento?', opciones, function(idx) {
+                if (idx === 0) mostrarSelectorFacturaBanco(idsAgrupados);
+                else if (idx === 1) mostrarSelectorFacturaClienteBanco(idsAgrupados);
+                else if (idx === 2) { if (idsAgrupados.length > 0) asignarNominaBanco(idsAgrupados[0]); }
+                else if (idx === 3) { idsAgrupados.forEach(function(aid) { marcarSinFactura(aid); }); }
+              });
             }
           }
         });
