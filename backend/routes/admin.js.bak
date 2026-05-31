@@ -228,6 +228,19 @@ router.post('/verificar-usuario', (req, res) => {
 
 
 // Endpoint temporal — cargar datos demo
+router.post('/borrar-demo', (req, res) => {
+  try {
+    let usuarios = getUsuarios();
+    usuarios = usuarios.filter(function(u) {
+      return u.empresaId !== 'emp_demo_construcciones' && u.gestoId !== 'gest_demo_001' && u.email !== 'demo@construccionesbalear.es' && u.email !== 'demo@gestoria-mallorca.es';
+    });
+    saveUsuarios(usuarios);
+    res.json({ ok: true, mensaje: 'Demo borrada' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/cargar-demo', async (req, res) => {
   const password = req.headers['x-admin-password'];
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
@@ -253,11 +266,11 @@ router.post('/cargar-demo', async (req, res) => {
       direccion: 'Avda. Jaume III 5, Palma de Mallorca', empresaId: gestoId, gestoId,
       plan: 'free', tipo: 'gestoria', facturas_mes: 0, mes_actual: new Date().getMonth(),
       fecha_registro: '2024-01-10T09:00:00.000Z', verificado: true, ver_token: null,
-      telefono: '971234567', nombre_gestoria: 'Gestoria Mallorca Assessors', whatsapp: '34971234567', clientesGestoria: [{ empresaId: empresaId, nombreEmpresa: 'CONSTRUCCIONES BALEAR S.L.', email: 'demo@construccionesbalear.es' }]
+      telefono: '971234567', nombre_gestoria: 'Gestoria Mallorca Assessors', whatsapp: '34971234567', clientesGestoria: [{ empresaId: empresaId, nombreEmpresa: 'CONSTRUCCIONES BALEAR S.L.', email: 'demo@construccionesbalear.es', es_demo: true }]
     };
 
     let usuarios = getUsuarios();
-    usuarios = usuarios.filter(function(u) { return u.empresaId !== empresaId && u.gestoId !== gestoId; });
+    usuarios = usuarios.filter(function(u) { return u.empresaId !== empresaId && u.gestoId !== gestoId && u.email !== 'demo@construccionesbalear.es' && u.email !== 'demo@gestoria-mallorca.es'; });
     usuarios.push(empresa);
     usuarios.push(gestoria);
     saveUsuarios(usuarios);
@@ -368,11 +381,207 @@ router.post('/cargar-demo', async (req, res) => {
 
 
 
+    // Generar PDFs demo
+    const PDFDocument = require('pdfkit');
+    const uploadsDirDemo = path.join(empDir, 'uploads');
+    if (!fs.existsSync(uploadsDirDemo)) fs.mkdirSync(uploadsDirDemo, { recursive: true });
+
+    function generarPDFFactura(factura) {
+      return new Promise(function(resolve, reject) {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const nombreArchivo = 'demo_' + factura.id + '.pdf';
+        const rutaArchivo = path.join(uploadsDirDemo, nombreArchivo);
+        const stream = fs.createWriteStream(rutaArchivo);
+        doc.pipe(stream);
+
+        // Cabecera
+        doc.fontSize(20).fillColor('#1a1a2e').text('CONSTRUCCIONES BALEAR S.L.', 50, 50);
+        doc.fontSize(10).fillColor('#666').text('B57123456 | Carrer Major 12, Palma de Mallorca', 50, 78);
+        doc.fontSize(10).fillColor('#666').text('info@construccionesbalear.es | Tel: 634 567 890', 50, 92);
+
+        // Linea separadora
+        doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e0e0e0').stroke();
+
+        // Titulo factura
+        const tipoLabel = factura.tipo === 'cliente' ? 'FACTURA EMITIDA' : 'FACTURA RECIBIDA';
+        doc.fontSize(14).fillColor('#1a1a2e').text(tipoLabel, 50, 125);
+        doc.fontSize(10).fillColor('#333');
+
+        // Datos factura
+        doc.text('Número:', 50, 155).text(factura.numero_factura, 150, 155);
+        doc.text('Fecha:', 50, 170).text(factura.fecha, 150, 170);
+        doc.text('Proveedor/Cliente:', 50, 185).text(factura.nombre, 150, 185);
+        doc.text('CIF:', 50, 200).text(factura.cif || '-', 150, 200);
+
+        // Linea separadora
+        doc.moveTo(50, 225).lineTo(545, 225).strokeColor('#e0e0e0').stroke();
+
+        // Tabla importes
+        doc.fontSize(10).fillColor('#666').text('Base imponible', 50, 240);
+        doc.fillColor('#333').text(factura.base_imponible.toFixed(2) + ' €', 400, 240, { align: 'right', width: 145 });
+
+        doc.fillColor('#666').text('IVA (' + factura.iva_porcentaje + '%)', 50, 258);
+        doc.fillColor('#333').text(factura.iva_importe.toFixed(2) + ' €', 400, 258, { align: 'right', width: 145 });
+
+        doc.moveTo(50, 278).lineTo(545, 278).strokeColor('#e0e0e0').stroke();
+
+        doc.fontSize(12).fillColor('#1a1a2e').text('TOTAL', 50, 290);
+        doc.fontSize(13).fillColor('#1a1a2e').text(factura.total.toFixed(2) + ' €', 400, 288, { align: 'right', width: 145 });
+
+        // Pie
+        doc.fontSize(8).fillColor('#aaa').text('Documento generado por TrimGest — trimgest.es', 50, 750, { align: 'center', width: 495 });
+
+        doc.end();
+        stream.on('finish', function() { resolve(nombreArchivo); });
+        stream.on('error', reject);
+      });
+    }
+
+    function generarPDFNomina(nomina) {
+      return new Promise(function(resolve, reject) {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const nombreArchivo = 'demo_nom_' + nomina.id + '.pdf';
+        const rutaArchivo = path.join(uploadsDirDemo, nombreArchivo);
+        const stream = fs.createWriteStream(rutaArchivo);
+        doc.pipe(stream);
+
+        doc.fontSize(20).fillColor('#1a1a2e').text('CONSTRUCCIONES BALEAR S.L.', 50, 50);
+        doc.fontSize(10).fillColor('#666').text('B57123456 | Carrer Major 12, Palma de Mallorca', 50, 78);
+
+        doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e0e0e0').stroke();
+
+        doc.fontSize(14).fillColor('#1a1a2e').text('NÓMINA', 50, 125);
+        doc.fontSize(10).fillColor('#333');
+
+        doc.text('Trabajador:', 50, 155).text(nomina.trabajador, 150, 155);
+        doc.text('Mes:', 50, 170).text(nomina.mes + '/' + nomina.anno, 150, 170);
+
+        doc.moveTo(50, 195).lineTo(545, 195).strokeColor('#e0e0e0').stroke();
+
+        doc.fillColor('#666').text('Devengado bruto', 50, 210);
+        doc.fillColor('#333').text(nomina.devengado.toFixed(2) + ' €', 400, 210, { align: 'right', width: 145 });
+
+        doc.fillColor('#666').text('SS trabajador', 50, 228);
+        doc.fillColor('#333').text('-' + nomina.ss_trabajador.toFixed(2) + ' €', 400, 228, { align: 'right', width: 145 });
+
+        doc.fillColor('#666').text('IRPF (' + nomina.irpf_porcentaje + '%)', 50, 246);
+        doc.fillColor('#333').text('-' + nomina.irpf_importe.toFixed(2) + ' €', 400, 246, { align: 'right', width: 145 });
+
+        doc.moveTo(50, 266).lineTo(545, 266).strokeColor('#e0e0e0').stroke();
+
+        doc.fontSize(12).fillColor('#1a1a2e').text('NETO A PERCIBIR', 50, 278);
+        doc.fontSize(13).fillColor('#1a1a2e').text(nomina.neto.toFixed(2) + ' €', 400, 276, { align: 'right', width: 145 });
+
+        doc.fontSize(10).fillColor('#666').text('Coste empresa: ' + nomina.coste_empresa.toFixed(2) + ' €', 50, 310);
+
+        doc.fontSize(8).fillColor('#aaa').text('Documento generado por TrimGest — trimgest.es', 50, 750, { align: 'center', width: 495 });
+
+        doc.end();
+        stream.on('finish', function() { resolve(nombreArchivo); });
+        stream.on('error', reject);
+      });
+    }
+
+    // Generar PDFs para todas las facturas
+    for (var fi = 0; fi < facturas.length; fi++) {
+      var nombrePDF = await generarPDFFactura(facturas[fi]);
+      facturas[fi].archivo = nombrePDF;
+    }
+    fs.writeFileSync(path.join(empDir, 'facturas.json'), JSON.stringify(facturas, null, 2));
+
+    // Generar PDFs para todas las nominas
+    for (var ni = 0; ni < nominas.length; ni++) {
+      var nombreNomPDF = await generarPDFNomina(nominas[ni]);
+      nominas[ni].archivo = nombreNomPDF;
+    }
+    fs.writeFileSync(path.join(empDir, 'nominas.json'), JSON.stringify(nominas, null, 2));
+
+    // Datos bancarios demo
+    const bancoDemoPath = path.join(empDir, 'banco.json');
+    const movimientosDemo = {
+      ultima_fecha: '2025-03-31',
+      movimientos: [
+        { id: 1, fecha: '2025-01-05', fecha_display: '05/01/2025', concepto: 'FERROS MALLORCA SL FACTURA MAT', importe: -1452.80, estado: 'conciliado', factura_id: 1001, factura_nombre: 'Ferros Mallorca S.L.', factura_total: 1452.80, nomina_id: null, motivo: null, conciliado: true },
+        { id: 2, fecha: '2025-01-10', fecha_display: '10/01/2025', concepto: 'CIMENTS BALEAR SA MATERIAL OBRA', importe: -3280.50, estado: 'conciliado', factura_id: 1002, factura_nombre: 'Ciments Balear S.A.', factura_total: 3280.50, nomina_id: null, motivo: null, conciliado: true },
+        { id: 3, fecha: '2025-01-15', fecha_display: '15/01/2025', concepto: 'COBRO CERTIFICACION OBRA HOTEL', importe: 18500.00, estado: 'conciliado', factura_id: 2001, factura_nombre: 'Hotel Playa Alcudia S.L.', factura_total: 18500.00, nomina_id: null, motivo: null, conciliado: true },
+        { id: 4, fecha: '2025-01-28', fecha_display: '28/01/2025', concepto: 'NOMINA ENERO PEDRO MARTINEZ', importe: -1850.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Pedro Martinez Enero 2025', factura_total: 1850.00, nomina_id: 3001, motivo: null, conciliado: true },
+        { id: 5, fecha: '2025-01-28', fecha_display: '28/01/2025', concepto: 'NOMINA ENERO MARIA GARCIA', importe: -1620.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Maria Garcia Enero 2025', factura_total: 1620.00, nomina_id: 3002, motivo: null, conciliado: true },
+        { id: 6, fecha: '2025-02-03', fecha_display: '03/02/2025', concepto: 'ELECTRICA BALEAR SL INSTALACION', importe: -2180.00, estado: 'conciliado', factura_id: 1003, factura_nombre: 'Electrica Balear S.L.', factura_total: 2180.00, nomina_id: null, motivo: null, conciliado: true },
+        { id: 7, fecha: '2025-02-10', fecha_display: '10/02/2025', concepto: 'TGSS FEBRERO CUOTA AUTONOMOS', importe: -1200.00, estado: 'sin_factura', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: 'TGSS / Seguridad Social', conciliado: false },
+        { id: 8, fecha: '2025-02-14', fecha_display: '14/02/2025', concepto: 'COBRO REFORMA OFICINAS PALMA', importe: 9800.00, estado: 'conciliado', factura_id: 2002, factura_nombre: 'Oficinas Palma Center S.L.', factura_total: 9800.00, nomina_id: null, motivo: null, conciliado: true },
+        { id: 9, fecha: '2025-02-28', fecha_display: '28/02/2025', concepto: 'NOMINA FEBRERO PEDRO MARTINEZ', importe: -1850.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Pedro Martinez Febrero 2025', factura_total: 1850.00, nomina_id: 3003, motivo: null, conciliado: true },
+        { id: 10, fecha: '2025-02-28', fecha_display: '28/02/2025', concepto: 'NOMINA FEBRERO MARIA GARCIA', importe: -1620.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Maria Garcia Febrero 2025', factura_total: 1620.00, nomina_id: 3004, motivo: null, conciliado: true },
+        { id: 11, fecha: '2025-03-05', fecha_display: '05/03/2025', concepto: 'GRUES I MAQUINARIA SA ALQUILER', importe: -4200.00, estado: 'conciliado', factura_id: 1004, factura_nombre: 'Grues i Maquinaria S.A.', factura_total: 4200.00, nomina_id: null, motivo: null, conciliado: true },
+        { id: 12, fecha: '2025-03-12', fecha_display: '12/03/2025', concepto: 'COMISION MANTENIMIENTO CUENTA', importe: -18.50, estado: 'sin_factura', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: 'Comision bancaria', conciliado: false },
+        { id: 13, fecha: '2025-03-18', fecha_display: '18/03/2025', concepto: 'COBRO CERTIFICACION 2 HOTEL', importe: 22000.00, estado: 'conciliado', factura_id: 2003, factura_nombre: 'Hotel Playa Alcudia S.L.', factura_total: 22000.00, nomina_id: null, motivo: null, conciliado: true },
+        { id: 14, fecha: '2025-03-20', fecha_display: '20/03/2025', concepto: 'FONTANERIA ISERN SL FACTURA', importe: -980.00, estado: 'pendiente', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: null, conciliado: false },
+        { id: 15, fecha: '2025-03-28', fecha_display: '28/03/2025', concepto: 'NOMINA MARZO PEDRO MARTINEZ', importe: -1850.00, estado: 'conciliado', factura_id: null, factura_nombre: 'Nomina: Pedro Martinez Marzo 2025', factura_total: 1850.00, nomina_id: 3005, motivo: null, conciliado: true },
+        { id: 16, fecha: '2025-03-28', fecha_display: '28/03/2025', concepto: 'NOMINA MARZO MARIA GARCIA', importe: -1620.00, estado: 'pendiente', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: null, conciliado: false }
+      ]
+    };
+    fs.writeFileSync(bancoDemoPath, JSON.stringify(movimientosDemo, null, 2));
+
     res.json({ ok: true, mensaje: 'Demo cargada', facturas: facturas.length, nominas: nominas.length });
   } catch(e) {
     console.error(e);
     res.status(500).json({ error: e.message });
   }
 });
+
+router.post('/generar-ref-codigos', (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const usuarios = getUsuarios();
+    let actualizados = 0;
+    usuarios.forEach(function(u) {
+      if (!u.ref_codigo) {
+        u.ref_codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
+        u.ref_saldo = u.ref_saldo || 0;
+        u.ref_referido_por = u.ref_referido_por || null;
+        actualizados++;
+      }
+    });
+    saveUsuarios(usuarios);
+    res.json({ ok: true, actualizados });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+router.post('/anadir-demo-gestorias', (req, res) => {
+  const adminPassword = req.headers['x-admin-password'];
+  if (adminPassword !== (process.env.ADMIN_PASSWORD || 'TrimGest2026!')) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  try {
+    const usuarios = getUsuarios();
+    let actualizados = 0;
+    usuarios.forEach(function(u) {
+      if (u.tipo === 'gestoria' && u.empresaId !== 'gest_demo_001') {
+        if (!u.clientesGestoria) u.clientesGestoria = [];
+        const yaDemo = u.clientesGestoria.find(c => c.empresaId === 'emp_demo_construcciones');
+        if (!yaDemo) {
+          u.clientesGestoria.unshift({
+            empresaId: 'emp_demo_construcciones',
+            empresaEmail: 'demo@construccionesbalear.es',
+            empresaNombre: 'Construcciones Balear SL',
+            fecha: new Date().toISOString(),
+            es_demo: true
+          });
+          actualizados++;
+        }
+      }
+    });
+    saveUsuarios(usuarios);
+    res.json({ ok: true, actualizados });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 module.exports = router;

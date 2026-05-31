@@ -266,7 +266,7 @@ router.post('/cargar-demo', async (req, res) => {
       direccion: 'Avda. Jaume III 5, Palma de Mallorca', empresaId: gestoId, gestoId,
       plan: 'free', tipo: 'gestoria', facturas_mes: 0, mes_actual: new Date().getMonth(),
       fecha_registro: '2024-01-10T09:00:00.000Z', verificado: true, ver_token: null,
-      telefono: '971234567', nombre_gestoria: 'Gestoria Mallorca Assessors', whatsapp: '34971234567', clientesGestoria: [{ empresaId: empresaId, nombreEmpresa: 'CONSTRUCCIONES BALEAR S.L.', email: 'demo@construccionesbalear.es', es_demo: true }]
+      telefono: '971234567', nombre_gestoria: 'Gestoria Mallorca Assessors', whatsapp: '34971234567', clientesGestoria: [{ empresaId: empresaId, empresaNombre: 'CONSTRUCCIONES BALEAR S.L.', empresaEmail: 'demo@construccionesbalear.es', es_demo: true, telefono: '634567890' }]
     };
 
     let usuarios = getUsuarios();
