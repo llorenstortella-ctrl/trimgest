@@ -228,6 +228,19 @@ router.post('/verificar-usuario', (req, res) => {
 
 
 // Endpoint temporal — cargar datos demo
+router.post('/borrar-demo', (req, res) => {
+  try {
+    let usuarios = getUsuarios();
+    usuarios = usuarios.filter(function(u) {
+      return u.empresaId !== 'emp_demo_construcciones' && u.gestoId !== 'gest_demo_001' && u.email !== 'demo@construccionesbalear.es' && u.email !== 'demo@gestoria-mallorca.es';
+    });
+    saveUsuarios(usuarios);
+    res.json({ ok: true, mensaje: 'Demo borrada' });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 router.post('/cargar-demo', async (req, res) => {
   const password = req.headers['x-admin-password'];
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
