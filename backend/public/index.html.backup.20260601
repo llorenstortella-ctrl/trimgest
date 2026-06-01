@@ -270,7 +270,6 @@
           localStorage.setItem('trimgest_token', data.token);
           localStorage.setItem('trimgest_empresa', data.nombre_empresa);
           gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
-          gtag('event', 'registro_completado', {'send_to': 'G-LRLKFDTN1E'});
           mostrarApp();
         } else {
           err.textContent = data.error || 'Error al registrarse';
