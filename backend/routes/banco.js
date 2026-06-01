@@ -51,14 +51,23 @@ function fechaStr(date) {
 }
 
 // Cruzar movimiento con facturas — busca por importe similar y fecha cercana
-function cruzarConFacturas(movimiento, facturas) {
+function cruzarConFacturas(movimiento, facturas, idsAsignados) {
   const imp = Math.abs(movimiento.importe);
   const fecha = new Date(movimiento.fecha);
+  const asignados = idsAsignados || [];
   const candidatos = facturas.filter(function(f) {
     const totalF = Math.abs(parseFloat(f.total));
-    return Math.abs(totalF - imp) <= 0.02;
+    return Math.abs(totalF - imp) <= 0.02 && !asignados.includes(f.id);
   });
-  return candidatos.length > 0 ? candidatos[0] : null;
+  if (candidatos.length === 0) return null;
+  if (candidatos.length === 1) return candidatos[0];
+  // Ordenar por proximidad de fecha al movimiento bancario
+  candidatos.sort(function(a, b) {
+    var da = Math.abs(new Date(a.fecha) - fecha);
+    var db = Math.abs(new Date(b.fecha) - fecha);
+    return da - db;
+  });
+  return candidatos[0];
 }
 
 const storage = multer.memoryStorage();
@@ -101,7 +110,8 @@ router.post('/subir', auth, upload.single('extracto'), (req, res) => {
       if (ultimaFecha && fecha <= ultimaFecha) continue;
 
       // Cruzar con facturas
-      const facturaMatch = cruzarConFacturas({ importe, fecha }, facturas);
+      const idsYaAsignados = nuevosMovimientos.filter(m => m.factura_id).map(m => m.factura_id).concat(banco.movimientos.filter(m => m.factura_id).map(m => m.factura_id));
+      const facturaMatch = cruzarConFacturas({ importe, fecha }, facturas, idsYaAsignados);
 
       const mov = {
         id: Date.now() + i,
@@ -201,7 +211,8 @@ router.post('/reconciliar', auth, (req, res) => {
     banco.movimientos.forEach(function(m) {
       if (m.estado && m.estado !== 'pendiente') return; // no tocar los ya procesados
       const fecha = new Date(m.fecha);
-      const match = cruzarConFacturas({ importe: m.importe, fecha }, facturas);
+      const idsYaConciliados = banco.movimientos.filter(function(x) { return x.factura_id && x.id !== m.id; }).map(function(x) { return x.factura_id; });
+      const match = cruzarConFacturas({ importe: m.importe, fecha }, facturas, idsYaConciliados);
       if (match) {
         m.estado = 'conciliado';
         m.conciliado = true;
