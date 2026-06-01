@@ -105,6 +105,7 @@ async function procesarPDFFactura(buffer, nombreArchivo, empresaId, emailUsuario
     anno: getAnno(datos.fecha),
     enviado: false,
     fecha_envio: null,
+    contabilizado: false,
     estado_pago: null,
     creado: new Date().toISOString(),
     origen: 'email'
