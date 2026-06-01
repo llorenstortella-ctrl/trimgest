@@ -223,8 +223,6 @@
         var data = await res.json();
         if (data.ok) {
           if (data.verificacion_pendiente) {
-            gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
-            gtag('event', 'registro_completado', {'send_to': 'G-LRLKFDTN1E'});
             alert('✅ Cuenta creada. Revisa tu email y verifica tu cuenta antes de entrar.');
             document.getElementById('registroScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
@@ -262,8 +260,6 @@
         var data = await res.json();
         if (data.ok) {
           if (data.verificacion_pendiente) {
-            gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
-            gtag('event', 'registro_completado', {'send_to': 'G-LRLKFDTN1E'});
             alert('✅ Cuenta creada. Revisa tu email y verifica tu cuenta antes de entrar.');
             document.getElementById('registroScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
