@@ -1446,11 +1446,11 @@ async function cargarBancoGest() {
   var selTrim = document.getElementById('banco-trim-gest');
   var selAnno = document.getElementById('banco-anno-gest');
   if (selAnno && !selAnno.dataset.inicializado) {
-    selAnno.value = annoActual;
+    selAnno.value = clienteActivo === 'emp_demo_construcciones' ? 2025 : annoActual;
     selAnno.dataset.inicializado = '1';
   }
   if (selTrim && !selTrim.dataset.inicializado) {
-    selTrim.value = trimActual;
+    selTrim.value = clienteActivo === 'emp_demo_construcciones' ? 'T1' : trimActual;
     selTrim.dataset.inicializado = '1';
   }
   var trim = selTrim ? selTrim.value : trimActual;
