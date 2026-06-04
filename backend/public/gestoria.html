@@ -176,6 +176,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
             <button class="tab active" id="tab-btn-proveedores" onclick="switchTab('proveedores')">Proveedores</button>
             <button class="tab" id="tab-btn-clientes" onclick="switchTab('clientes')">Clientes</button>
             <button class="tab" id="tab-btn-nominas" onclick="switchTab('nominas')">Nominas</button>
+            <button class="tab" id="tab-btn-banco" onclick="switchTab('banco')">&#127981; Banco</button>
           </div>
 
           <div id="tab-proveedores-content">
@@ -306,6 +307,34 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
               </div>
             </div>
             <div id="mobile-nominas-list" class="mobile-only" style="padding: 8px 0;"></div>
+          </div>
+
+          <div id="tab-banco-content" style="display:none">
+            <div class="filtros-bar" style="margin-bottom:12px;">
+              <input type="text" id="banco-buscar-gest" placeholder="🔍 Buscar concepto..." oninput="filtrarBancoGest(this.value)" style="flex:1;padding:8px;border-radius:8px;border:1px solid #2a2a3a;background:#1a1a28;color:#e8e0f0;font-size:13px;">
+              <select id="banco-trim-gest" onchange="cargarBancoGest()" style="padding:8px;border-radius:8px;border:1px solid #2a2a3a;background:#1a1a28;color:#e8e0f0;font-size:13px;">
+                <option value="T1">T1</option>
+                <option value="T2">T2</option>
+                <option value="T3">T3</option>
+                <option value="T4">T4</option>
+                <option value="todos">Año completo</option>
+              </select>
+              <select id="banco-anno-gest" onchange="cargarBancoGest()" style="padding:8px;border-radius:8px;border:1px solid #2a2a3a;background:#1a1a28;color:#e8e0f0;font-size:13px;">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;cursor:pointer;position:relative;">
+                <input type="file" id="banco-csv-gest" accept=".csv" style="display:none">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('banco-csv-gest').click()">&#128196; Subir CSV</button>
+              </label>
+              <button class="btn btn-secondary btn-sm" onclick="reconciliarBancoGest()">&#8635; Re-conciliar</button>
+              <button class="btn btn-secondary btn-sm" onclick="resetearBancoGest()" style="color:#e05555;">&#128465; Resetear</button>
+            </div>
+            <div id="banco-stats-gest" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;"></div>
+            <div id="banco-lista-gest"></div>
           </div>
         </div>
 
@@ -558,9 +587,12 @@ function switchTab(tab) {
   document.getElementById('tab-proveedores-content').style.display = tab === 'proveedores' ? 'block' : 'none';
   document.getElementById('tab-clientes-content').style.display = tab === 'clientes' ? 'block' : 'none';
   document.getElementById('tab-nominas-content').style.display = tab === 'nominas' ? 'block' : 'none';
+  document.getElementById('tab-banco-content').style.display = tab === 'banco' ? 'block' : 'none';
   document.getElementById('tab-btn-proveedores').classList.toggle('active', tab === 'proveedores');
   document.getElementById('tab-btn-clientes').classList.toggle('active', tab === 'clientes');
   document.getElementById('tab-btn-nominas').classList.toggle('active', tab === 'nominas');
+  document.getElementById('tab-btn-banco').classList.toggle('active', tab === 'banco');
+  if (tab === 'banco') cargarBancoGest();
   if (tab === 'nominas' && clienteActivo) cargarNominasCliente(clienteActivo);
 }
 
@@ -1399,6 +1431,210 @@ function ejecutarPdfModal() {
   cerrarModalPdf();
   if (cb) cb(adj);
 }
+
+// MÓDULO BANCO GESTORÍA
+
+var bancoMovsGest = [];
+
+async function cargarBancoGest() {
+  if (!clienteActivo) return;
+  var trim = document.getElementById('banco-trim-gest') ? document.getElementById('banco-trim-gest').value : 'T1';
+  var anno = document.getElementById('banco-anno-gest') ? parseInt(document.getElementById('banco-anno-gest').value) : new Date().getFullYear();
+  var lista = document.getElementById('banco-lista-gest');
+  var stats = document.getElementById('banco-stats-gest');
+  if (!lista) return;
+  lista.innerHTML = '<div style="color:#9a90b4;padding:20px;text-align:center;">Cargando...</div>';
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    if (!d.ok) { lista.innerHTML = '<div style="color:#e05555;padding:20px;">Error cargando banco</div>'; return; }
+    var movs = d.movimientos || [];
+    var mesesTrim = { T1:[1,2,3], T2:[4,5,6], T3:[7,8,9], T4:[10,11,12] };
+    movs = movs.filter(function(m) {
+      var fecha = new Date(m.fecha);
+      var mes = fecha.getMonth() + 1;
+      var anyoMov = fecha.getFullYear();
+      if (anyoMov !== anno) return false;
+      if (trim === 'todos') return true;
+      return mesesTrim[trim] && mesesTrim[trim].includes(mes);
+    });
+    bancoMovsGest = movs;
+    var pendientes = movs.filter(function(m) { return m.estado === 'pendiente'; });
+    var conciliados = movs.filter(function(m) { return m.estado === 'conciliado'; });
+    var sinFactura = movs.filter(function(m) { return m.estado === 'sin_factura'; });
+    if (stats) stats.innerHTML =
+      '<div style="background:#1a1a28;border-radius:8px;padding:10px 16px;font-size:12px;color:#9a90b4;">Pendientes: <strong style="color:#e8c87a;">' + pendientes.length + '</strong></div>' +
+      '<div style="background:#1a1a28;border-radius:8px;padding:10px 16px;font-size:12px;color:#9a90b4;">Conciliados: <strong style="color:#4caf7d;">' + conciliados.length + '</strong></div>' +
+      '<div style="background:#1a1a28;border-radius:8px;padding:10px 16px;font-size:12px;color:#9a90b4;">Sin factura: <strong style="color:#888;">' + sinFactura.length + '</strong></div>';
+    renderBancoGest(movs);
+  } catch(e) { lista.innerHTML = '<div style="color:#e05555;padding:20px;">Error: ' + e.message + '</div>'; }
+}
+
+function renderBancoGest(movs) {
+  var lista = document.getElementById('banco-lista-gest');
+  if (!lista) return;
+  if (!movs.length) { lista.innerHTML = '<div style="color:#9a90b4;padding:20px;text-align:center;">Sin movimientos en este periodo</div>'; return; }
+  var html = '';
+  movs.forEach(function(m) {
+    var color = m.importe >= 0 ? '#4caf7d' : '#e05555';
+    var estadoBadge = m.estado === 'conciliado' ? '<span style="background:#1a3a2a;color:#4caf7d;padding:2px 8px;border-radius:6px;font-size:11px;">Conciliado</span>' :
+      m.estado === 'sin_factura' ? '<span style="background:#2a2a2a;color:#888;padding:2px 8px;border-radius:6px;font-size:11px;">Sin factura</span>' :
+      '<span style="background:#3a2a1a;color:#e8c87a;padding:2px 8px;border-radius:6px;font-size:11px;">Pendiente</span>';
+    var asignado = m.factura_nombre ? '<div style="font-size:11px;color:#9a90b4;margin-top:4px;">' + m.factura_nombre + '</div>' :
+      m.motivo ? '<div style="font-size:11px;color:#9a90b4;margin-top:4px;">' + m.motivo + '</div>' : '';
+    var btnAsignar = m.estado === 'pendiente'
+      ? '<button class="btn btn-secondary btn-sm btn-asignar-gest" data-id="' + m.id + '" style="font-size:11px;padding:4px 10px;">Asignar</button>'
+      : '<button class="btn btn-secondary btn-sm btn-deshacer-gest" data-id="' + m.id + '" style="font-size:11px;padding:4px 10px;color:#888;">Deshacer</button>';
+    html += '<div class="banco-mov-gest" data-id="' + m.id + '" style="background:#1a1a28;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:13px;font-weight:600;color:#e8e0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + m.concepto + '</div>' +
+        '<div style="font-size:11px;color:#6a6070;margin-top:2px;">' + m.fecha_display + '</div>' +
+        asignado +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+        estadoBadge +
+        '<span style="font-size:14px;font-weight:700;color:' + color + ';">' + (m.importe >= 0 ? '+' : '') + m.importe.toFixed(2) + '€</span>' +
+        btnAsignar +
+      '</div>' +
+    '</div>';
+  });
+  lista.innerHTML = html;
+  lista.querySelectorAll('.btn-asignar-gest').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = parseInt(this.dataset.id);
+      var opciones = [
+        { titulo: 'Factura de proveedor' },
+        { titulo: 'Factura de cliente' },
+        { titulo: 'Nomina trabajador' },
+        { titulo: 'Sin factura (TGSS, banco, personal...)' }
+      ];
+      mostrarModalBanco('¿Que es este movimiento?', opciones, function(idx) {
+        if (idx === 0) mostrarSelectorFacturaBancoGest([id], 'proveedor');
+        else if (idx === 1) mostrarSelectorFacturaBancoGest([id], 'cliente');
+        else if (idx === 2) asignarNominaBancoGest(id);
+        else if (idx === 3) marcarSinFacturaBancoGest(id);
+      });
+    });
+  });
+  lista.querySelectorAll('.btn-deshacer-gest').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      var id = parseInt(this.dataset.id);
+      await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/actualizar-movimiento', {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ movimiento_id: id, estado: 'pendiente', factura_id: null, factura_nombre: null, factura_total: null, nomina_id: null, motivo: null })
+      });
+      cargarBancoGest();
+    });
+  });
+}
+
+function filtrarBancoGest(texto) {
+  var t = texto.toLowerCase().trim();
+  document.querySelectorAll('.banco-mov-gest').forEach(function(el) {
+    el.style.display = (!t || el.textContent.toLowerCase().includes(t)) ? '' : 'none';
+  });
+}
+
+async function mostrarSelectorFacturaBancoGest(ids, tipo) {
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/facturas', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var facturas = (d.facturas || []).filter(function(f) { return tipo === 'cliente' ? f.tipo === 'cliente' : f.tipo !== 'cliente'; });
+    var asignadas = bancoMovsGest.filter(function(m) { return m.factura_id && !ids.includes(m.id); }).map(function(m) { return m.factura_id; });
+    facturas = facturas.filter(function(f) { return !asignadas.includes(f.id); });
+    if (!facturas.length) { alert('No hay facturas disponibles'); return; }
+    var opciones = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + (f.total || 0).toFixed(2) + '€ (' + (f.fecha || '') + ')', id: f.id, nombre: f.nombre, total: f.total }; });
+    mostrarModalBanco('Selecciona la factura', opciones, async function(idx) {
+      var factura = opciones[idx];
+      for (var i = 0; i < ids.length; i++) {
+        await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/actualizar-movimiento', {
+          method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ movimiento_id: ids[i], estado: 'conciliado', factura_id: factura.id, factura_nombre: factura.titulo, factura_total: factura.total })
+        });
+      }
+      cargarBancoGest();
+    });
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function asignarNominaBancoGest(id) {
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/nominas', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var nominas = d.nominas || [];
+    if (!nominas.length) { alert('No hay nominas disponibles'); return; }
+    var opciones = nominas.map(function(n) { return { titulo: (n.trabajador || '') + ' — ' + (n.mes || '') + '/' + (n.anno || '') + ' — ' + (n.neto || 0).toFixed(2) + '€', id: n.id, nombre: (n.trabajador || '') + ' ' + (n.mes || '') + '/' + (n.anno || ''), total: n.neto }; });
+    mostrarModalBanco('Selecciona la nomina', opciones, async function(idx) {
+      var nomina = opciones[idx];
+      await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/actualizar-movimiento', {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ movimiento_id: id, estado: 'conciliado', nomina_id: nomina.id, factura_nombre: nomina.nombre, factura_total: nomina.total })
+      });
+      cargarBancoGest();
+    });
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function marcarSinFacturaBancoGest(id) {
+  var motivos = [
+    { titulo: 'TGSS / Seguridad Social' },
+    { titulo: 'Comision bancaria' },
+    { titulo: 'Gasto personal' },
+    { titulo: 'Transferencia interna' },
+    { titulo: 'Otro (especificar)' }
+  ];
+  mostrarModalBanco('Motivo del movimiento', motivos, async function(idx) {
+    var motivo = motivos[idx].titulo;
+    if (idx === 4) {
+      var texto = prompt('Describe el motivo:');
+      if (!texto) return;
+      motivo = texto;
+    }
+    await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/actualizar-movimiento', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ movimiento_id: id, estado: 'sin_factura', motivo: motivo })
+    });
+    cargarBancoGest();
+  });
+}
+
+async function reconciliarBancoGest() {
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/reconciliar', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var d = await r.json();
+    alert('Re-conciliados: ' + (d.actualizados || 0) + ' movimientos');
+    cargarBancoGest();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function resetearBancoGest() {
+  if (!confirm('¿Seguro que quieres borrar todo el historial bancario de este cliente?')) return;
+  try {
+    await fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/resetear', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token }
+    });
+    cargarBancoGest();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'banco-csv-gest') {
+    var file = e.target.files[0];
+    if (!file) return;
+    var formData = new FormData();
+    formData.append('extracto', file);
+    fetch(API + '/gestoria/cliente/' + clienteActivo + '/banco/subir', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (d.ok) { alert('Importados: ' + d.nuevos + ' movimientos (' + d.conciliados + ' conciliados)'); cargarBancoGest(); }
+      else { alert('Error: ' + (d.error || 'Error desconocido')); }
+    }).catch(function(e) { alert('Error: ' + e.message); });
+  }
+});
+
 </script>
 <div id="modal-pdf" class="modal-overlay" style="display:none">
   <div class="modal" style="max-width:420px;">

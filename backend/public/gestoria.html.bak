@@ -125,7 +125,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="0" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="0" x2="14.5" y2="30" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="14.5" x2="30" y2="14.5" stroke="#0f0f13" stroke-width="2"/><text x="38" y="12" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="300" fill="#f0ede8" letter-spacing="-0.3">Trim</text><text x="38" y="27" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="600" fill="#e8c87a" letter-spacing="-0.3">Gest</text></svg></div>
+    <div class="auth-logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="1" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="1" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="1" x2="14.5" y2="31" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="16" x2="30" y2="16" stroke="#0f0f13" stroke-width="2"/><text x="38" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="300" fill="#f0ede8" letter-spacing="-0.5">Trim</text><text x="72" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="600" fill="#e8c87a" letter-spacing="-0.5">Gest</text></svg></div>
     <div class="auth-sub">Panel de Gestoria</div>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-btn-login" onclick="switchAuthTab('login')">Entrar</button>
@@ -148,7 +148,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 <div id="app-screen" style="display:none">
   <div class="topbar">
-    <div class="logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="0" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="0" x2="14.5" y2="30" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="14.5" x2="30" y2="14.5" stroke="#0f0f13" stroke-width="2"/><text x="38" y="12" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="300" fill="#f0ede8" letter-spacing="-0.3">Trim</text><text x="38" y="27" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="600" fill="#e8c87a" letter-spacing="-0.3">Gest</text></svg><span style="font-size:12px;color:#888;font-weight:400;margin-left:8px">Gestoria</span></div>
+    <div class="logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="1" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="1" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="1" x2="14.5" y2="31" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="16" x2="30" y2="16" stroke="#0f0f13" stroke-width="2"/><text x="38" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="300" fill="#f0ede8" letter-spacing="-0.5">Trim</text><text x="72" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="600" fill="#e8c87a" letter-spacing="-0.5">Gest</text></svg><span style="font-size:12px;color:#888;font-weight:400;margin-left:8px">Gestoria</span></div>
     <div class="topbar-right">
       <span class="nombre-gestoria" id="nombre-gestoria-top"></span>
       <button class="btn-logout" onclick="logout()">Cerrar sesion</button>
@@ -160,6 +160,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
       <div class="nav-item" id="nav-solicitar" onclick="showPage('solicitar', this)">&#43; Solicitar acceso</div>
       <div class="nav-item" id="nav-invitaciones" onclick="showPage('invitaciones', this)">&#128232; Invitaciones</div>
       <div class="nav-item" id="nav-ajustes" onclick="showPage('ajustes', this)">&#9881; Ajustes</div>
+      <div onclick="showPage('ajustes', document.getElementById('nav-ajustes'))" style="margin:16px 12px 0;background:#1e1a0a;border:1px solid #3a3010;border-radius:10px;padding:12px;cursor:pointer;">
+        <div style="font-size:13px;margin-bottom:4px;">&#127873; <span style="color:#e8c87a;font-weight:600;">Invita y gana 5&euro;</span></div>
+        <div style="font-size:11px;color:#9a7a30;">Por cada cliente que se suscriba &rarr;</div>
+      </div>
     </div>
     <div class="main">
 
@@ -338,6 +342,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
           <button class="btn btn-primary" onclick="guardarAjustesGestoria()">Guardar</button>
           <div id="ajustes-msg" style="margin-top:10px;font-size:13px;"></div>
         </div>
+
+        <div class="card" style="max-width:500px;margin-top:16px;">
+          <div class="card-title">Invita y gana</div>
+          <p style="font-size:13px;color:#9a90b4;margin-bottom:12px;">Invita a empresas a usar TrimGest. Cuando se suscriban, ganas <strong style="color:#e8c87a;">5&euro;</strong> por cada una.</p>
+          <div style="font-size:11px;color:#6a6070;margin-bottom:6px;">Tu enlace de invitaci&oacute;n:</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <div id="gest-ref-enlace" style="flex:1;background:#22223a;border-radius:8px;padding:10px;font-size:11px;color:#9a90b4;word-break:break-all;"></div>
+            <button id="gest-ref-copiar" style="background:#22223a;border:none;color:#f0ede8;border-radius:6px;padding:8px 12px;font-size:11px;cursor:pointer;white-space:nowrap;">Copiar</button>
+          </div>
+          <div style="font-size:11px;color:#6a6070;margin-bottom:6px;">Enviar invitaci&oacute;n por email:</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <input id="gest-ref-email" type="email" placeholder="email@empresa.com" style="flex:1;background:#22223a;border:1px solid #2a2a3a;border-radius:8px;padding:10px;font-size:13px;color:#f0ede8;">
+            <button id="gest-ref-enviar" class="btn btn-primary" style="white-space:nowrap;">Enviar</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;color:#9a90b4;">Saldo acumulado: <strong id="gest-ref-saldo" style="color:#e8c87a;">0&euro;</strong></div>
+            <button id="gest-ref-cobrar" style="display:none;" class="btn btn-secondary">Solicitar pago</button>
+          </div>
+        </div>
       </div>
 
       <div class="page" id="page-invitaciones">
@@ -447,7 +470,7 @@ async function doRegistro() {
   if (!nombre || !email || !pass) return showAuthMsg('Completa todos los campos', true);
   if (pass.length < 6) return showAuthMsg('La contrasena debe tener al menos 6 caracteres', true);
   try {
-    var r = await fetch(API + '/gestoria/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pass, nombre_empresa: nombre }) });
+    var r = await fetch(API + '/gestoria/registro', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, password: pass, nombre_empresa: nombre, ref_referido_por: new URLSearchParams(window.location.search).get('ref') || null }) });
     var d = await r.json();
     if (!d.ok) return showAuthMsg(d.error || 'Error al registrarse', true);
     showAuthMsg('Cuenta creada. Revisa tu email para verificar la cuenta antes de entrar.', false);
@@ -475,7 +498,7 @@ function showPage(id, el) {
   document.getElementById('page-' + id).classList.add('active');
   if (el) el.classList.add('active');
   if (id === 'invitaciones') cargarInvitaciones();
-  if (id === 'ajustes') cargarAjustesGestoria();
+  if (id === 'ajustes') { cargarAjustesGestoria(); cargarReferidosGestoria(); }
 }
 
 async function cargarClientes() {
@@ -488,10 +511,13 @@ async function cargarClientes() {
       return;
     }
     lista.innerHTML = d.clientes.map(function(c) {
+      var badgeDemo = c.es_demo ? '<span style="background:#2a2010;border:1px solid #e8c87a;color:#e8c87a;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;letter-spacing:1px;">DEMO</span>' : '';
+      var btnQuitarDemo = c.es_demo ? '<button class="btn-quitar-demo" onclick="event.stopPropagation();quitarDemo()" style="background:#2a1a1a;border:1px solid #5a3a3a;color:#c06060;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">Quitar demo</button>' : '';
       return '<div class="cliente-card" data-id="' + c.empresaId + '" data-nombre="' + c.empresaNombre.replace(/"/g, '&quot;') + '">' +
-        '<div class="cliente-info"><h3>' + c.empresaNombre + '</h3><p>' + c.empresaEmail + '</p></div>' +
-        '<div style="display:flex;gap:8px;align-items:center;">' +
+        '<div class="cliente-info"><h3>' + c.empresaNombre + ' ' + badgeDemo + '</h3><p>' + c.empresaEmail + '</p></div>' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
         (c.telefono ? '<a href="https://wa.me/34' + c.telefono.replace(/\D/g,'') + '" target="_blank" onclick="event.stopPropagation()" style="background:#25d366;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;text-decoration:none;">WhatsApp</a>' : '') +
+        btnQuitarDemo +
         '<button class="btn btn-secondary btn-sm">Ver datos &rarr;</button>' +
         '</div>' +
         '</div>';
@@ -500,6 +526,16 @@ async function cargarClientes() {
       card.addEventListener('click', function() { verCliente(this.dataset.id, this.dataset.nombre); });
     });
   } catch(e) { console.error(e); }
+}
+
+async function quitarDemo() {
+  if (!confirm('¿Quieres quitar la empresa de demostración de tu lista de clientes?')) return;
+  try {
+    var r = await fetch(API + '/gestoria/quitar-demo', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    if (d.ok) cargarClientes();
+    else alert(d.error || 'Error');
+  } catch(e) { alert('Error de conexion'); }
 }
 
 async function verCliente(empresaId, nombre) {
@@ -1223,6 +1259,64 @@ async function cargarAjustesGestoria() {
   } catch(e) { console.error(e); }
 }
 
+
+async function cargarReferidosGestoria() {
+  try {
+    var r = await fetch(API + '/referidos/info', { headers: { 'Authorization': 'Bearer ' + token } });
+    var data = await r.json();
+    var elEnlace = document.getElementById('gest-ref-enlace');
+    var elSaldo = document.getElementById('gest-ref-saldo');
+    var elCobrar = document.getElementById('gest-ref-cobrar');
+    var elCopiar = document.getElementById('gest-ref-copiar');
+    var elEnviar = document.getElementById('gest-ref-enviar');
+    if (!elEnlace) return;
+    elEnlace.textContent = data.enlace || '';
+    elSaldo.textContent = (data.ref_saldo || 0) + '€';
+    if ((data.ref_saldo || 0) >= 15) elCobrar.style.display = 'inline-block';
+    elCopiar.onclick = function() {
+      navigator.clipboard.writeText(data.enlace || '');
+      elCopiar.textContent = 'Copiado!';
+      setTimeout(function() { elCopiar.textContent = 'Copiar'; }, 2000);
+    };
+    elEnviar.onclick = async function() {
+      var email = document.getElementById('gest-ref-email').value.trim();
+      if (!email) return;
+      elEnviar.disabled = true;
+      elEnviar.textContent = '...';
+      try {
+        var res = await fetch(API + '/referidos/invitar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ emailDestino: email })
+        });
+        var d = await res.json();
+        if (d.ok) {
+          document.getElementById('gest-ref-email').value = '';
+          elEnviar.textContent = 'Enviado!';
+          setTimeout(function() { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }, 2000);
+        } else {
+          elEnviar.textContent = 'Error';
+          setTimeout(function() { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }, 2000);
+        }
+      } catch(e) { elEnviar.textContent = 'Enviar'; elEnviar.disabled = false; }
+    };
+    elCobrar.onclick = function() {
+      var iban = prompt('Introduce tu IBAN para recibir ' + (data.ref_saldo || 0) + '€:');
+      if (!iban) return;
+      var dni = prompt('Introduce tu DNI o NIF:');
+      if (!dni) return;
+      fetch(API + '/referidos/solicitar-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ iban: iban, dni: dni })
+      }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d.ok) alert('Solicitud enviada. Te transferiremos ' + (data.ref_saldo || 0) + '€ en los proximos dias.');
+        else alert(d.error || 'Error al solicitar pago');
+      }).catch(function() { alert('Error de conexion'); });
+    };
+  } catch(e) { console.error('Error cargando referidos gestoria:', e); }
+}
+
 async function guardarAjustesGestoria() {
   var nombre = document.getElementById('ajuste-nombre').value.trim();
   var telefono = document.getElementById('ajuste-telefono').value.trim();
@@ -1239,6 +1333,8 @@ async function guardarAjustesGestoria() {
   } catch(e) { msg.style.color = '#c06060'; msg.textContent = 'Error de conexion'; }
 }
 
+var _refCodigo = new URLSearchParams(window.location.search).get('ref');
+if (_refCodigo) sessionStorage.setItem('ref_codigo', _refCodigo);
 if (window.location.hash === '#registro') switchAuthTab('registro');
 if (token) {
   fetch(API + '/gestoria/clientes', { headers: { 'Authorization': 'Bearer ' + token } })
