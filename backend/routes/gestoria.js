@@ -1017,4 +1017,194 @@ router.post('/quitar-demo', (req, res) => {
 });
 
 
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MÓDULO BANCO — gestoría accede al banco de sus clientes
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const multer = require('multer');
+const multerStorage = multer.memoryStorage();
+const uploadBanco = multer({ storage: multerStorage });
+
+function getBancoPath(empresaId) {
+  return path.join(baseDataDir, 'empresas', empresaId, 'banco.json');
+}
+function getBanco(empresaId) {
+  const p = getBancoPath(empresaId);
+  if (!fs.existsSync(p)) return { movimientos: [], ultima_fecha: null };
+  return JSON.parse(fs.readFileSync(p));
+}
+function saveBanco(empresaId, data) {
+  fs.writeFileSync(getBancoPath(empresaId), JSON.stringify(data, null, 2));
+}
+function getFacturasBanco(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'facturas.json');
+  if (!fs.existsSync(p)) return [];
+  return JSON.parse(fs.readFileSync(p));
+}
+function getNominasBanco(empresaId) {
+  const p = path.join(baseDataDir, 'empresas', empresaId, 'nominas.json');
+  if (!fs.existsSync(p)) return [];
+  return JSON.parse(fs.readFileSync(p));
+}
+function parsearImporteBanco(str) {
+  if (!str) return 0;
+  var s = str.replace('EUR','').replace('+','').trim();
+  s = s.replace(/\./g,'').replace(',','.');
+  return parseFloat(s);
+}
+function parsearFechaBanco(str) {
+  if (!str) return null;
+  const parts = str.trim().split('/');
+  if (parts.length !== 3) return null;
+  return new Date(parts[2], parts[1]-1, parts[0]);
+}
+function fechaStrBanco(date) {
+  if (!date) return null;
+  const d = new Date(date);
+  return d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+}
+function cruzarConFacturasBanco(movimiento, facturas, idsAsignados) {
+  const imp = Math.abs(movimiento.importe);
+  const fecha = new Date(movimiento.fecha);
+  const asignados = idsAsignados || [];
+  const candidatos = facturas.filter(function(f) {
+    const totalF = Math.abs(parseFloat(f.total));
+    return Math.abs(totalF - imp) <= 0.02 && !asignados.includes(f.id);
+  });
+  if (candidatos.length === 0) return null;
+  if (candidatos.length === 1) return candidatos[0];
+  candidatos.sort(function(a, b) {
+    var da = Math.abs(new Date(a.fecha) - fecha);
+    var db = Math.abs(new Date(b.fecha) - fecha);
+    return da - db;
+  });
+  return candidatos[0];
+}
+function verificarAccesoBanco(req, empresaId) {
+  const gestoria = getUserFromToken(req);
+  if (!gestoria || gestoria.tipo !== 'gestoria') return null;
+  const usuarios = getUsuarios();
+  const ges = usuarios.find(u => u.empresaId === gestoria.empresaId);
+  if (!ges) return null;
+  const tieneAcceso = (ges.clientesGestoria || []).find(c => c.empresaId === empresaId);
+  if (!tieneAcceso) return null;
+  return gestoria;
+}
+
+// GET /gestoria/cliente/:empresaId/banco
+router.get('/cliente/:empresaId/banco', (req, res) => {
+  try {
+    if (!verificarAccesoBanco(req, req.params.empresaId)) return res.status(401).json({ error: 'No autorizado' });
+    const banco = getBanco(req.params.empresaId);
+    res.json({ ok: true, movimientos: banco.movimientos || [], ultima_fecha: banco.ultima_fecha });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /gestoria/cliente/:empresaId/banco/subir
+router.post('/cliente/:empresaId/banco/subir', uploadBanco.single('extracto'), (req, res) => {
+  try {
+    if (!verificarAccesoBanco(req, req.params.empresaId)) return res.status(401).json({ error: 'No autorizado' });
+    if (!req.file) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
+    const empresaId = req.params.empresaId;
+    const contenido = req.file.buffer.toString('utf8');
+    const lineas = contenido.split('\n').filter(l => l.trim());
+    const cabecera = lineas[0].toLowerCase();
+    if (!cabecera.includes('concepto') || !cabecera.includes('fecha') || !cabecera.includes('importe')) {
+      return res.status(400).json({ error: 'Formato de banco no reconocido. Por favor usa el extracto de CaixaBank.' });
+    }
+    const banco = getBanco(empresaId);
+    const facturas = getFacturasBanco(empresaId);
+    const ultimaFecha = banco.ultima_fecha ? new Date(banco.ultima_fecha) : null;
+    const nuevosMovimientos = [];
+    let maxFecha = ultimaFecha;
+    for (let i = 1; i < lineas.length; i++) {
+      const cols = lineas[i].split(';');
+      if (cols.length < 3) continue;
+      const concepto = cols[0].trim();
+      const fechaRaw = cols[1].trim();
+      const importeRaw = cols[2].trim();
+      const fecha = parsearFechaBanco(fechaRaw);
+      if (!fecha) continue;
+      const importe = parsearImporteBanco(importeRaw);
+      if (ultimaFecha && fecha <= ultimaFecha) continue;
+      const idsYaAsignados = nuevosMovimientos.filter(m => m.factura_id).map(m => m.factura_id).concat(banco.movimientos.filter(m => m.factura_id).map(m => m.factura_id));
+      const facturaMatch = cruzarConFacturasBanco({ importe, fecha }, facturas, idsYaAsignados);
+      const mov = {
+        id: Date.now() + i,
+        concepto, fecha: fecha.toISOString(), fecha_display: fechaRaw, importe,
+        estado: facturaMatch ? 'conciliado' : 'pendiente',
+        conciliado: !!facturaMatch,
+        factura_id: facturaMatch ? facturaMatch.id : null,
+        factura_nombre: facturaMatch ? facturaMatch.nombre : null,
+        factura_total: facturaMatch ? facturaMatch.total : null,
+        manual: false
+      };
+      nuevosMovimientos.push(mov);
+      if (!maxFecha || fecha > maxFecha) maxFecha = fecha;
+    }
+    banco.movimientos = banco.movimientos.concat(nuevosMovimientos);
+    banco.ultima_fecha = maxFecha ? maxFecha.toISOString() : banco.ultima_fecha;
+    banco.ultima_importacion = new Date().toISOString();
+    saveBanco(empresaId, banco);
+    res.json({ ok: true, nuevos: nuevosMovimientos.length, conciliados: nuevosMovimientos.filter(m => m.conciliado).length, sin_cruzar: nuevosMovimientos.filter(m => !m.conciliado).length });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /gestoria/cliente/:empresaId/banco/actualizar-movimiento
+router.post('/cliente/:empresaId/banco/actualizar-movimiento', (req, res) => {
+  try {
+    if (!verificarAccesoBanco(req, req.params.empresaId)) return res.status(401).json({ error: 'No autorizado' });
+    const empresaId = req.params.empresaId;
+    const { movimiento_id, estado, factura_id, factura_nombre, factura_total, nomina_id, motivo } = req.body;
+    const banco = getBanco(empresaId);
+    const idx = banco.movimientos.findIndex(m => m.id === movimiento_id);
+    if (idx === -1) return res.status(404).json({ error: 'Movimiento no encontrado' });
+    banco.movimientos[idx].estado = estado || banco.movimientos[idx].estado;
+    banco.movimientos[idx].conciliado = estado === 'conciliado' || estado === 'sin_factura';
+    banco.movimientos[idx].factura_id = factura_id || null;
+    banco.movimientos[idx].factura_nombre = factura_id ? factura_nombre : null;
+    banco.movimientos[idx].factura_total = factura_id ? factura_total : null;
+    banco.movimientos[idx].nomina_id = nomina_id || null;
+    banco.movimientos[idx].motivo = motivo || null;
+    banco.movimientos[idx].manual = true;
+    saveBanco(empresaId, banco);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /gestoria/cliente/:empresaId/banco/reconciliar
+router.post('/cliente/:empresaId/banco/reconciliar', (req, res) => {
+  try {
+    if (!verificarAccesoBanco(req, req.params.empresaId)) return res.status(401).json({ error: 'No autorizado' });
+    const empresaId = req.params.empresaId;
+    const banco = getBanco(empresaId);
+    const facturas = getFacturasBanco(empresaId);
+    let actualizados = 0;
+    banco.movimientos.forEach(function(m) {
+      if (m.estado && m.estado !== 'pendiente') return;
+      const fecha = new Date(m.fecha);
+      const idsYaConciliados = banco.movimientos.filter(function(x) { return x.factura_id && x.id !== m.id; }).map(function(x) { return x.factura_id; });
+      const match = cruzarConFacturasBanco({ importe: m.importe, fecha }, facturas, idsYaConciliados);
+      if (match) {
+        m.estado = 'conciliado'; m.conciliado = true;
+        m.factura_id = match.id; m.factura_nombre = match.nombre; m.factura_total = match.total;
+        actualizados++;
+      }
+    });
+    saveBanco(empresaId, banco);
+    res.json({ ok: true, actualizados });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /gestoria/cliente/:empresaId/banco/resetear
+router.post('/cliente/:empresaId/banco/resetear', (req, res) => {
+  try {
+    if (!verificarAccesoBanco(req, req.params.empresaId)) return res.status(401).json({ error: 'No autorizado' });
+    saveBanco(req.params.empresaId, { movimientos: [], ultima_fecha: null });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;

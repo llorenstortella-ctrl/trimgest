@@ -61,6 +61,14 @@ router.post('/registro', async (req, res) => {
       ref_referido_por: ref_referido_por || null,
       ref_saldo: 0
     };
+    // Añadir empresa demo como primer cliente
+    nuevo.clientesGestoria = [{
+      empresaId: 'emp_demo_construcciones',
+      empresaEmail: 'demo@construccionesbalear.es',
+      empresaNombre: 'Construcciones Balear SL',
+      fecha: new Date().toISOString(),
+      es_demo: true
+    }];
     usuarios.push(nuevo);
     saveUsuarios(usuarios);
     try { await enviarVerificacion(email, nombre_empresa, verToken); } catch(e) { console.error('Error email verificacion gestoria:', e); }
@@ -991,5 +999,22 @@ router.put('/perfil', (req, res) => {
     res.json({ ok: true });
   } catch(e) { res.status(500).json({ error: 'Error' }); }
 });
+
+// POST /gestoria/quitar-demo — elimina el cliente demo de la lista
+router.post('/quitar-demo', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const usuarios = getUsuarios();
+    const idx = usuarios.findIndex(u => u.empresaId === gestoria.empresaId);
+    if (idx === -1) return res.status(404).json({ error: 'No encontrado' });
+    usuarios[idx].clientesGestoria = (usuarios[idx].clientesGestoria || []).filter(c => c.empresaId !== 'emp_demo_construcciones');
+    saveUsuarios(usuarios);
+    res.json({ ok: true });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 module.exports = router;
