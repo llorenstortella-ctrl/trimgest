@@ -1028,7 +1028,7 @@ const multerStorage = multer.memoryStorage();
 const uploadBanco = multer({ storage: multerStorage });
 
 function getBancoPath(empresaId) {
-  return path.join(baseDataDir, 'empresas', empresaId, 'banco.json');
+  return path.join(dataDir, 'empresas', empresaId, 'banco.json');
 }
 function getBanco(empresaId) {
   const p = getBancoPath(empresaId);
@@ -1039,12 +1039,12 @@ function saveBanco(empresaId, data) {
   fs.writeFileSync(getBancoPath(empresaId), JSON.stringify(data, null, 2));
 }
 function getFacturasBanco(empresaId) {
-  const p = path.join(baseDataDir, 'empresas', empresaId, 'facturas.json');
+  const p = path.join(dataDir, 'empresas', empresaId, 'facturas.json');
   if (!fs.existsSync(p)) return [];
   return JSON.parse(fs.readFileSync(p));
 }
 function getNominasBanco(empresaId) {
-  const p = path.join(baseDataDir, 'empresas', empresaId, 'nominas.json');
+  const p = path.join(dataDir, 'empresas', empresaId, 'nominas.json');
   if (!fs.existsSync(p)) return [];
   return JSON.parse(fs.readFileSync(p));
 }
