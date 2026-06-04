@@ -1438,8 +1438,23 @@ var bancoMovsGest = [];
 
 async function cargarBancoGest() {
   if (!clienteActivo) return;
-  var trim = document.getElementById('banco-trim-gest') ? document.getElementById('banco-trim-gest').value : 'T1';
-  var anno = document.getElementById('banco-anno-gest') ? parseInt(document.getElementById('banco-anno-gest').value) : new Date().getFullYear();
+  // Inicializar selectores con trimestre y año actual si no han sido tocados
+  var hoy = new Date();
+  var annoActual = hoy.getFullYear();
+  var mesActual = hoy.getMonth() + 1;
+  var trimActual = mesActual <= 3 ? 'T1' : mesActual <= 6 ? 'T2' : mesActual <= 9 ? 'T3' : 'T4';
+  var selTrim = document.getElementById('banco-trim-gest');
+  var selAnno = document.getElementById('banco-anno-gest');
+  if (selAnno && !selAnno.dataset.inicializado) {
+    selAnno.value = annoActual;
+    selAnno.dataset.inicializado = '1';
+  }
+  if (selTrim && !selTrim.dataset.inicializado) {
+    selTrim.value = trimActual;
+    selTrim.dataset.inicializado = '1';
+  }
+  var trim = selTrim ? selTrim.value : trimActual;
+  var anno = selAnno ? parseInt(selAnno.value) : annoActual;
   var lista = document.getElementById('banco-lista-gest');
   var stats = document.getElementById('banco-stats-gest');
   if (!lista) return;
