@@ -521,9 +521,6 @@ function entrarApp() {
   document.getElementById('nombre-gestoria-top').textContent = gestoriaNombre;
   cargarClientes();
   cargarInvitaciones();
-  var clienteGuardado = sessionStorage.getItem('gest_cliente_activo');
-  var nombreGuardado = sessionStorage.getItem('gest_cliente_nombre');
-  if (clienteGuardado && nombreGuardado) { verCliente(clienteGuardado, nombreGuardado); }
 }
 
 function logout() {
@@ -581,8 +578,6 @@ async function quitarDemo() {
 async function verCliente(empresaId, nombre) {
   clienteActivo = empresaId;
   clienteNombreActivo = nombre;
-  sessionStorage.setItem('gest_cliente_activo', empresaId);
-  sessionStorage.setItem('gest_cliente_nombre', nombre);
   document.getElementById('detalle-nombre').textContent = nombre;
   document.getElementById('clientes-lista-wrap').style.display = 'none';
   document.getElementById('detalle-wrap').style.display = 'block';
@@ -599,8 +594,6 @@ function cerrarDetalle() {
   document.getElementById('detalle-wrap').style.display = 'none';
   document.getElementById('clientes-lista-wrap').style.display = 'block';
   clienteActivo = null;
-  sessionStorage.removeItem('gest_cliente_activo');
-  sessionStorage.removeItem('gest_cliente_nombre');
 }
 
 function switchTab(tab) {
