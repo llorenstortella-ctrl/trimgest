@@ -392,7 +392,7 @@ if (window.location.hash === '#registro') {
             listaHTML += '<div class="factura-datos"><span>Neto: ' + formatEur(n.neto) + '</span><span>IRPF: ' + formatEur(n.irpf_importe) + '</span><span>SS emp: ' + formatEur(n.ss_empresa) + '</span></div>';
             listaHTML += (n.duplicado_detectado ? '<div style="background:#2a1f00;border:1px solid #e8c87a;border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#e8c87a;">⚠️ Posible duplicado detectado (' + (n.num_paginas || 2) + ' páginas)</span><div style="display:flex;gap:6px;"><button onclick="eliminarPaginaNomina(' + n.id + ',' + (n.pagina_duplicada || 2) + ')" style="background:#e8c87a;color:#1a1500;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Eliminar duplicado</button><button onclick="conservarNomina(' + n.id + ')" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">Conservar</button></div></div>' : '');
             listaHTML += '<div class="factura-acciones">' +
-              (n.archivo ? '<button class="btn-accion" onclick="verArchivo(\'/nominas/archivo/' + n.archivo + '?token=' + window.token + '\')" >Ver PDF</button>' : '') +
+              (n.archivo ? '<button class="btn-accion" onclick="verPDF(\'/nominas/archivo/' + n.archivo + '?token=' + window.token + '\')" >Ver PDF</button>' : '') +
               (n.archivo && n.num_paginas > 1 ? '<button class="btn-accion" onclick="eliminarPaginaNomina(' + n.id + ',' + (n.pagina_duplicada || 2) + ')" title="Dividir PDF">✂️</button>' : '') +
               '<button class="btn-accion" onclick="editarNomina(' + n.id + ')">Editar</button>' +
               '<button class="btn-borrar" onclick="borrarNomina(' + n.id + ')">Borrar</button>' +
@@ -1698,7 +1698,7 @@ if (window.location.hash === '#registro') {
           if (f.nota) listaHTML += '<div style="font-size:12px;color:#9a90b4;margin-top:6px;padding:6px 8px;background:#1a1a24;border-radius:6px;border-left:2px solid #3a3a5a;">📝 ' + f.nota + '</div>';
           var contBadge = f.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
           var conciliadoBadge = (window.bancoMovs || []).some(function(m) { return m.factura_id === f.id; }) ? '<span style="background:#0d1a2b;border:1px solid #1a3a4a;color:#4c8faf;border-radius:8px;padding:4px 8px;font-size:11px;">🏦 Conciliado</span>' : '';
-          var btnPDF = f.archivo ? '<button class="btn-accion" onclick="verArchivo(\'/facturas/archivo/' + f.archivo + '?token=' + window.token + '\')">' + 'Ver PDF</button>' : '';
+          var btnPDF = f.archivo ? '<a href="/facturas/archivo/' + f.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
           var btnReemplazar = '<button class="btn-accion" id="btn-reemplazar-' + f.id + '">Reemplazar PDF</button><input type="file" id="input-reemplazar-' + f.id + '" accept=".pdf" style="display:none">';
           listaHTML += '<div class="factura-acciones">' + contBadge + conciliadoBadge + btnPDF + btnReemplazar + '<button class="btn-accion" onclick="toggleEdit(' + f.id + ')">Editar</button><button class="btn-borrar" onclick="borrarFactura(' + f.id + ',' + (f.contabilizado ? 'true' : 'false') + ')">Borrar</button></div>';
           listaHTML += '<div class="edit-form" id="edit-' + f.id + '">';
@@ -1725,7 +1725,7 @@ if (window.location.hash === '#registro') {
             trabajadorActual = nomTrabNorm;
             listaHTML += '<div style="padding:8px 4px;font-size:11px;font-weight:600;color:#9a90b4;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid #2a2a3a;margin-bottom:4px;">' + (n.trabajador||'Sin nombre').trim() + '</div>';
           }
-          var btnPDF = n.archivo ? '<button class="btn-accion" onclick="verArchivo(\'/nominas/archivo/' + n.archivo + '?token=' + window.token + '\')">' + 'Ver PDF</button>' : '';
+          var btnPDF = n.archivo ? '<a href="/nominas/archivo/' + n.archivo + '?token=' + window.token + '" target="_blank" class="btn-accion" style="text-decoration:none;">Ver PDF</a>' : '';
           var contBadge = n.contabilizado ? '<span style="background:#0d2b1a;border:1px solid #1a4a2a;color:#4caf7d;border-radius:8px;padding:4px 8px;font-size:11px;">✓ Contabilizado</span>' : '';
           var dupBadge = n.duplicado_detectado ? '<span style="background:#2a1f00;border:1px solid #e8c87a;color:#e8c87a;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;" onclick="eliminarPaginaNomina(' + n.id + ',' + (n.pagina_duplicada||2) + ')">✂️ Duplicado</span>' : '';
           listaHTML += '<div class="factura-card">';
@@ -2249,18 +2249,6 @@ function mostrarOnboarding() {
   document.body.appendChild(overlay);
 }
 
-    function verArchivo(url) {
-      var modal = document.getElementById('pdf-viewer-modal');
-      var iframe = document.getElementById('pdf-viewer-iframe');
-      if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; } else { window.open(url, '_blank'); }
-    }
-    function cerrarPDFViewer() {
-      var modal = document.getElementById('pdf-viewer-modal');
-      var iframe = document.getElementById('pdf-viewer-iframe');
-      if (modal) modal.style.display = 'none';
-      if (iframe) iframe.src = '';
-    }
   </script>
-<div id="pdf-viewer-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:#0f0f13;flex-direction:column;"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#16161e;border-bottom:1px solid #22223a;"><span style="font-size:14px;font-weight:600;color:#e8e0f0;">Documento</span><button onclick="cerrarPDFViewer()" style="background:#2a2a3a;border:none;color:#e8e0f0;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">&#x2715; Cerrar</button></div><iframe id="pdf-viewer-iframe" src="" style="flex:1;width:100%;border:none;background:#fff;"></iframe></div>
 </body>
 </html>
