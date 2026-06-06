@@ -1124,6 +1124,8 @@ async function toggleContabilizadoGestoria(id) {
 function verArchivo(filename) {
   if (!filename || !clienteActivo) return;
   var url = API + '/gestoria/cliente/' + clienteActivo + '/archivo/' + encodeURIComponent(filename) + '?token=' + token;
+  var esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (esIOS) { window.open(url, '_blank'); return; }
   var modal = document.getElementById('pdf-viewer-modal');
   var iframe = document.getElementById('pdf-viewer-iframe');
   if (modal && iframe) { iframe.src = url + '#zoom=page-fit'; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
@@ -1199,6 +1201,8 @@ async function descargarPDFSeleccionadas() {
 function verArchivoNomina(filename) {
   if (!filename || !clienteActivo) return;
   var url = API + '/gestoria/cliente/' + clienteActivo + '/archivo-nomina/' + encodeURIComponent(filename) + '?token=' + token;
+  var esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (esIOS) { window.open(url, '_blank'); return; }
   var modal = document.getElementById('pdf-viewer-modal');
   var iframe = document.getElementById('pdf-viewer-iframe');
   if (modal && iframe) { iframe.src = url + '#zoom=page-fit'; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
