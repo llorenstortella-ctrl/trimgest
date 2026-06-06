@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="/manifest-gestoria.json">
   <meta name="theme-color" content="#0f0f13">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -129,6 +129,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 </style>
 </head>
 <body>
+<div id="pwa-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#16161e;border-top:1px solid #22223a;padding:8px 16px;display:none;justify-content:space-between;align-items:center;"><button onclick="window.history.back()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">← Atrás</button><button onclick="window.location.reload()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">⟳ Recargar</button></div><script>if(window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches){  var b=document.getElementById("pwa-bar");  if(b){b.style.display="flex";document.body.style.paddingBottom="52px";}}</script>
 
 <div id="auth-screen">
   <div class="auth-box">
@@ -613,6 +614,12 @@ async function cargarFacturasCliente(empresaId) {
     var r = await fetch(API + '/gestoria/cliente/' + empresaId + '/facturas', { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
     todasFacturas = d.facturas || [];
+    // Cargar banco para saber qué facturas están conciliadas
+    try {
+      var rb = await fetch(API + '/gestoria/cliente/' + empresaId + '/banco', { headers: { 'Authorization': 'Bearer ' + token } });
+      var db = await rb.json();
+      window.bancoConciliadosGest = (db.movimientos || []).filter(function(m) { return m.factura_id; }).map(function(m) { return m.factura_id; });
+    } catch(e) { window.bancoConciliadosGest = []; }
     filtrarFacturas();
   } catch(e) { console.error(e); }
 }
@@ -775,6 +782,7 @@ function renderTarjetaMobil(f) {
   var estadoPago = f.estado_pago || null;
   var badgeColors = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
   var badgeHtml = estadoPago && badgeColors[estadoPago] ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + badgeColors[estadoPago].bg + ';color:' + badgeColors[estadoPago].color + ';">' + estadoPago.charAt(0).toUpperCase() + estadoPago.slice(1) + '</span>' : '<span style="color:#555;font-size:11px;">—</span>';
+  var conciliadoBadge = (window.bancoConciliadosGest || []).includes(f.id) ? '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:#0d1a2b;color:#4c8faf;margin-left:4px;">🏦 Conc.</span>' : '';
   return '<div class="mobile-factura-card">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
     '<div>' +
@@ -817,7 +825,7 @@ function renderFila(f) {
     '<td>' + base + '</td>' +
     '<td>' + iva + '</td>' +
     '<td style="font-weight:600;color:#e8c87a">' + total + '</td>' +
-    '<td>' + badgeHtml + '</td>' +
+    '<td>' + badgeHtml + conciliadoBadge + '</td>' +
     '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
       (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo || '') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
       '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
