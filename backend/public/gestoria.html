@@ -1124,7 +1124,7 @@ function verArchivo(filename) {
   var url = API + '/gestoria/cliente/' + clienteActivo + '/archivo/' + encodeURIComponent(filename) + '?token=' + token;
   var modal = document.getElementById('pdf-viewer-modal');
   var iframe = document.getElementById('pdf-viewer-iframe');
-  if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; } else { window.open(url, '_blank'); }
+  if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
 }
 function cerrarPDFViewer() {
   var modal = document.getElementById('pdf-viewer-modal');
@@ -1199,7 +1199,7 @@ function verArchivoNomina(filename) {
   var url = API + '/gestoria/cliente/' + clienteActivo + '/archivo-nomina/' + encodeURIComponent(filename) + '?token=' + token;
   var modal = document.getElementById('pdf-viewer-modal');
   var iframe = document.getElementById('pdf-viewer-iframe');
-  if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; } else { window.open(url, '_blank'); }
+  if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
 }
 
 function toggleTodos(tipo, checked) {
@@ -1702,6 +1702,6 @@ document.addEventListener('change', function(e) {
   </div>
 </div>
 
-<div id="pdf-viewer-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:#0f0f13;flex-direction:column;"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#16161e;border-bottom:1px solid #22223a;"><span style="font-size:14px;font-weight:600;color:#e8e0f0;">Documento</span><button onclick="cerrarPDFViewer()" style="background:#2a2a3a;border:none;color:#e8e0f0;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">✕ Cerrar</button></div><iframe id="pdf-viewer-iframe" src="" style="flex:1;width:100%;border:none;background:#fff;"></iframe></div>
+<div id="pdf-viewer-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:#0f0f13;"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#16161e;border-bottom:1px solid #22223a;"><span style="font-size:14px;font-weight:600;color:#e8e0f0;">Documento</span><button onclick="cerrarPDFViewer()" style="background:#2a2a3a;border:none;color:#e8e0f0;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">✕ Cerrar</button></div><iframe id="pdf-viewer-iframe" src="" style="flex:1;width:100%;border:none;background:#fff;"></iframe></div>
 </body>
 </html>
