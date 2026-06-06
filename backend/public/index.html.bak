@@ -2,6 +2,13 @@
 <html lang="es">
 <head>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TrimGest">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}</script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-LRLKFDTN1E"></script>
 <script>
@@ -223,6 +230,8 @@
         var data = await res.json();
         if (data.ok) {
           if (data.verificacion_pendiente) {
+            gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
+            gtag('event', 'registro_completado', {'send_to': 'G-LRLKFDTN1E'});
             alert('✅ Cuenta creada. Revisa tu email y verifica tu cuenta antes de entrar.');
             document.getElementById('registroScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
@@ -260,6 +269,8 @@
         var data = await res.json();
         if (data.ok) {
           if (data.verificacion_pendiente) {
+            gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
+            gtag('event', 'registro_completado', {'send_to': 'G-LRLKFDTN1E'});
             alert('✅ Cuenta creada. Revisa tu email y verifica tu cuenta antes de entrar.');
             document.getElementById('registroScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
@@ -270,6 +281,7 @@
           localStorage.setItem('trimgest_token', data.token);
           localStorage.setItem('trimgest_empresa', data.nombre_empresa);
           gtag('event', 'conversion', {'send_to': 'AW-18198602025/pIh8CI_thbYcEKnC4uVD'});
+          gtag('event', 'registro_completado', {'send_to': 'G-LRLKFDTN1E'});
           mostrarApp();
         } else {
           err.textContent = data.error || 'Error al registrarse';
@@ -1317,8 +1329,20 @@ if (window.location.hash === '#registro') {
             self.style.borderColor = '#e8c87a';
             self.textContent = 'Agrup. (' + window.bancoSeleccion.length + ')';
             if (window.bancoSeleccion.length >= 2) {
-              mostrarSelectorFacturaBanco(window.bancoSeleccion.slice());
+              var idsAgrupados = window.bancoSeleccion.slice();
               window.bancoSeleccion = [];
+              var opciones = [
+                { titulo: '📄 Factura de proveedor' },
+                { titulo: '🧾 Factura de cliente' },
+                { titulo: '👤 Nomina trabajador' },
+                { titulo: '⊘  Sin factura (TGSS, banco, personal...)' }
+              ];
+              mostrarModalBanco('¿Qué es este movimiento?', opciones, function(idx) {
+                if (idx === 0) mostrarSelectorFacturaBanco(idsAgrupados);
+                else if (idx === 1) mostrarSelectorFacturaClienteBanco(idsAgrupados);
+                else if (idx === 2) { if (idsAgrupados.length > 0) asignarNominaBanco(idsAgrupados[0]); }
+                else if (idx === 3) { idsAgrupados.forEach(function(aid) { marcarSinFactura(aid); }); }
+              });
             }
           }
         });
