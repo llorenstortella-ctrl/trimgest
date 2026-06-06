@@ -1572,6 +1572,8 @@ if (window.location.hash === '#registro') {
 
     async function renderApp() {
       var facturas = await cargarFacturas();
+      // Cargar movimientos banco en segundo plano para badges conciliado
+      fetch(API + '/banco/movimientos', { headers: getHeaders() }).then(function(r){ return r.json(); }).then(function(d){ window.bancoMovs = d.movimientos || []; }).catch(function(){});
       var nominasRes = await fetch(API + '/nominas/listar', { headers: getHeaders() });
       var nominasData = await nominasRes.json();
       var todasNominas = nominasData.nominas || [];
