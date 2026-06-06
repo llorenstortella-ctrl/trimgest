@@ -2,6 +2,13 @@
 <html lang="es">
 <head>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest-admin.json">
+  <meta name="theme-color" content="#0f0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TrimGest Admin">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TrimGest Admin</title>
@@ -73,6 +80,7 @@
   </style>
 </head>
 <body>
+<div id="pwa-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#16161e;border-top:1px solid #22223a;padding:8px 16px;display:none;justify-content:space-between;align-items:center;"><button onclick="window.history.back()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">← Atrás</button><button onclick="window.location.reload()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">⟳ Recargar</button></div><script>if(window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches){  var b=document.getElementById("pwa-bar");  if(b){b.style.display="flex";document.body.style.paddingBottom="52px";}}</script>
 
   <div class="login" id="loginPanel">
     <div class="logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="0" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="16" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="0" x2="14.5" y2="30" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="14.5" x2="30" y2="14.5" stroke="#0f0f13" stroke-width="2"/><text x="38" y="12" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="300" fill="#f0ede8" letter-spacing="-0.3">Trim</text><text x="38" y="27" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="600" fill="#e8c87a" letter-spacing="-0.3">Gest</text></svg></div>
