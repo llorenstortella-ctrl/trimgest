@@ -780,7 +780,6 @@ function renderTarjetaMobil(f) {
   var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
   var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
   var estadoPago = f.estado_pago || null;
-  var conciliadoBadge = (window.bancoConciliadosGest || []).includes(f.id) ? '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:#0d1a2b;color:#4c8faf;margin-left:4px;">🏦 Conc.</span>' : '';
   var badgeColors = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
   var badgeHtml = estadoPago && badgeColors[estadoPago] ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + badgeColors[estadoPago].bg + ';color:' + badgeColors[estadoPago].color + ';">' + estadoPago.charAt(0).toUpperCase() + estadoPago.slice(1) + '</span>' : '<span style="color:#555;font-size:11px;">—</span>';
   var conciliadoBadge = (window.bancoConciliadosGest || []).includes(f.id) ? '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:#0d1a2b;color:#4c8faf;margin-left:4px;">🏦 Conc.</span>' : '';
@@ -815,7 +814,6 @@ function renderFila(f) {
   var iva = f.iva_porcentaje ? f.iva_porcentaje + '%' : (f.iva ? f.iva + '%' : '-');
   var total = f.total ? Number(f.total).toFixed(2) + ' EUR' : '-';
   var estadoPago = f.estado_pago || null;
-  var conciliadoBadge = (window.bancoConciliadosGest || []).includes(f.id) ? '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:#0d1a2b;color:#4c8faf;margin-left:4px;">🏦 Conc.</span>' : '';
   var badgeColors = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
   var badgeHtml = estadoPago && badgeColors[estadoPago] ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + badgeColors[estadoPago].bg + ';color:' + badgeColors[estadoPago].color + ';">' + estadoPago.charAt(0).toUpperCase() + estadoPago.slice(1) + '</span>' : '<span style="color:#555;font-size:11px;">—</span>';
   return '<tr>' +
