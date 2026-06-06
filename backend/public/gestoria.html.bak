@@ -2,6 +2,13 @@
 <html lang="es">
 <head>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f0f13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TrimGest">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TrimGest — Panel Gestoria</title>
@@ -573,6 +580,11 @@ async function verCliente(empresaId, nombre) {
   document.getElementById('detalle-nombre').textContent = nombre;
   document.getElementById('clientes-lista-wrap').style.display = 'none';
   document.getElementById('detalle-wrap').style.display = 'block';
+  // Reset selectores banco para que se inicialicen con valores correctos para este cliente
+  var selTrim = document.getElementById('banco-trim-gest');
+  var selAnno = document.getElementById('banco-anno-gest');
+  if (selTrim) delete selTrim.dataset.inicializado;
+  if (selAnno) delete selAnno.dataset.inicializado;
   switchTab('proveedores');
   await cargarFacturasCliente(empresaId);
 }
@@ -1438,8 +1450,23 @@ var bancoMovsGest = [];
 
 async function cargarBancoGest() {
   if (!clienteActivo) return;
-  var trim = document.getElementById('banco-trim-gest') ? document.getElementById('banco-trim-gest').value : 'T1';
-  var anno = document.getElementById('banco-anno-gest') ? parseInt(document.getElementById('banco-anno-gest').value) : new Date().getFullYear();
+  // Inicializar selectores con trimestre y año actual si no han sido tocados
+  var hoy = new Date();
+  var annoActual = hoy.getFullYear();
+  var mesActual = hoy.getMonth() + 1;
+  var trimActual = mesActual <= 3 ? 'T1' : mesActual <= 6 ? 'T2' : mesActual <= 9 ? 'T3' : 'T4';
+  var selTrim = document.getElementById('banco-trim-gest');
+  var selAnno = document.getElementById('banco-anno-gest');
+  if (selAnno && !selAnno.dataset.inicializado) {
+    selAnno.value = clienteActivo === 'emp_demo_construcciones' ? 2025 : annoActual;
+    selAnno.dataset.inicializado = '1';
+  }
+  if (selTrim && !selTrim.dataset.inicializado) {
+    selTrim.value = clienteActivo === 'emp_demo_construcciones' ? 'T1' : trimActual;
+    selTrim.dataset.inicializado = '1';
+  }
+  var trim = selTrim ? selTrim.value : trimActual;
+  var anno = selAnno ? parseInt(selAnno.value) : annoActual;
   var lista = document.getElementById('banco-lista-gest');
   var stats = document.getElementById('banco-stats-gest');
   if (!lista) return;
