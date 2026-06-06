@@ -783,7 +783,6 @@ function renderTarjetaMobil(f) {
   var conciliadoBadge = (window.bancoConciliadosGest || []).includes(String(f.id)) ? '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:#0d1a2b;color:#4c8faf;margin-left:4px;">🏦 Conc.</span>' : '';
   var badgeColors = { transferencia: { bg: '#0d1a2b', color: '#4c8faf' }, tarjeta: { bg: '#1a0d2b', color: '#9b7fd4' }, domiciliacion: { bg: '#2b1a0d', color: '#d4944c' }, bizum: { bg: '#0d2b1a', color: '#4caf7d' }, efectivo: { bg: '#2a2a35', color: '#888' }, mixto: { bg: '#2b1a2b', color: '#c47fd4' }, sinpagar: { bg: '#2b0d0d', color: '#e05555' }, parcial: { bg: '#2b2010', color: '#d4944c' } };
   var badgeHtml = estadoPago && badgeColors[estadoPago] ? '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:' + badgeColors[estadoPago].bg + ';color:' + badgeColors[estadoPago].color + ';">' + estadoPago.charAt(0).toUpperCase() + estadoPago.slice(1) + '</span>' : '<span style="color:#555;font-size:11px;">—</span>';
-  var conciliadoBadge = (window.bancoConciliadosGest || []).includes(String(f.id)) ? '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:#0d1a2b;color:#4c8faf;margin-left:4px;">🏦 Conc.</span>' : '';
   return '<div class="mobile-factura-card">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
     '<div>' +
@@ -796,7 +795,7 @@ function renderTarjetaMobil(f) {
     '<div class="mobile-factura-row"><span>Base</span><span>' + base + '</span></div>' +
     '<div class="mobile-factura-row"><span>IVA</span><span>' + iva + '</span></div>' +
     '<div class="mobile-factura-total">' + total + '</div>' +
-    '<div style="margin:6px 0 4px 0;">' + badgeHtml + '</div>' +
+    '<div style="margin:6px 0 4px 0;">' + badgeHtml + conciliadoBadge + '</div>' +
     '<div class="mobile-factura-btns">' +
     (f.archivo ? '<button class="btn btn-secondary btn-sm" data-archivo="' + (f.archivo||'') + '" onclick="verArchivo(this.dataset.archivo)">📄 PDF</button>' : '') +
     '<button class="btn btn-secondary btn-sm" data-id="' + f.id + '" onclick="abrirEditarFactura(this.dataset.id)">Editar</button>' +
