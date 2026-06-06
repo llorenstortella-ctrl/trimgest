@@ -108,6 +108,10 @@
     .btn-marcar { width: 100%; background: #2a3a2a; color: #7ec47e; border: 1px solid #3a5a3a; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
     .manual-input { background: #1e1e28; border: 1px solid #2a2a3a; color: #e0d8cc; padding: 8px; border-radius: 8px; font-size: 14px; width: 100%; }
     .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: #16161e; border-top: 1px solid #22223a; display: flex; z-index: 50; }
+    body.pwa-mode .nav-bar { bottom: 52px; }
+    body.pwa-mode { padding-bottom: 104px; }
+    body.pwa-mode .nav-bar { bottom: 52px; }
+    body.pwa-mode { padding-bottom: 104px; }
     .nav-btn { flex: 1; padding: 12px; background: none; border: none; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; -webkit-tap-highlight-color: transparent; }
     .nav-btn.active { color: #e8c87a; }
     .nav-btn.inactive { color: #6a6070; }
@@ -115,7 +119,7 @@
   </style>
 </head>
 <body>
-<div id="pwa-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#16161e;border-top:1px solid #22223a;padding:8px 16px;display:none;justify-content:space-between;align-items:center;"><button onclick="window.history.back()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">← Atrás</button><button onclick="window.location.reload()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">⟳ Recargar</button></div><script>if(window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches){  var b=document.getElementById("pwa-bar");  if(b){b.style.display="flex";}  var nav=document.querySelector(".nav-bar");  if(nav){nav.style.bottom="52px";}  document.body.style.paddingBottom="104px";}</script>
+<div id="pwa-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#16161e;border-top:1px solid #22223a;padding:8px 16px;display:none;justify-content:space-between;align-items:center;"><button onclick="window.history.back()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">← Atrás</button><button onclick="window.location.reload()" style="background:#1e1e28;border:1px solid #2a2a3a;color:#9a90b4;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">⟳ Recargar</button></div><script>if(window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches){  var b=document.getElementById("pwa-bar");  if(b){b.style.display="flex";}  document.body.classList.add("pwa-mode");}</script>
 
   <div class="auth-screen" id="loginScreen">
     <div class="auth-logo"><svg width="120" height="32" viewBox="0 0 120 32" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="1" width="14" height="14" rx="2.5" fill="#e8c87a"/><rect x="16" y="1" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="0" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><rect x="16" y="17" width="14" height="14" rx="2.5" fill="none" stroke="#e8c87a" stroke-width="1.5"/><line x1="14.5" y1="1" x2="14.5" y2="31" stroke="#0f0f13" stroke-width="2"/><line x1="0" y1="16" x2="30" y2="16" stroke="#0f0f13" stroke-width="2"/><text x="38" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="300" fill="#f0ede8" letter-spacing="-0.5">Trim</text><text x="72" y="21" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="600" fill="#e8c87a" letter-spacing="-0.5">Gest</text></svg></div>
