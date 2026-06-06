@@ -2252,7 +2252,7 @@ function mostrarOnboarding() {
     function verArchivo(url) {
       var modal = document.getElementById('pdf-viewer-modal');
       var iframe = document.getElementById('pdf-viewer-iframe');
-      if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; } else { window.open(url, '_blank'); }
+      if (modal && iframe) { iframe.src = url + '#zoom=page-fit'; modal.style.display = 'flex'; } else { window.open(url, '_blank'); }
     }
     function cerrarPDFViewer() {
       var modal = document.getElementById('pdf-viewer-modal');

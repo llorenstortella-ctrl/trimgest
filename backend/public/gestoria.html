@@ -1126,7 +1126,7 @@ function verArchivo(filename) {
   var url = API + '/gestoria/cliente/' + clienteActivo + '/archivo/' + encodeURIComponent(filename) + '?token=' + token;
   var modal = document.getElementById('pdf-viewer-modal');
   var iframe = document.getElementById('pdf-viewer-iframe');
-  if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
+  if (modal && iframe) { iframe.src = url + '#zoom=page-fit'; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
 }
 function cerrarPDFViewer() {
   var modal = document.getElementById('pdf-viewer-modal');
@@ -1201,7 +1201,7 @@ function verArchivoNomina(filename) {
   var url = API + '/gestoria/cliente/' + clienteActivo + '/archivo-nomina/' + encodeURIComponent(filename) + '?token=' + token;
   var modal = document.getElementById('pdf-viewer-modal');
   var iframe = document.getElementById('pdf-viewer-iframe');
-  if (modal && iframe) { iframe.src = url; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
+  if (modal && iframe) { iframe.src = url + '#zoom=page-fit'; modal.style.display = 'flex'; modal.style.flexDirection = 'column'; } else { window.open(url, '_blank'); }
 }
 
 function toggleTodos(tipo, checked) {
