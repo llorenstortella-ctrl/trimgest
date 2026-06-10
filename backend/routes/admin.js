@@ -105,6 +105,26 @@ router.get('/empresa/:empresaId', (req, res) => {
 });
 
 
+// GET /admin/empresa/:empresaId/facturas — ver facturas de una empresa
+router.get('/empresa/:empresaId/facturas', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
+  const dbPath = path.join(baseDataDir, 'empresas', req.params.empresaId, 'facturas.json');
+  if (!fs.existsSync(dbPath)) return res.json({ ok: true, facturas: [] });
+  const facturas = JSON.parse(fs.readFileSync(dbPath));
+  res.json({ ok: true, facturas });
+});
+
+// GET /admin/empresa/:empresaId/nominas — ver nominas de una empresa
+router.get('/empresa/:empresaId/nominas', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
+  const dbPath = path.join(baseDataDir, 'empresas', req.params.empresaId, 'nominas.json');
+  if (!fs.existsSync(dbPath)) return res.json({ ok: true, nominas: [] });
+  const nominas = JSON.parse(fs.readFileSync(dbPath));
+  res.json({ ok: true, nominas });
+});
+
 // POST /admin/plan-gratuito — dar o quitar acceso gratuito
 router.post('/plan-gratuito', (req, res) => {
   const adminPass = req.headers['x-admin-password'];
