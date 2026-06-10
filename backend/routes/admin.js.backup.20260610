@@ -54,8 +54,7 @@ router.get('/usuarios', (req, res) => {
     fecha_registro: u.fecha_registro,
     empresaId: u.empresaId,
     facturas: getFacturasCount(u.empresaId),
-    nominas: getNominasCount(u.empresaId),
-    clientesGestoria: u.tipo === 'gestoria' ? (u.clientesGestoria || []) : undefined
+    nominas: getNominasCount(u.empresaId)
   }));
 
   res.json({
