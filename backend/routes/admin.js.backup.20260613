@@ -126,17 +126,6 @@ router.get('/empresa/:empresaId/nominas', (req, res) => {
   res.json({ ok: true, nominas });
 });
 
-
-// GET /admin/empresa/:empresaId/banco — leer banco de empresa
-router.get('/empresa/:empresaId/banco', (req, res) => {
-  const password = req.headers['x-admin-password'];
-  if (password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'No autorizado' });
-  const dbPath = path.join(baseDataDir, 'empresas', req.params.empresaId, 'banco.json');
-  if (!fs.existsSync(dbPath)) return res.json({ ok: true, movimientos: [] });
-  const banco = JSON.parse(fs.readFileSync(dbPath));
-  res.json({ ok: true, movimientos: banco.movimientos || [], ultima_fecha: banco.ultima_fecha });
-});
-
 // POST /admin/plan-gratuito — dar o quitar acceso gratuito
 router.post('/plan-gratuito', (req, res) => {
   const adminPass = req.headers['x-admin-password'];
