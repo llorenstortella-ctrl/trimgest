@@ -109,6 +109,13 @@ router.post('/verificar-token', (req, res) => {
     const usuarios = getUsuarios();
     const usuario = usuarios.find(u => u.id === decoded.id);
     if (!usuario) return res.status(401).json({ error: 'Usuario no encontrado' });
+    const idxV = usuarios.findIndex(u => u.id === decoded.id);
+    if (idxV !== -1) {
+      if (!usuarios[idxV].accesos) usuarios[idxV].accesos = [];
+      usuarios[idxV].accesos.push(new Date().toISOString());
+      if (usuarios[idxV].accesos.length > 50) usuarios[idxV].accesos = usuarios[idxV].accesos.slice(-50);
+      saveUsuarios(usuarios);
+    }
     res.json({ ok: true, nombre_empresa: usuario.nombre_empresa, empresaId: usuario.empresaId });
   } catch(e) {
     res.status(401).json({ error: 'Token inválido' });
