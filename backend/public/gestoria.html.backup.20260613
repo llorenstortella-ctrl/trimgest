@@ -325,7 +325,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 <option value="T2">T2</option>
                 <option value="T3">T3</option>
                 <option value="T4">T4</option>
-                <option value="TODOS">Año completo</option>
+                <option value="todos">Año completo</option>
               </select>
               <select id="banco-anno-gest" onchange="cargarBancoGest()" style="padding:8px;border-radius:8px;border:1px solid #2a2a3a;background:#1a1a28;color:#e8e0f0;font-size:13px;">
                 <option value="2024">2024</option>
@@ -1529,7 +1529,7 @@ async function cargarBancoGest() {
       var mes = fecha.getMonth() + 1;
       var anyoMov = fecha.getFullYear();
       if (anyoMov !== anno) return false;
-      if (trim === 'TODOS') return true;
+      if (trim === 'todos') return true;
       return mesesTrim[trim] && mesesTrim[trim].includes(mes);
     });
     bancoMovsGest = movs;
