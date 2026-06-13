@@ -241,6 +241,7 @@
             '<div class="mobile-card-row"><span>Facturas</span><span>' + u.facturas + '</span></div>' +
             '<div class="mobile-card-row"><span>Nóminas</span><span>' + u.nominas + '</span></div>' +
             '<div class="mobile-card-row"><span>Plan</span><span>' + planLabel + '</span></div>' +
+            (u.tipo === 'gestoria' && u.clientesGestoria && u.clientesGestoria.filter(function(c){return !c.es_demo;}).length ? '<div style="font-size:11px;color:#4ab4e8;margin-top:6px;"><span style="color:#6a6070;">Clientes: </span>' + u.clientesGestoria.filter(function(c){return !c.es_demo;}).map(function(c){return c.empresaNombre||c.empresaId;}).join(', ') + '</div>' : '') +
             '<div class="mobile-card-btns">' +
             '<button class="btn-gratis' + (u.plan_gratuito ? ' activo' : '') + '" data-card-gratis>' + (u.plan_gratuito ? '★ Gratis ON' : 'Dar gratis') + '</button>' +
             '<button class="btn-ver" data-card-ver>Ver</button>' +
