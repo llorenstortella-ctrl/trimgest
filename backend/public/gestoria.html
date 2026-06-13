@@ -339,6 +339,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
                 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('banco-csv-gest').click()">&#128196; Subir CSV</button>
               </label>
               <button class="btn btn-secondary btn-sm" onclick="reconciliarBancoGest()">&#8635; Re-conciliar</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportarExcelBanco()" style="background:#0d2b1a;border-color:#1a4a2a;color:#4caf7d;">&#128196; Excel</button>
               <button class="btn btn-secondary btn-sm" onclick="resetearBancoGest()" style="color:#e05555;">&#128465; Resetear</button>
             </div>
             <div id="banco-stats-gest" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;"></div>
@@ -1056,6 +1057,24 @@ async function exportarExcelCliente(tipo) {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
   } catch(e) { alert('Error al exportar. Selecciona trimestre y ano primero.'); }
+}
+
+async function exportarExcelBanco() {
+  if (!clienteActivo) return;
+  var selT = document.getElementById('banco-trim-gest');
+  var selA = document.getElementById('banco-anno-gest');
+  var t = (selT && selT.value) ? selT.value : 'T1';
+  var a = (selA && selA.value) ? selA.value : new Date().getFullYear();
+  try {
+    var r = await fetch(API + '/gestoria/cliente/' + clienteActivo + '/exportar/banco/' + t + '/' + a, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!r.ok) throw new Error('Error');
+    var blob = await r.blob();
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url; link.download = clienteNombreActivo + '-banco-' + t + '-' + a + '.xlsx';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  } catch(e) { alert('Error al exportar banco.'); }
 }
 
 async function exportarExcelNominasCliente() {

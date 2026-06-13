@@ -612,6 +612,43 @@ router.get('/cliente/:empresaId/exportar/nominas/:anno', (req, res) => {
   } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar nominas' }); }
 });
 
+// GET /gestoria/cliente/:empresaId/exportar/banco/:trimestre/:anno — exportar Excel banco
+router.get('/cliente/:empresaId/exportar/banco/:trimestre/:anno', (req, res) => {
+  try {
+    const gestoria = getUserFromToken(req);
+    if (!gestoria || gestoria.tipo !== 'gestoria') return res.status(401).json({ error: 'No autorizado' });
+    const { empresaId, trimestre, anno } = req.params;
+    const tieneAcceso = gestoria.clientesGestoria?.find(c => c.empresaId === empresaId);
+    if (!tieneAcceso) return res.status(403).json({ error: 'Sin acceso' });
+    const XLSX = require('xlsx');
+    const bancoPath = path.join(dataDir, 'empresas', empresaId, 'banco.json');
+    if (!fs.existsSync(bancoPath)) return res.status(404).json({ error: 'Sin datos de banco' });
+    const banco = JSON.parse(fs.readFileSync(bancoPath));
+    const mesesTrim = { T1: [0,1,2], T2: [3,4,5], T3: [6,7,8], T4: [9,10,11] };
+    const meses = mesesTrim[trimestre] || [];
+    const movs = (banco.movimientos || []).filter(function(m) {
+      const d = new Date(m.fecha);
+      if (trimestre === 'TODOS') return d.getFullYear() === parseInt(anno);
+      return meses.includes(d.getMonth()) && d.getFullYear() === parseInt(anno);
+    });
+    const datos = movs.map(m => ({
+      'Fecha': m.fecha_display || m.fecha || '',
+      'Concepto': m.concepto || '',
+      'Importe': Number(m.importe) || 0,
+      'Estado': m.estado || '',
+      'Asignado a': m.factura_nombre || (m.nomina_id ? 'Nomina' : '') || m.motivo || ''
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(datos);
+    ws['!cols'] = [{ wch: 12 },{ wch: 35 },{ wch: 12 },{ wch: 12 },{ wch: 35 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Banco');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=TrimGest-banco-' + trimestre + '-' + anno + '.xlsx');
+    res.send(buffer);
+  } catch(e) { console.error(e); res.status(500).json({ error: 'Error al exportar banco' }); }
+});
+
 // GET /gestoria/cliente/:empresaId/pdf/:tipo/:trimestre/:anno — generar PDF
 router.get('/cliente/:empresaId/pdf/:tipo/:trimestre/:anno', async (req, res) => {
   try {
