@@ -246,6 +246,7 @@
             '<div class="mobile-card-row"><span>Registro</span><span>' + fecha + '</span></div>' +
             '<div class="mobile-card-row"><span>Facturas</span><span>' + u.facturas + '</span></div>' +
             '<div class="mobile-card-row"><span>Nóminas</span><span>' + u.nominas + '</span></div>' +
+            '<div class="mobile-card-row"><span>Último acceso</span><span>' + (u.accesos && u.accesos.length ? new Date(u.accesos[u.accesos.length-1]).toLocaleString('es-ES') : '-') + '</span></div>' +
             '<div class="mobile-card-row"><span>Plan</span><span>' + planLabel + '</span></div>' +
             (u.tipo === 'gestoria' && u.clientesGestoria && u.clientesGestoria.filter(function(c){return !c.es_demo;}).length ? '<div style="font-size:11px;color:#4ab4e8;margin-top:6px;"><span style="color:#6a6070;">Clientes: </span>' + u.clientesGestoria.filter(function(c){return !c.es_demo;}).map(function(c){return c.empresaNombre||c.empresaId;}).join(', ') + '</div>' : '') +
             '<div class="mobile-card-btns">' +
