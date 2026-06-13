@@ -112,6 +112,7 @@
             <th>Facts</th>
             <th>Nom</th>
             <th>Plan</th>
+            <th>Último acceso</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -151,6 +152,10 @@
         <div class="ficha-num-label">Nominas</div>
         <div class="ficha-num-value" id="fichaNominas"></div>
       </div>
+    </div>
+    <div class="ficha-card" id="fichaAccesosCard" style="display:none;">
+      <div class="ficha-card-title" style="cursor:pointer;" onclick="toggleAccesos()">Historial de accesos <span id="fichaAccesosArrow">▼</span></div>
+      <div id="fichaAccesosLista" style="display:none;max-height:200px;overflow-y:auto;"></div>
     </div>
   </div>
 
@@ -217,6 +222,7 @@
             '<td data-label="Facts">' + u.facturas + '</td>' +
             '<td data-label="Nom">' + u.nominas + '</td>' +
             '<td data-label="Plan"><span class="badge' + (u.tipo === 'gestoria' ? ' badge-gestoria' : u.plan_gratuito ? ' badge-gratis' : '') + '">' + (u.tipo === 'gestoria' ? '⚖ Gestoría' : u.plan_gratuito ? '★ gratis' : u.plan) + '</span>' + (u.tipo === 'gestoria' && u.clientesGestoria && u.clientesGestoria.length ? '<div style="font-size:10px;color:#4ab4e8;margin-top:4px;">' + u.clientesGestoria.filter(function(c){return !c.es_demo;}).map(function(c){return '· ' + (c.empresaNombre||c.empresaId);}).join('<br>') + '</div>' : '') + '</td>' +
+            '<td style="font-size:11px;color:#6a6070;">' + (u.accesos && u.accesos.length ? new Date(u.accesos[u.accesos.length-1]).toLocaleString('es-ES') : '-') + '</td>' +
             '<td>' +
             '<button class="btn-gratis' + (u.plan_gratuito ? ' activo' : '') + '">' + (u.plan_gratuito ? '★' : 'Gratis') + '</button>' +
             '<button class="btn-ver">Ver</button>' +
@@ -225,7 +231,7 @@
           var btnVer = tr.querySelector('.btn-ver');
           var btnBorrar = tr.querySelector('.btn-borrar');
           var btnGratis = tr.querySelector('.btn-gratis');
-          btnVer.addEventListener('click', function() { verEmpresa(u.empresaId); });
+          btnVer.addEventListener('click', function() { verEmpresa(u.empresaId, u.accesos); });
           btnBorrar.addEventListener('click', function() { borrarUsuario(u.id); });
           btnGratis.addEventListener('click', function() { toggleGratis(u.empresaId, !u.plan_gratuito); });
           tbody.appendChild(tr);
@@ -247,7 +253,7 @@
             '<button class="btn-ver" data-card-ver>Ver</button>' +
             '<button class="btn-borrar" data-card-borrar>Borrar</button>' +
             '</div>';
-          card.querySelector('[data-card-ver]').addEventListener('click', function() { verEmpresa(u.empresaId); });
+          card.querySelector('[data-card-ver]').addEventListener('click', function() { verEmpresa(u.empresaId, u.accesos); });
           card.querySelector('[data-card-borrar]').addEventListener('click', function() { borrarUsuario(u.id); });
           card.querySelector('[data-card-gratis]').addEventListener('click', function() { toggleGratis(u.empresaId, !u.plan_gratuito); });
           document.getElementById('mobileLista').appendChild(card);
@@ -257,7 +263,14 @@
       }
     }
 
-    async function verEmpresa(empresaId) {
+    function toggleAccesos() {
+      var lista = document.getElementById('fichaAccesosLista');
+      var arrow = document.getElementById('fichaAccesosArrow');
+      if (lista.style.display === 'none') { lista.style.display = 'block'; arrow.textContent = '▲'; }
+      else { lista.style.display = 'none'; arrow.textContent = '▼'; }
+    }
+
+    async function verEmpresa(empresaId, accesos) {
       var r = await fetch(API + '/admin/empresa/' + empresaId, {
         headers: { 'x-admin-password': adminPassword }
       });
@@ -274,6 +287,16 @@
       document.getElementById('fichaFacturas').textContent = e.facturas;
       document.getElementById('fichaNominas').textContent = e.nominas;
       document.getElementById('fichaPanel').style.display = 'block';
+      var accesosCard = document.getElementById('fichaAccesosCard');
+      var accesosLista = document.getElementById('fichaAccesosLista');
+      if (accesos && accesos.length) {
+        accesosCard.style.display = 'block';
+        accesosLista.innerHTML = accesos.slice().reverse().map(function(a) {
+          return '<div style="font-size:12px;color:#9a90b4;padding:4px 0;border-bottom:1px solid #1a1a25;">' + new Date(a).toLocaleString('es-ES') + '</div>';
+        }).join('');
+      } else {
+        accesosCard.style.display = 'none';
+      }
     }
 
     function cerrarFicha() {
