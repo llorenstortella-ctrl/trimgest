@@ -168,7 +168,6 @@ function renderApp(d) {
   html += '<button class="tab active" id="tab-proveedores">Proveedores</button>';
   html += '<button class="tab" id="tab-clientes">Clientes</button>';
   html += '<button class="tab" id="tab-nominas">Nominas</button>';
-  html += '<button class="tab" id="tab-banco">🏦 Banco</button>';
   html += '</div>';
 
   html += '<div class="tab-content active" id="content-proveedores">';
@@ -222,17 +221,7 @@ function renderApp(d) {
   html += '</tr></thead><tbody id="tbody-nom"></tbody></table></div>';
   html += '</div>';
 
-  html += '<div class="tab-content" id="content-banco">';
-  html += '<div id="banco-loading" style="text-align:center;padding:40px;color:#6a6070;">Cargando movimientos...</div>';
-  html += '<div id="banco-content" style="display:none;">';
-  html += '<div style="margin-bottom:12px;font-size:12px;color:#6a6070;" id="banco-ultima-fecha"></div>';
-  html += '<div class="tabla-wrap"><table class="tabla"><thead><tr>';
-  html += '<th>Fecha</th><th>Concepto</th><th>Importe</th><th>Estado</th><th>Asignado a</th>';
-  html += '</tr></thead><tbody id="tbody-banco"></tbody></table></div>';
-  html += '</div>';
-  html += '</div>';
-
-  html += '<div class="banner">'<p>Quieres que todos tus clientes te envien las facturas asi de organizadas?</p><a href="https://trimgest.es/panel-gestoria#registro" target="_blank">Descubre TrimGest para gestorias - gratis</a></div>';
+  html += '<div class="banner"><p>Quieres que todos tus clientes te envien las facturas asi de organizadas?</p><a href="https://trimgest.es/panel-gestoria#registro" target="_blank">Descubre TrimGest para gestorias - gratis</a></div>';
   html += '</div>';
 
   document.getElementById('root').innerHTML = html;
@@ -240,7 +229,6 @@ function renderApp(d) {
   document.getElementById('tab-proveedores').onclick = function() { switchTab('proveedores'); };
   document.getElementById('tab-clientes').onclick = function() { switchTab('clientes'); };
   document.getElementById('tab-nominas').onclick = function() { switchTab('nominas'); };
-  document.getElementById('tab-banco').onclick = function() { switchTab('banco'); cargarBancoCompartir(); };
 
   var fpb = document.getElementById('filtro-buscar-prov');
   if (fpb) fpb.oninput = function() { filtrosProv.buscar = this.value.toLowerCase().trim(); renderTablas(datosGlobales); };
@@ -557,45 +545,6 @@ function abrirPdfNominas(soloSel) {
 }
 
 cargar('');
-
-var bancoCargado = false;
-async function cargarBancoCompartir() {
-  if (bancoCargado) return;
-  var loading = document.getElementById('banco-loading');
-  var bancoContent = document.getElementById('banco-content');
-  var tbody = document.getElementById('tbody-banco');
-  if (!tbody) return;
-  try {
-    var passParam = passwordUsada ? '?password=' + encodeURIComponent(passwordUsada) : '';
-    var r = await fetch('/api/compartir/' + token + '/banco' + passParam);
-    var d = await r.json();
-    if (!d.ok) { if (loading) loading.textContent = 'Error al cargar banco.'; return; }
-    bancoCargado = true;
-    if (loading) loading.style.display = 'none';
-    if (bancoContent) bancoContent.style.display = 'block';
-    var ultima = document.getElementById('banco-ultima-fecha');
-    if (ultima && d.ultima_fecha) ultima.textContent = 'Datos hasta: ' + d.ultima_fecha;
-    var movs = d.movimientos || [];
-    if (!movs.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#6a6070;padding:20px;">Sin movimientos bancarios</td></tr>'; return; }
-    var estadoColors = { conciliado: '#4caf7d', pendiente: '#e8c87a', sin_factura: '#9a90b4' };
-    var filas = '';
-    movs.forEach(function(m) {
-      var importe = Number(m.importe || 0);
-      var color = importe >= 0 ? '#7ac87a' : '#c87a7a';
-      var estadoLabel = m.estado === 'conciliado' ? 'Conciliado' : m.estado === 'sin_factura' ? 'Sin factura' : 'Pendiente';
-      var estadoColor = estadoColors[m.estado] || '#6a6070';
-      var asignado = m.factura_nombre || m.nomina_id ? (m.factura_nombre || 'Nómina') : (m.motivo || '-');
-      filas += '<tr>' +
-        '<td>' + (m.fecha_display || m.fecha || '-') + '</td>' +
-        '<td>' + (m.concepto || '-') + '</td>' +
-        '<td style="font-weight:600;color:' + color + ';">' + (importe >= 0 ? '+' : '') + importe.toFixed(2) + ' €</td>' +
-        '<td><span style="background:#1a1a2a;border:1px solid ' + estadoColor + ';color:' + estadoColor + ';border-radius:8px;padding:2px 8px;font-size:11px;">' + estadoLabel + '</span></td>' +
-        '<td style="font-size:12px;color:#9a90b4;">' + asignado + '</td>' +
-        '</tr>';
-    });
-    tbody.innerHTML = filas;
-  } catch(e) { if (loading) loading.textContent = 'Error al cargar banco.'; }
-}
 </script>
 <div id="modal-pdf" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:20px;">
   <div style="background:#1a1a20;border:1px solid #2a2a35;border-radius:16px;padding:28px;width:100%;max-width:420px;">

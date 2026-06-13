@@ -363,28 +363,4 @@ function generarPdfNominas(res, lista, empresa, trimestre, anno) {
   doc.end();
 }
 
-// GET /:token/banco — ver movimientos bancarios del enlace compartido
-router.get('/:token/banco', (req, res) => {
-  const { token } = req.params;
-  const { password } = req.query;
-  const usuarios = JSON.parse(fs.readFileSync(require('path').join(__dirname, '../data/usuarios.json')));
-  var empresaEncontrada = null;
-  var enlaceEncontrado = null;
-  usuarios.forEach(function(u) {
-    if (u.enlaces_compartidos) {
-      u.enlaces_compartidos.forEach(function(e) {
-        if (e.token === token) { empresaEncontrada = u; enlaceEncontrado = e; }
-      });
-    }
-  });
-  if (!empresaEncontrada || !enlaceEncontrado) return res.status(404).json({ error: 'Enlace no encontrado' });
-  if (enlaceEncontrado.password && enlaceEncontrado.password !== password) {
-    return res.status(401).json({ error: 'contrasena_requerida' });
-  }
-  const bancoPath = require('path').join(__dirname, '../data/empresas', empresaEncontrada.empresaId, 'banco.json');
-  if (!fs.existsSync(bancoPath)) return res.json({ ok: true, movimientos: [], ultima_fecha: null });
-  const banco = JSON.parse(fs.readFileSync(bancoPath));
-  res.json({ ok: true, movimientos: banco.movimientos || [], ultima_fecha: banco.ultima_fecha || null });
-});
-
 module.exports = router;
