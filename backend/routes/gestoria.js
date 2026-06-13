@@ -627,7 +627,13 @@ router.get('/cliente/:empresaId/exportar/banco/:trimestre/:anno', (req, res) => 
     const mesesTrim = { T1: [0,1,2], T2: [3,4,5], T3: [6,7,8], T4: [9,10,11] };
     const meses = mesesTrim[trimestre] || [];
     const movs = (banco.movimientos || []).filter(function(m) {
-      const d = new Date(m.fecha);
+      let d;
+      if (m.fecha && m.fecha.includes('/')) {
+        const parts = m.fecha.split('/');
+        d = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+      } else {
+        d = new Date(m.fecha);
+      }
       if (trimestre === 'TODOS') return d.getFullYear() === parseInt(anno);
       return meses.includes(d.getMonth()) && d.getFullYear() === parseInt(anno);
     });
