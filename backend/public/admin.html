@@ -156,7 +156,7 @@
 
   <script>
     var API = 'https://trimgest.es';
-    var adminPassword = sessionStorage.getItem('admin_pass');
+    var adminPassword = localStorage.getItem('admin_pass');
 
     if (adminPassword) cargarPanel();
 
@@ -172,7 +172,7 @@
         var data = await r.json();
         if (data.ok) {
           adminPassword = pass;
-          sessionStorage.setItem('admin_pass', pass);
+          localStorage.setItem('admin_pass', pass);
           cargarPanel();
         } else {
           err.textContent = 'Password incorrecta';
@@ -394,7 +394,7 @@
     }
 
     function logout() {
-      sessionStorage.removeItem('admin_pass');
+      localStorage.removeItem('admin_pass');
       adminPassword = null;
       document.getElementById('adminPanel').style.display = 'none';
       document.getElementById('loginPanel').style.display = 'flex';
