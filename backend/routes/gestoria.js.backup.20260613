@@ -341,14 +341,7 @@ router.get('/clientes', (req, res) => {
       return res.status(401).json({ error: 'No autorizado' });
     }
     const usuarios = getUsuarios();
-    const idxG = usuarios.findIndex(u => u.id === gestoria.id);
-    if (idxG !== -1) {
-      if (!usuarios[idxG].accesos) usuarios[idxG].accesos = [];
-      usuarios[idxG].accesos.push(new Date().toISOString());
-      if (usuarios[idxG].accesos.length > 50) usuarios[idxG].accesos = usuarios[idxG].accesos.slice(-50);
-      saveUsuarios(usuarios);
-    }
-    const ges = usuarios[idxG] || {};
+    const ges = usuarios.find(u => u.id === gestoria.id);
     const clientesEnriquecidos = (ges.clientesGestoria || []).map(function(c) {
       const empresa = usuarios.find(u => u.empresaId === c.empresaId);
       return Object.assign({}, c, { telefono: empresa ? (empresa.telefono || '') : '' });
