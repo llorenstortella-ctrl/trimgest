@@ -1637,7 +1637,7 @@ if (window.location.hash === '#registro') {
         var mesNum = mesesNombres[String(n.mes).toLowerCase()] || String(n.mes).padStart(2,'0');
         return mesesTrimMap[window.trimestreSel] && mesesTrimMap[window.trimestreSel].indexOf(mesNum) !== -1;
       });
-      var totalNom = nominasT.reduce(function(s, n) { return s + Number(n.neto || 0); }, 0);
+      var totalNom = nominasT.reduce(function(s, n) { return s + Number(n.coste_empresa || 0); }, 0);
 
       var listaHTML = '';
       // ordenar: proveedores agrupados por nombre y fecha, clientes solo por fecha
