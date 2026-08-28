@@ -1123,7 +1123,7 @@ if (window.location.hash === '#registro') {
       return facturas;
     }
 
-    var MESES_NOMBRE = { '1':'enero','2':'febrero','3':'marzo','4':'abril','5':'mayo','6':'junio','7':'julio','8':'agosto','9':'septiembre','10':'octubre','11':'noviembre','12':'diciembre','01':'enero','02':'febrero','03':'marzo','04':'abril','05':'mayo','06':'junio','07':'agosto','08':'agosto','09':'septiembre','10':'octubre','11':'noviembre','12':'diciembre', 'enero':'enero','febrero':'febrero','marzo':'marzo','abril':'abril','mayo':'mayo','junio':'junio','julio':'julio','agosto':'agosto','septiembre':'septiembre','octubre':'octubre','noviembre':'noviembre','diciembre':'diciembre' };
+    var MESES_NOMBRE = { '1':'enero','2':'febrero','3':'marzo','4':'abril','5':'mayo','6':'junio','7':'julio','8':'agosto','9':'septiembre','10':'octubre','11':'noviembre','12':'diciembre','01':'enero','02':'febrero','03':'marzo','04':'abril','05':'mayo','06':'junio','07':'julio','08':'agosto','09':'septiembre','10':'octubre','11':'noviembre','12':'diciembre', 'enero':'enero','febrero':'febrero','marzo':'marzo','abril':'abril','mayo':'mayo','junio':'junio','julio':'julio','agosto':'agosto','septiembre':'septiembre','octubre':'octubre','noviembre':'noviembre','diciembre':'diciembre' };
     function mesNombre(mes) { return MESES_NOMBRE[String(mes).toLowerCase()] || String(mes); }
     function mesNumero(mes) { var n = {'enero':1,'febrero':2,'marzo':3,'abril':4,'mayo':5,'junio':6,'julio':7,'agosto':8,'septiembre':9,'octubre':10,'noviembre':11,'diciembre':12}; return n[String(mes).toLowerCase()] || Number(mes) || 0; }
 
