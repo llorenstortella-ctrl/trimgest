@@ -1197,13 +1197,8 @@ if (window.location.hash === '#registro') {
       var annos = [];
       for (var y = new Date().getFullYear(); y >= 2024; y--) annos.push(y);
 
-      var _bancoTab = window.bancoTabActual || 'movimientos';
       var html = '<div class="header"><div class="header-top"><div><div class="label">TrimGest</div><h1>Banco</h1></div></div>';
-      html += '<div style="display:flex;gap:0;border-bottom:1px solid #22223a;margin-bottom:0;">';
-      html += '<button onclick="window.bancoTabActual=\'movimientos\';renderBanco()" style="flex:1;padding:10px;font-size:13px;font-weight:500;border:none;border-bottom:2px solid ' + (_bancoTab==='movimientos'?'#e8c87a':'transparent') + ';color:' + (_bancoTab==='movimientos'?'#e8c87a':'#6a6070') + ';background:none;cursor:pointer;">Movimientos</button>';
-      html += '<button onclick="window.bancoTabActual=\'facturas\';renderBanco()" style="flex:1;padding:10px;font-size:13px;font-weight:500;border:none;border-bottom:2px solid ' + (_bancoTab==='facturas'?'#e8c87a':'transparent') + ';color:' + (_bancoTab==='facturas'?'#e8c87a':'#6a6070') + ';background:none;cursor:pointer;">Facturas pendientes</button>';
-      html += '</div>';
-      html += '<div class="selectores" style="' + (_bancoTab==='facturas'?'display:none;':'') + '">';
+      html += '<div class="selectores">';
       html += '<select id="bancoTrimSel" onchange="window.bancoTrim=this.value;renderBanco()">';
       trims.forEach(function(t) { html += '<option value="' + t + '"' + (t === window.bancoTrim ? ' selected' : '') + '>' + t + '</option>'; });
       html += '</select>';
@@ -1218,53 +1213,6 @@ if (window.location.hash === '#registro') {
         var todosMovs = data.movimientos || [];
         window.bancoMovs = todosMovs;
         var ultimaFecha = data.ultima_fecha;
-
-        if (_bancoTab === 'facturas') {
-          var saldosR = await fetch(API + '/banco/saldos', { headers: getHeaders() });
-          var saldosData = await saldosR.json();
-          var saldos = saldosData.saldos || {};
-          var facturasR = await fetch(API + '/facturas/listar', { headers: getHeaders() });
-          var facturasData = await facturasR.json();
-          var todasFacturas = facturasData.facturas || [];
-          var facturasPendientes = todasFacturas.filter(function(f) {
-            var s = saldos[f.id];
-            return s ? s.pendiente > 0.01 : Math.abs(f.total) > 0.01;
-          });
-          if (facturasPendientes.length === 0) {
-            html += '<div style="text-align:center;color:#6a6070;padding:40px 20px;">Todas las facturas están conciliadas</div>';
-          } else {
-            html += '<div style="font-size:11px;color:#6a6070;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase;">Facturas con saldo pendiente</div>';
-            facturasPendientes.forEach(function(f) {
-              var s = saldos[f.id] || { pagado: 0, pendiente: Math.abs(f.total), total: Math.abs(f.total) };
-              var pct = s.total > 0 ? Math.round((s.pagado / s.total) * 100) : 0;
-              var colorTipo = f.tipo === 'cliente' ? '#4caf7d' : '#c06060';
-              var labelTipo = f.tipo === 'cliente' ? 'CLIENTE' : 'PROVEEDOR';
-              html += '<div style="background:#16161e;border:1px solid #22223a;border-radius:10px;padding:14px;margin-bottom:10px;">';
-              html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">';
-              html += '<div><div style="font-size:13px;font-weight:600;color:#e0d8cc;">' + (f.nombre || f.cliente || '-') + '</div>';
-              html += '<div style="font-size:11px;color:#6a6070;margin-top:2px;">' + (f.fecha || '') + (f.numero_factura ? ' · N ' + f.numero_factura : '') + '</div></div>';
-              html += '<span style="font-size:10px;font-weight:600;color:' + colorTipo + ';background:#1a1a2a;border:1px solid ' + colorTipo + ';border-radius:6px;padding:2px 6px;">' + labelTipo + '</span></div>';
-              html += '<div style="display:flex;gap:12px;font-size:12px;margin-bottom:8px;">';
-              html += '<span style="color:#6a6070;">Total: <strong style="color:#e0d8cc;">' + formatEur(f.total) + '</strong></span>';
-              html += '<span style="color:#6a6070;">Pagado: <strong style="color:#4caf7d;">' + formatEur(s.pagado) + '</strong></span>';
-              html += '<span style="color:#6a6070;">Pendiente: <strong style="color:#e8c87a;">' + formatEur(s.pendiente) + '</strong></span></div>';
-              html += '<div style="background:#2a2a3a;border-radius:4px;height:4px;margin-bottom:10px;"><div style="background:#4caf7d;height:4px;border-radius:4px;width:' + pct + '%;"></div></div>';
-              html += '<div style="display:flex;gap:8px;">';
-              html += '<button class="btn-conciliar-factura" data-id="' + f.id + '" data-tipo="' + f.tipo + '" style="flex:1;background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:8px;padding:8px;font-size:12px;font-weight:600;cursor:pointer;">🏦 Asignar movimiento</button>';
-              html += '<button class="btn-efectivo-factura" data-id="' + f.id + '" data-pendiente="' + s.pendiente + '" style="flex:1;background:#1a1a2a;border:1px solid #3a3a5a;color:#9a90b4;border-radius:8px;padding:8px;font-size:12px;cursor:pointer;">💵 Efectivo</button>';
-              html += '</div></div>';
-            });
-          }
-          html += '</div>';
-          document.getElementById('app').innerHTML = html;
-          document.querySelectorAll('.btn-conciliar-factura').forEach(function(btn) {
-            btn.addEventListener('click', function() { mostrarMovimientosParaFactura(parseInt(this.dataset.id), this.dataset.tipo); });
-          });
-          document.querySelectorAll('.btn-efectivo-factura').forEach(function(btn) {
-            btn.addEventListener('click', function() { registrarPagoEfectivo(parseInt(this.dataset.id), parseFloat(this.dataset.pendiente)); });
-          });
-          return;
-        }
 
         var mesesTrim = { T1: [0,1,2], T2: [3,4,5], T3: [6,7,8], T4: [9,10,11] };
         var meses = mesesTrim[window.bancoTrim] || [];
@@ -1476,94 +1424,6 @@ if (window.location.hash === '#registro') {
       mostrarModalAsignarImporte(ids, facturas, saldos, disponibleMov, 'proveedor');
     }
 
-
-    async function mostrarMovimientosParaFactura(facturaId, tipo) {
-      var movsPendientes = (window.bancoMovs || []).filter(function(m) {
-        var yaAsignado = (m.asignaciones || []).some(function(a) { return a.factura_id === facturaId; });
-        if (yaAsignado) return false;
-        var totalAsig = (m.asignaciones || []).reduce(function(s,a){return s+a.importe;},0);
-        var disponible = Math.abs(m.importe) - totalAsig;
-        return disponible > 0.01 && m.estado !== 'sin_factura';
-      });
-      if (movsPendientes.length === 0) { alert('No hay movimientos bancarios disponibles para asignar'); return; }
-      var saldosR = await fetch(API + '/banco/saldos', { headers: getHeaders() });
-      var saldosData = await saldosR.json();
-      var saldos = saldosData.saldos || {};
-      var saldo = saldos[facturaId] || { pendiente: 0 };
-      var existing = document.getElementById('banco-modal');
-      if (existing) existing.remove();
-      var isMobile = window.innerWidth <= 600;
-      var overlay = document.createElement('div');
-      overlay.id = 'banco-modal';
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;' + (isMobile ? 'align-items:flex-end;justify-content:center;' : 'align-items:center;justify-content:center;');
-      var modal = document.createElement('div');
-      modal.style.cssText = isMobile ? 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;' : 'background:#1e1e28;border-radius:16px;width:460px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
-      var html = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
-      html += '<div><div style="font-size:15px;font-weight:600;color:#f0ede8;">Selecciona movimiento</div>';
-      html += '<div style="font-size:12px;color:#9a90b4;margin-top:2px;">Pendiente: <strong style="color:#e8c87a;">' + formatEur(saldo.pendiente) + '</strong></div></div>';
-      html += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:22px;cursor:pointer;">x</button></div>';
-      html += '<div style="overflow-y:auto;flex:1;min-height:0;">';
-      movsPendientes.forEach(function(m, i) {
-        var totalAsig = (m.asignaciones || []).reduce(function(s,a){return s+a.importe;},0);
-        var disponible = Math.abs(m.importe) - totalAsig;
-        var importeSugerido = Math.min(disponible, saldo.pendiente).toFixed(2);
-        html += '<div style="padding:14px 20px;border-bottom:1px solid #22223a;">';
-        html += '<div style="font-size:13px;font-weight:600;color:#e0d8cc;">' + m.concepto + '</div>';
-        html += '<div style="display:flex;gap:12px;font-size:12px;margin:4px 0 8px;">';
-        html += '<span style="color:#6a6070;">' + (m.fecha_display || '') + '</span>';
-        html += '<span style="color:#e8c87a;font-weight:600;">' + (m.importe >= 0 ? '+' : '') + formatEur(m.importe) + '</span>';
-        html += '<span style="color:#4caf7d;">Disponible: ' + formatEur(disponible) + '</span></div>';
-        html += '<div style="display:flex;gap:8px;align-items:center;">';
-        html += '<input type="number" id="movi-imp-' + i + '" value="' + importeSugerido + '" min="0.01" max="' + disponible + '" step="0.01" style="background:#16161e;border:1px solid #3a3a5a;color:#e0d8cc;border-radius:8px;padding:8px 10px;font-size:14px;width:120px;">';
-        html += '<button data-idx="' + i + '" class="btn-asignar-mov" style="background:#e8c87a;border:none;color:#1a1500;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;flex:1;">Asignar</button></div>';
-        html += '</div>';
-      });
-      html += '</div>';
-      html += '<div style="padding:12px 20px;border-top:1px solid #2a2a3a;flex-shrink:0;">';
-      html += '<button id="banco-modal-cancel" style="width:100%;background:#2a2a3a;border:none;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Cancelar</button></div>';
-      modal.innerHTML = html;
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-      document.body.style.overflow = 'hidden';
-      document.getElementById('banco-modal-close').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
-      document.getElementById('banco-modal-cancel').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
-      overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; } };
-      modal.onclick = function(e) { e.stopPropagation(); };
-      modal.querySelectorAll('.btn-asignar-mov').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-          var idx = parseInt(this.dataset.idx);
-          var mov = movsPendientes[idx];
-          var impInput = document.getElementById('movi-imp-' + idx);
-          var importe = parseFloat(impInput.value);
-          if (!importe || importe <= 0) { alert('Introduce un importe valido'); return; }
-          var r = await fetch(API + '/banco/asignar', {
-            method: 'POST',
-            headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ movimiento_id: mov.id, factura_id: facturaId, importe: importe })
-          });
-          var d = await r.json();
-          if (!d.ok) { alert(d.error || 'Error al asignar'); return; }
-          overlay.remove();
-          document.body.style.overflow = '';
-          renderBanco();
-        });
-      });
-    }
-
-    async function registrarPagoEfectivo(facturaId, pendiente) {
-      var importe = prompt('Importe en efectivo (pendiente: ' + formatEur(pendiente) + '):', pendiente.toFixed(2));
-      if (!importe) return;
-      importe = parseFloat(importe);
-      if (!importe || importe <= 0) { alert('Importe no valido'); return; }
-      var r = await fetch(API + '/banco/pago-efectivo', {
-        method: 'POST',
-        headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ factura_id: facturaId, importe: importe })
-      });
-      var d = await r.json();
-      if (!d.ok) { alert(d.error || 'Error'); return; }
-      renderBanco();
-    }
 
     async function verAsignaciones(movId) {
       var mov = (window.bancoMovs || []).find(function(m) { return m.id === movId; });
