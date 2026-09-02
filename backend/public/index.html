@@ -1481,7 +1481,10 @@ if (window.location.hash === '#registro') {
       var todosMovsR = await fetch(API + '/banco/movimientos', { headers: getHeaders() });
       var todosMovsD = await todosMovsR.json();
       window.bancoMovs = todosMovsD.movimientos || [];
-      var movsPendientes = window.bancoMovs.filter(function(m) {
+      var movsPendientes = window.bancoMovs.slice().sort(function(a,b) {
+        var da = new Date(a.fecha || 0), db = new Date(b.fecha || 0);
+        return db - da;
+      }).filter(function(m) {
         var yaAsignado = (m.asignaciones || []).some(function(a) { return a.factura_id === facturaId; });
         if (yaAsignado) return false;
         var totalAsig = (m.asignaciones || []).reduce(function(s,a){return s+a.importe;},0);
@@ -1503,7 +1506,7 @@ if (window.location.hash === '#registro') {
       modal.style.cssText = isMobile ? 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;' : 'background:#1e1e28;border-radius:16px;width:460px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
       var html = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
       html += '<div><div style="font-size:15px;font-weight:600;color:#f0ede8;">Selecciona movimiento</div>';
-      html += '<div style="font-size:12px;color:#9a90b4;margin-top:2px;">Pendiente: <strong style="color:#e8c87a;">' + formatEur(saldo.pendiente) + '</strong></div></div>';
+      html += '<div style="font-size:12px;color:#9a90b4;margin-top:2px;">Pendiente: <strong data-saldo style="color:#e8c87a;">' + formatEur(saldo.pendiente) + '</strong></div></div>';
       html += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:22px;cursor:pointer;">x</button></div>';
       html += '<div style="overflow-y:auto;flex:1;min-height:0;">';
       movsPendientes.forEach(function(m, i) {
@@ -1546,8 +1549,26 @@ if (window.location.hash === '#registro') {
           });
           var d = await r.json();
           if (!d.ok) { alert(d.error || 'Error al asignar'); return; }
-          overlay.remove();
-          document.body.style.overflow = '';
+          // Actualizar saldo pendiente en el modal sin cerrarlo
+          var saldoActualizado = d.pendiente || 0;
+          var saldoDiv = modal.querySelector('[data-saldo]');
+          if (saldoDiv) saldoDiv.textContent = formatEur(saldoActualizado);
+          // Marcar movimiento como asignado y ocultarlo
+          var btnAsig = modal.querySelector('.btn-asignar-mov[data-idx="' + idx + '"]');
+          if (btnAsig) {
+            var rowDiv = btnAsig.closest('div[style*="border-bottom"]');
+            if (rowDiv) {
+              rowDiv.style.opacity = '0.4';
+              btnAsig.textContent = '✓ Asignado';
+              btnAsig.disabled = true;
+              btnAsig.style.background = '#0d2b1a';
+              btnAsig.style.color = '#4caf7d';
+            }
+          }
+          if (saldoActualizado <= 0.01) {
+            overlay.remove();
+            document.body.style.overflow = '';
+          }
           renderBanco();
         });
       });
