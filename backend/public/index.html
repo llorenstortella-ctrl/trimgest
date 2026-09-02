@@ -1196,6 +1196,7 @@ if (window.location.hash === '#registro') {
       var trims = ['Año completo','T1','T2','T3','T4'];
       var annos = [];
       for (var y = new Date().getFullYear(); y >= 2024; y--) annos.push(y);
+      annos.push('Todo');
 
       var _bancoTab = window.bancoTabActual || 'movimientos';
       var html = '<div class="header"><div class="header-top"><div><div class="label">TrimGest</div><h1>Banco</h1></div></div>';
@@ -1208,8 +1209,8 @@ if (window.location.hash === '#registro') {
       html += '<select id="bancoTrimSel" onchange="window.bancoTrim=this.value;renderBanco()">';
       trims.forEach(function(t) { html += '<option value="' + t + '"' + (t === window.bancoTrim ? ' selected' : '') + '>' + t + '</option>'; });
       html += '</select>';
-      html += '<select id="bancoAnnoSel" onchange="window.bancoAnno=parseInt(this.value);renderBanco()">';
-      annos.forEach(function(y) { html += '<option value="' + y + '"' + (y === window.bancoAnno ? ' selected' : '') + '>' + y + '</option>'; });
+      html += '<select id="bancoAnnoSel" onchange="window.bancoAnno=this.value==='Todo'?'Todo':parseInt(this.value);renderBanco()">';
+      annos.forEach(function(y) { html += '<option value="' + y + '"' + (String(y) === String(window.bancoAnno) ? ' selected' : '') + '>' + (y === 'Todo' ? 'Todo el historial' : y) + '</option>'; });
       html += '</select></div></div>';
       html += '<div class="content" style="padding:16px;padding-bottom:80px;">';
 
@@ -1277,6 +1278,7 @@ if (window.location.hash === '#registro') {
           var mesesTrimC = { T1: ['01','02','03'], T2: ['04','05','06'], T3: ['07','08','09'], T4: ['10','11','12'] };
           var mesesNombresC = { enero:'01', febrero:'02', marzo:'03', abril:'04', mayo:'05', junio:'06', julio:'07', agosto:'08', septiembre:'09', octubre:'10', noviembre:'11', diciembre:'12' };
           todasF2 = todasF2.filter(function(f) {
+            if (window.bancoAnno === 'Todo') return true;
             if (String(f.anno) !== String(window.bancoAnno)) return false;
             if (window.bancoTrim === 'Año completo') return true;
             var mesNum = mesesNombresC[String(f.mes || '').toLowerCase()] || String(f.mes || '').padStart(2,'0');
