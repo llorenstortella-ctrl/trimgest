@@ -1393,89 +1393,29 @@ if (window.location.hash === '#registro') {
 
     async function mostrarSelectorFacturaBanco(ids) {
       if (!ids || ids.length === 0) return;
-      var movId = ids[0];
-      var mov = (window.bancoMovs || []).find(function(m) { return m.id === movId; });
-      var importeMov = mov ? Math.abs(mov.importe) : 0;
-      var yaAsignadoMov = mov && mov.asignaciones ? mov.asignaciones.reduce(function(s,a){return s+a.importe;},0) : 0;
-      var disponibleMov = importeMov - yaAsignadoMov;
-      var saldosR = await fetch(API + '/banco/saldos', { headers: getHeaders() });
-      var saldosData = await saldosR.json();
-      var saldos = saldosData.saldos || {};
       var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var data = await r.json();
-      var facturas = (data.facturas || []).filter(function(f) {
-        return f.tipo === 'proveedor' && (saldos[f.id] ? saldos[f.id].pendiente > 0.01 : Math.abs(f.total) > 0.01);
+      var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'proveedor'; });
+      facturas = facturas.filter(function(f) {
+        var pagado = (window.bancoMovs || []).filter(function(m) { return m.factura_id === f.id; }).reduce(function(acc, m) { return acc + Math.abs(m.importe || 0); }, 0);
+        return pagado < (f.total || 0);
       });
-      if (facturas.length === 0) { alert('No tienes facturas de proveedor pendientes de pago'); return; }
-      mostrarModalAsignarImporte(ids, facturas, saldos, disponibleMov, 'proveedor');
-    }
-
-
-    function mostrarModalAsignarImporte(ids, facturas, saldos, disponibleMov, tipo) {
-      var existing = document.getElementById('banco-modal');
-      if (existing) existing.remove();
-      var isMobile = window.innerWidth <= 600;
-      var overlay = document.createElement('div');
-      overlay.id = 'banco-modal';
-      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;' + (isMobile ? 'align-items:flex-end;justify-content:center;' : 'align-items:center;justify-content:center;');
-      var modal = document.createElement('div');
-      modal.style.cssText = isMobile ? 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;' : 'background:#1e1e28;border-radius:16px;width:460px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
-      var titulo = tipo === 'cliente' ? 'Asignar cobro a factura' : 'Asignar pago a factura';
-      var html = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
-      html += '<div><div style="font-size:15px;font-weight:600;color:#f0ede8;">' + titulo + '</div>';
-      html += '<div style="font-size:12px;color:#9a90b4;margin-top:2px;">Disponible: <strong style="color:#e8c87a;">' + formatEur(disponibleMov) + '</strong></div></div>';
-      html += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:22px;cursor:pointer;">×</button></div>';
-      html += '<div id="banco-modal-scroll" style="overflow-y:auto;flex:1;min-height:0;">';
-      facturas.forEach(function(f, i) {
-        var saldo = saldos[f.id] || { pagado: 0, pendiente: Math.abs(f.total), total: Math.abs(f.total) };
-        var pct = saldo.total > 0 ? Math.round((saldo.pagado / saldo.total) * 100) : 0;
-        var importeSugerido = Math.min(disponibleMov, saldo.pendiente).toFixed(2);
-        html += '<div style="padding:14px 20px;border-bottom:1px solid #22223a;">';
-        html += '<div style="font-size:13px;font-weight:600;color:#e0d8cc;">' + (f.nombre || f.cliente || '-') + '</div>';
-        html += '<div style="font-size:11px;color:#6a6070;margin:2px 0;">' + (f.fecha || '') + (f.numero_factura ? ' · N ' + f.numero_factura : '') + '</div>';
-        html += '<div style="display:flex;gap:12px;font-size:12px;margin:6px 0;">';
-        html += '<span style="color:#6a6070;">Total: <strong style="color:#e0d8cc;">' + formatEur(f.total) + '</strong></span>';
-        html += '<span style="color:#6a6070;">Pagado: <strong style="color:#4caf7d;">' + formatEur(saldo.pagado) + '</strong></span>';
-        html += '<span style="color:#6a6070;">Pendiente: <strong style="color:#e8c87a;">' + formatEur(saldo.pendiente) + '</strong></span></div>';
-        html += '<div style="background:#2a2a3a;border-radius:4px;height:4px;margin-bottom:8px;"><div style="background:#4caf7d;height:4px;border-radius:4px;width:' + pct + '%;"></div></div>';
-        html += '<div style="display:flex;gap:8px;align-items:center;">';
-        html += '<input type="number" id="imp-' + i + '" value="' + importeSugerido + '" min="0.01" max="' + disponibleMov + '" step="0.01" style="background:#16161e;border:1px solid #3a3a5a;color:#e0d8cc;border-radius:8px;padding:8px 10px;font-size:14px;width:120px;">';
-        html += '<button data-idx="' + i + '" class="btn-asignar-fact" style="background:#e8c87a;border:none;color:#1a1500;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;flex:1;">Asignar</button></div>';
-        html += '</div>';
-      });
-      html += '</div>';
-      html += '<div style="padding:12px 20px;border-top:1px solid #2a2a3a;flex-shrink:0;">';
-      html += '<button id="banco-modal-cancel" style="width:100%;background:#2a2a3a;border:none;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Cancelar</button></div>';
-      modal.innerHTML = html;
-      overlay.appendChild(modal);
-      document.body.appendChild(overlay);
-      document.body.style.overflow = 'hidden';
-      document.getElementById('banco-modal-close').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
-      document.getElementById('banco-modal-cancel').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
-      overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; } };
-      modal.onclick = function(e) { e.stopPropagation(); };
-      modal.querySelectorAll('.btn-asignar-fact').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-          var idx = parseInt(this.dataset.idx);
-          var factura = facturas[idx];
-          var impInput = document.getElementById('imp-' + idx);
-          var importe = parseFloat(impInput.value);
-          if (!importe || importe <= 0) { alert('Introduce un importe válido'); return; }
-          if (importe > disponibleMov + 0.01) { alert('El importe supera el disponible del movimiento'); return; }
-          var r = await fetch(API + '/banco/asignar', {
+      if (facturas.length === 0) { alert('No tienes facturas de proveedor pendientes de asignar'); return; }
+      var items = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + formatEur(f.total), subtitulo: f.fecha + (f.numero_factura ? ' · N ' + f.numero_factura : '') }; });
+      mostrarModalBanco('Selecciona la factura', items, async function(idx) {
+        var factura = facturas[idx];
+        for (var i = 0; i < ids.length; i++) {
+          await fetch(API + '/banco/actualizar-movimiento', {
             method: 'POST',
             headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ movimiento_id: ids[0], factura_id: factura.id, importe: importe })
+            body: JSON.stringify({ movimiento_id: ids[i], estado: 'conciliado', factura_id: factura.id, factura_nombre: factura.nombre, factura_total: factura.total })
           });
-          var d = await r.json();
-          if (!d.ok) { alert(d.error || 'Error al asignar'); return; }
-          overlay.remove();
-          document.body.style.overflow = '';
-          window.bancoSeleccion = [];
-          renderBanco();
-        });
+        }
+        window.bancoSeleccion = [];
+        renderBanco();
       });
     }
+
 
     function mostrarModalBanco(titulo, items, onSelect) {
       var existing = document.getElementById('banco-modal');
@@ -1536,21 +1476,27 @@ if (window.location.hash === '#registro') {
 
     async function mostrarSelectorFacturaClienteBanco(ids) {
       if (!ids || ids.length === 0) return;
-      var movId = ids[0];
-      var mov = (window.bancoMovs || []).find(function(m) { return m.id === movId; });
-      var importeMov = mov ? Math.abs(mov.importe) : 0;
-      var yaAsignadoMov = mov && mov.asignaciones ? mov.asignaciones.reduce(function(s,a){return s+a.importe;},0) : 0;
-      var disponibleMov = importeMov - yaAsignadoMov;
-      var saldosR = await fetch(API + '/banco/saldos', { headers: getHeaders() });
-      var saldosData = await saldosR.json();
-      var saldos = saldosData.saldos || {};
       var r = await fetch(API + '/facturas/listar', { headers: getHeaders() });
       var data = await r.json();
-      var facturas = (data.facturas || []).filter(function(f) {
-        return f.tipo === 'cliente' && (saldos[f.id] ? saldos[f.id].pendiente > 0.01 : Math.abs(f.total) > 0.01);
+      var facturas = (data.facturas || []).filter(function(f) { return f.tipo === 'cliente'; });
+      facturas = facturas.filter(function(f) {
+        var cobrado = (window.bancoMovs || []).filter(function(m) { return m.factura_id === f.id; }).reduce(function(acc, m) { return acc + Math.abs(m.importe || 0); }, 0);
+        return cobrado < (f.total || 0);
       });
-      if (facturas.length === 0) { alert('No tienes facturas de cliente pendientes de cobro'); return; }
-      mostrarModalAsignarImporte(ids, facturas, saldos, disponibleMov, 'cliente');
+      if (facturas.length === 0) { alert('No tienes facturas de cliente pendientes de asignar'); return; }
+      var items = facturas.map(function(f) { return { titulo: f.nombre + ' — ' + formatEur(f.total), subtitulo: f.fecha + (f.numero_factura ? ' · N ' + f.numero_factura : '') }; });
+      mostrarModalBanco('Selecciona la factura de cliente', items, async function(idx) {
+        var factura = facturas[idx];
+        for (var i = 0; i < ids.length; i++) {
+          await fetch(API + '/banco/actualizar-movimiento', {
+            method: 'POST',
+            headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ movimiento_id: ids[i], estado: 'conciliado', factura_id: factura.id, factura_nombre: factura.nombre, factura_total: factura.total })
+          });
+        }
+        window.bancoSeleccion = [];
+        renderBanco();
+      });
     }
 
     async function asignarNominaBanco(id) {
