@@ -1478,7 +1478,10 @@ if (window.location.hash === '#registro') {
 
 
     async function mostrarMovimientosParaFactura(facturaId, tipo) {
-      var movsPendientes = (window.bancoMovs || []).filter(function(m) {
+      var todosMovsR = await fetch(API + '/banco/movimientos', { headers: getHeaders() });
+      var todosMovsD = await todosMovsR.json();
+      window.bancoMovs = todosMovsD.movimientos || [];
+      var movsPendientes = window.bancoMovs.filter(function(m) {
         var yaAsignado = (m.asignaciones || []).some(function(a) { return a.factura_id === facturaId; });
         if (yaAsignado) return false;
         var totalAsig = (m.asignaciones || []).reduce(function(s,a){return s+a.importe;},0);
