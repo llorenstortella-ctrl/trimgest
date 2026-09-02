@@ -1320,7 +1320,7 @@ if (window.location.hash === '#registro') {
             btn.addEventListener('click', function() {
               var nombre = this.dataset.nombre;
               var url = API + '/banco/extracto-pdf?nombre=' + encodeURIComponent(nombre) + '&token=' + window.token;
-              window.open(url, '_blank');
+              verArchivo(url);
             });
           });
           return;
