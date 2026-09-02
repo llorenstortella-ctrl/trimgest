@@ -303,6 +303,57 @@ router.post('/borrar-asignacion', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /banco/extracto-pdf — PDF extracto por cliente/proveedor
+router.get('/extracto-pdf', auth, (req, res) => {
+  try {
+    const empresaId = req.empresaId;
+    const nombre = req.query.nombre || '';
+    const banco = getBanco(empresaId);
+    const facturas = getFacturas(empresaId);
+    const saldos = {};
+    facturas.forEach(f => {
+      const pagadoBanco = banco.movimientos.reduce((s, m) => {
+        return s + (m.asignaciones || []).filter(a => a.factura_id === f.id).reduce((ss, a) => ss + a.importe, 0)
+          + (m.factura_id === f.id && (!m.asignaciones || m.asignaciones.length === 0) ? Math.abs(m.importe) : 0);
+      }, 0);
+      const pagadoEfectivo = f.pago_efectivo || 0;
+      const totalPagado = pagadoBanco + pagadoEfectivo;
+      saldos[f.id] = { pagado: totalPagado, pendiente: Math.max(0, Math.abs(f.total) - totalPagado) };
+    });
+    const lista = facturas.filter(f => (f.nombre || f.cliente || '').trim() === nombre.trim());
+    if (lista.length === 0) return res.status(404).json({ error: 'Sin facturas para este cliente' });
+    const totalFacturado = lista.reduce((s, f) => s + Math.abs(f.total), 0);
+    const totalPagado = lista.reduce((s, f) => s + (saldos[f.id] ? saldos[f.id].pagado : 0), 0);
+    const totalPendiente = Math.max(0, totalFacturado - totalPagado);
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="Extracto-' + nombre.substring(0,20).replace(/[^a-zA-Z0-9]/g,'-') + '.pdf"');
+    doc.pipe(res);
+    doc.fontSize(18).fillColor('#1a1a1a').text('Extracto: ' + nombre);
+    doc.fontSize(11).fillColor('#666').text('Generado por TrimGest · ' + new Date().toLocaleDateString('es-ES'));
+    doc.moveDown(0.5);
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#cccccc').stroke();
+    doc.moveDown(0.5);
+    lista.forEach(function(f) {
+      if (doc.y > 700) doc.addPage();
+      var s = saldos[f.id] || { pagado: 0, pendiente: Math.abs(f.total) };
+      doc.fontSize(11).fillColor('#1a1a1a').text((f.numero_factura || '-') + '  |  ' + (f.fecha || '-'));
+      doc.fontSize(10).fillColor('#444').text('Total: ' + Number(f.total).toFixed(2) + ' EUR  |  Pagado: ' + s.pagado.toFixed(2) + ' EUR  |  Pendiente: ' + s.pendiente.toFixed(2) + ' EUR');
+      doc.moveDown(0.3);
+      doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#eeeeee').stroke();
+      doc.moveDown(0.3);
+    });
+    doc.moveDown(0.5);
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).strokeColor('#cccccc').stroke();
+    doc.moveDown(0.5);
+    doc.fontSize(12).fillColor('#1a1a1a').text('Total facturado: ' + totalFacturado.toFixed(2) + ' EUR', { align: 'right' });
+    doc.fontSize(12).fillColor('#2a7a2a').text('Total pagado: ' + totalPagado.toFixed(2) + ' EUR', { align: 'right' });
+    doc.fontSize(12).fillColor('#c06060').text('Total pendiente: ' + totalPendiente.toFixed(2) + ' EUR', { align: 'right' });
+    doc.end();
+  } catch(e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
 // POST /banco/pago-efectivo — registrar pago en efectivo en una factura
 router.post('/pago-efectivo', auth, (req, res) => {
   const { factura_id, importe } = req.body;
