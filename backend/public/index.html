@@ -1280,7 +1280,18 @@ if (window.location.hash === '#registro') {
               html += '</div>';
               html += '</div>';
             } else {
-              html += '<button class="btn-deshacer" data-id="' + m.id + '" style="background:none;border:none;color:#5a5060;font-size:10px;cursor:pointer;text-decoration:underline;">Deshacer</button>';
+              html += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">';
+              if (m.asignaciones && m.asignaciones.length > 0) {
+                var totalAsig = m.asignaciones.reduce(function(s,a){return s+a.importe;},0);
+                var dispRest = Math.abs(m.importe) - totalAsig;
+                html += '<button class="btn-ver-asignaciones" data-id="' + m.id + '" style="background:#0d1a2b;border:1px solid #1a3a4a;color:#4c8faf;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">📋 Ver asignaciones (' + m.asignaciones.length + ')</button>';
+                if (dispRest > 0.01) {
+                  html += '<button class="btn-asignar" data-id="' + m.id + '" style="background:#1a2a1a;border:1px solid #2a4a2a;color:#7ec47e;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;">+ Asignar resto (' + formatEur(dispRest) + ')</button>';
+                }
+              } else {
+                html += '<button class="btn-deshacer" data-id="' + m.id + '" style="background:none;border:none;color:#5a5060;font-size:10px;cursor:pointer;text-decoration:underline;">Deshacer</button>';
+              }
+              html += '</div>';
             }
             html += '</div></div></div>';
           });
@@ -1374,6 +1385,9 @@ if (window.location.hash === '#registro') {
       document.querySelectorAll('.btn-deshacer').forEach(function(btn) {
         btn.addEventListener('click', function() { deshacerConciliacion(parseInt(this.dataset.id)); });
       });
+      document.querySelectorAll('.btn-ver-asignaciones').forEach(function(btn) {
+        btn.addEventListener('click', function() { verAsignaciones(parseInt(this.dataset.id)); });
+      });
     }
 
     function filtrarBanco(texto) {
@@ -1410,6 +1424,70 @@ if (window.location.hash === '#registro') {
       mostrarModalAsignarImporte(ids, facturas, saldos, disponibleMov, 'proveedor');
     }
 
+
+    async function verAsignaciones(movId) {
+      var mov = (window.bancoMovs || []).find(function(m) { return m.id === movId; });
+      if (!mov) return;
+      var asignaciones = mov.asignaciones || [];
+      var existing = document.getElementById('banco-modal');
+      if (existing) existing.remove();
+      var isMobile = window.innerWidth <= 600;
+      var overlay = document.createElement('div');
+      overlay.id = 'banco-modal';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;' + (isMobile ? 'align-items:flex-end;justify-content:center;' : 'align-items:center;justify-content:center;');
+      var modal = document.createElement('div');
+      modal.style.cssText = isMobile ? 'background:#1e1e28;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;' : 'background:#1e1e28;border-radius:16px;width:440px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);';
+      var totalAsig = asignaciones.reduce(function(s,a){return s+a.importe;},0);
+      var dispRest = Math.abs(mov.importe) - totalAsig;
+      var html = '<div style="padding:16px 20px;border-bottom:1px solid #2a2a3a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
+      html += '<div><div style="font-size:15px;font-weight:600;color:#f0ede8;">Asignaciones</div>';
+      html += '<div style="font-size:12px;color:#9a90b4;margin-top:2px;">' + mov.concepto + ' · ' + (mov.importe >= 0 ? '+' : '') + formatEur(mov.importe) + '</div></div>';
+      html += '<button id="banco-modal-close" style="background:none;border:none;color:#9a90b4;font-size:22px;cursor:pointer;">×</button></div>';
+      html += '<div style="overflow-y:auto;flex:1;min-height:0;">';
+      if (asignaciones.length === 0) {
+        html += '<div style="padding:30px;text-align:center;color:#6a6070;">Sin asignaciones</div>';
+      } else {
+        asignaciones.forEach(function(a, i) {
+          html += '<div style="padding:14px 20px;border-bottom:1px solid #22223a;display:flex;justify-content:space-between;align-items:center;">';
+          html += '<div><div style="font-size:13px;color:#e0d8cc;font-weight:500;">' + (a.factura_nombre || '-') + '</div>';
+          html += '<div style="font-size:11px;color:#6a6070;margin-top:2px;">Total factura: ' + formatEur(a.factura_total) + '</div></div>';
+          html += '<div style="display:flex;align-items:center;gap:10px;">';
+          html += '<div style="font-size:14px;font-weight:700;color:#e8c87a;">' + formatEur(a.importe) + '</div>';
+          html += '<button class="btn-borrar-asig" data-idx="' + i + '" style="background:#2b0d0d;border:1px solid #4a1a1a;color:#e05555;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">Borrar</button>';
+          html += '</div></div>';
+        });
+      }
+      if (dispRest > 0.01) {
+        html += '<div style="padding:12px 20px;background:#0d1a0d;border-top:1px solid #1a3a1a;">';
+        html += '<div style="font-size:12px;color:#4caf7d;">Disponible sin asignar: <strong>' + formatEur(dispRest) + '</strong></div></div>';
+      }
+      html += '</div>';
+      html += '<div style="padding:12px 20px;border-top:1px solid #2a2a3a;flex-shrink:0;">';
+      html += '<button id="banco-modal-cancel" style="width:100%;background:#2a2a3a;border:none;color:#9a90b4;border-radius:10px;padding:12px;font-size:14px;cursor:pointer;">Cerrar</button></div>';
+      modal.innerHTML = html;
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      document.body.style.overflow = 'hidden';
+      document.getElementById('banco-modal-close').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
+      document.getElementById('banco-modal-cancel').onclick = function() { overlay.remove(); document.body.style.overflow = ''; };
+      overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); document.body.style.overflow = ''; } };
+      modal.onclick = function(e) { e.stopPropagation(); };
+      modal.querySelectorAll('.btn-borrar-asig').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          var idx = parseInt(this.dataset.idx);
+          var r = await fetch(API + '/banco/borrar-asignacion', {
+            method: 'POST',
+            headers: Object.assign(getHeaders(), { 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ movimiento_id: movId, asignacion_idx: idx })
+          });
+          var d = await r.json();
+          if (!d.ok) { alert(d.error || 'Error'); return; }
+          overlay.remove();
+          document.body.style.overflow = '';
+          renderBanco();
+        });
+      });
+    }
 
     function mostrarModalAsignarImporte(ids, facturas, saldos, disponibleMov, tipo) {
       var existing = document.getElementById('banco-modal');

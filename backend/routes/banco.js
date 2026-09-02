@@ -275,6 +275,34 @@ router.post('/asignar', auth, (req, res) => {
   res.json({ ok: true, pagado_total: totalPagado, pendiente: Math.max(0, factura.total - totalPagado) });
 });
 
+// POST /banco/borrar-asignacion — borrar una asignacion de un movimiento
+router.post('/borrar-asignacion', auth, (req, res) => {
+  const { movimiento_id, asignacion_idx } = req.body;
+  if (movimiento_id === undefined || asignacion_idx === undefined) return res.status(400).json({ error: 'Faltan datos' });
+  const empresaId = req.empresaId;
+  const banco = getBanco(empresaId);
+  const idx = banco.movimientos.findIndex(m => m.id === parseInt(movimiento_id));
+  if (idx === -1) return res.status(404).json({ error: 'Movimiento no encontrado' });
+  const mov = banco.movimientos[idx];
+  if (!mov.asignaciones || asignacion_idx >= mov.asignaciones.length) return res.status(400).json({ error: 'Asignacion no encontrada' });
+  mov.asignaciones.splice(asignacion_idx, 1);
+  if (mov.asignaciones.length === 0) {
+    mov.estado = 'pendiente';
+    mov.conciliado = false;
+    mov.factura_id = null;
+    mov.factura_nombre = null;
+    mov.factura_total = null;
+  } else {
+    mov.factura_id = mov.asignaciones.length === 1 ? mov.asignaciones[0].factura_id : null;
+    mov.factura_nombre = mov.asignaciones.length === 1 ? mov.asignaciones[0].factura_nombre : 'Multiples facturas';
+    var totalAsig = mov.asignaciones.reduce(function(s,a){return s+a.importe;},0);
+    mov.estado = totalAsig >= Math.abs(mov.importe) - 0.01 ? 'conciliado' : 'parcial';
+    mov.conciliado = mov.estado === 'conciliado';
+  }
+  saveBanco(empresaId, banco);
+  res.json({ ok: true });
+});
+
 // POST /banco/pago-efectivo — registrar pago en efectivo en una factura
 router.post('/pago-efectivo', auth, (req, res) => {
   const { factura_id, importe } = req.body;
