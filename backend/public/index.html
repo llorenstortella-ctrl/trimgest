@@ -1483,7 +1483,7 @@ if (window.location.hash === '#registro') {
         if (yaAsignado) return false;
         var totalAsig = (m.asignaciones || []).reduce(function(s,a){return s+a.importe;},0);
         var disponible = Math.abs(m.importe) - totalAsig;
-        return disponible > 0.01 && m.estado !== 'sin_factura';
+        return disponible > 0.01;
       });
       if (movsPendientes.length === 0) { alert('No hay movimientos bancarios disponibles para asignar'); return; }
       var saldosR = await fetch(API + '/banco/saldos', { headers: getHeaders() });
