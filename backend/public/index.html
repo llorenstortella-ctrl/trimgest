@@ -1209,7 +1209,7 @@ if (window.location.hash === '#registro') {
       html += '<select id="bancoTrimSel" onchange="window.bancoTrim=this.value;renderBanco()">';
       trims.forEach(function(t) { html += '<option value="' + t + '"' + (t === window.bancoTrim ? ' selected' : '') + '>' + t + '</option>'; });
       html += '</select>';
-      html += '<select id="bancoAnnoSel" onchange="window.bancoAnno=this.value==='Todo'?'Todo':parseInt(this.value);renderBanco()">';
+      html += '<select id="bancoAnnoSel" onchange="window.bancoAnno=this.value===\'Todo\'?\'Todo\':parseInt(this.value);renderBanco()">';
       annos.forEach(function(y) { html += '<option value="' + y + '"' + (String(y) === String(window.bancoAnno) ? ' selected' : '') + '>' + (y === 'Todo' ? 'Todo el historial' : y) + '</option>'; });
       html += '</select></div></div>';
       html += '<div class="content" style="padding:16px;padding-bottom:80px;">';
