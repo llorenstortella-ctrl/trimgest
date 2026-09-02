@@ -1204,7 +1204,7 @@ if (window.location.hash === '#registro') {
       html += '<button onclick="window.bancoTabActual=\'facturas\';renderBanco()" style="flex:1;padding:10px;font-size:13px;font-weight:500;border:none;border-bottom:2px solid ' + (_bancoTab==='facturas'?'#e8c87a':'transparent') + ';color:' + (_bancoTab==='facturas'?'#e8c87a':'#6a6070') + ';background:none;cursor:pointer;">Pendientes</button>';
       html += '<button onclick="window.bancoTabActual=\'clientes\';renderBanco()" style="flex:1;padding:10px;font-size:13px;font-weight:500;border:none;border-bottom:2px solid ' + (_bancoTab==='clientes'?'#e8c87a':'transparent') + ';color:' + (_bancoTab==='clientes'?'#e8c87a':'#6a6070') + ';background:none;cursor:pointer;">Por cliente</button>';
       html += '</div>';
-      html += '<div class="selectores" style="' + (_bancoTab==='facturas'||_bancoTab==='clientes'?'display:none;':'') + '">';
+      html += '<div class="selectores" style="' + (_bancoTab==='facturas'?'display:none;':'') + '">';
       html += '<select id="bancoTrimSel" onchange="window.bancoTrim=this.value;renderBanco()">';
       trims.forEach(function(t) { html += '<option value="' + t + '"' + (t === window.bancoTrim ? ' selected' : '') + '>' + t + '</option>'; });
       html += '</select>';
@@ -1274,6 +1274,16 @@ if (window.location.hash === '#registro') {
           var facturasR2 = await fetch(API + '/facturas/listar', { headers: getHeaders() });
           var facturasData2 = await facturasR2.json();
           var todasF2 = facturasData2.facturas || [];
+          var mesesTrimC = { T1: ['01','02','03'], T2: ['04','05','06'], T3: ['07','08','09'], T4: ['10','11','12'] };
+          var mesesNombresC = { enero:'01', febrero:'02', marzo:'03', abril:'04', mayo:'05', junio:'06', julio:'07', agosto:'08', septiembre:'09', octubre:'10', noviembre:'11', diciembre:'12' };
+          todasF2 = todasF2.filter(function(f) {
+            if (String(f.anno) !== String(window.bancoAnno)) return false;
+            if (window.bancoTrim === 'Año completo') return true;
+            var mesNum = mesesNombresC[String(f.mes || '').toLowerCase()] || String(f.mes || '').padStart(2,'0');
+            var trimMeses = mesesTrimC[window.bancoTrim] || [];
+            if (f.trimestre) return f.trimestre === window.bancoTrim;
+            return trimMeses.indexOf(mesNum) !== -1;
+          });
           // Agrupar por nombre
           var grupos = {};
           todasF2.forEach(function(f) {
