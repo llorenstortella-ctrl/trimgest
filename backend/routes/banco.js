@@ -327,7 +327,7 @@ router.get('/saldos', auth, (req, res) => {
   facturas.forEach(f => {
     const pagadoBanco = banco.movimientos.reduce((s, m) => {
       return s + (m.asignaciones || []).filter(a => a.factura_id === f.id).reduce((ss, a) => ss + a.importe, 0)
-        + (m.factura_id === f.id && !m.asignaciones ? Math.abs(m.importe) : 0);
+        + (m.factura_id === f.id && (!m.asignaciones || m.asignaciones.length === 0) ? Math.abs(m.importe) : 0);
     }, 0);
     const pagadoEfectivo = f.pago_efectivo || 0;
     const totalPagado = pagadoBanco + pagadoEfectivo;
