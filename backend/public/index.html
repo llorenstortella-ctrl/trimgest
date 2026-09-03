@@ -1280,10 +1280,11 @@ if (window.location.hash === '#registro') {
           todasF2 = todasF2.filter(function(f) {
             if (window.bancoAnno === 'Todo') return true;
             if (String(f.anno) !== String(window.bancoAnno)) return false;
-            if (window.bancoTrim === 'Año completo') return true;
-            var mesNum = mesesNombresC[String(f.mes || '').toLowerCase()] || String(f.mes || '').padStart(2,'0');
+            if (!window.bancoTrim || window.bancoTrim === 'Año completo') return true;
+            var trimF = f.trimestre || '';
+            if (trimF) return trimF === window.bancoTrim;
+            var mesNum = mesesNombresC[String(f.mes || '').toLowerCase()] || String(f.trimestre_mes || f.mes || '').padStart(2,'0');
             var trimMeses = mesesTrimC[window.bancoTrim] || [];
-            if (f.trimestre) return f.trimestre === window.bancoTrim;
             return trimMeses.indexOf(mesNum) !== -1;
           });
           // Agrupar por nombre
