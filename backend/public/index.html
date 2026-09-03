@@ -1205,7 +1205,7 @@ if (window.location.hash === '#registro') {
       html += '<button onclick="window.bancoTabActual=\'facturas\';renderBanco()" style="flex:1;padding:10px;font-size:13px;font-weight:500;border:none;border-bottom:2px solid ' + (_bancoTab==='facturas'?'#e8c87a':'transparent') + ';color:' + (_bancoTab==='facturas'?'#e8c87a':'#6a6070') + ';background:none;cursor:pointer;">Pendientes</button>';
       html += '<button onclick="window.bancoTabActual=\'clientes\';renderBanco()" style="flex:1;padding:10px;font-size:13px;font-weight:500;border:none;border-bottom:2px solid ' + (_bancoTab==='clientes'?'#e8c87a':'transparent') + ';color:' + (_bancoTab==='clientes'?'#e8c87a':'#6a6070') + ';background:none;cursor:pointer;">Por cliente</button>';
       html += '</div>';
-      html += '<div class="selectores" style="' + (_bancoTab==='facturas'?'display:none;':'') + '">';
+      html += '<div class="selectores">';
       html += '<select id="bancoTrimSel" onchange="window.bancoTrim=this.value;renderBanco()">';
       trims.forEach(function(t) { html += '<option value="' + t + '"' + (t === window.bancoTrim ? ' selected' : '') + '>' + t + '</option>'; });
       html += '</select>';
